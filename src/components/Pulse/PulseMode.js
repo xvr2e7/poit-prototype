@@ -1,13 +1,17 @@
 import React from 'react';
-import '../../styles/Pulse.css';
 
-function PulseMode() {
+function PulseMode({ onComplete }) {
+  const handleAction = () => {
+    // Simulate completing a task
+    alert('Pulse task completed!');
+    onComplete();
+  };
+
   return (
     <div className="pulse-mode">
-      <h1>Pulse Mode</h1>
-      <div className="word-card">
-        <p>Swipe to begin curating your lexicon</p>
-      </div>
+      <h2>Pulse Mode</h2>
+      <p>Swipe to begin curating your lexicon</p>
+      <button onClick={handleAction}>Complete Pulse Task</button>
     </div>
   );
 }
