@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import Navigation from './components/Navigation';
-import Login from './components/Login';
-import PulseMode from './components/Pulse/PulseMode';
-import CraftMode from './components/Craft/CraftMode';
-import EchoMode from './components/Echo/EchoMode';
-import Playground from './components/Playground'; // Import Playground page
-import './styles/App.css';
-import './styles/Login.css';
-import './styles/Modes.css';
+import React, { useState } from "react";
+import Navigation from "./components/Navigation";
+import Login from "./components/Login";
+import PulseInterface from "./components/Pulse/PulseMode";
+import CraftMode from "./components/Craft/CraftMode";
+import EchoMode from "./components/Echo/EchoMode";
+import Playground from "./components/Playground";
+import "./index.css";
 
 function App() {
-  const [currentMode, setCurrentMode] = useState('pulse');
+  const [currentMode, setCurrentMode] = useState("pulse");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [lockedModes, setLockedModes] = useState({ craft: true, echo: true });
   const [playgroundUnlocked, setPlaygroundUnlocked] = useState(false);
-  const [inPlayground, setInPlayground] = useState(false); // Track if in Playground
+  const [inPlayground, setInPlayground] = useState(false);
+  const [selectedWords, setSelectedWords] = useState([]);
 
   const unlockMode = (mode) => {
+    console.log(`Unlocking ${mode} mode`); // Debug log
     setLockedModes((prev) => ({ ...prev, [mode]: false }));
   };
 
@@ -25,45 +25,75 @@ function App() {
   };
 
   const enterPlayground = () => {
-    setIsAuthenticated(true); // Allow direct access to Playground
-    setInPlayground(true); // Switch to Playground view
+    setIsAuthenticated(true);
+    setInPlayground(true);
+  };
+
+  const handlePulseComplete = (words = []) => {
+    console.log("Pulse completed with words:", words);
+    setSelectedWords(words);
+    unlockMode("craft");
+  };
+
+  const handleCraftComplete = () => {
+    console.log("Craft completed"); // Debug log
+    unlockMode("echo");
+    // Automatically switch to echo mode when craft is completed
+    setCurrentMode("echo");
   };
 
   const renderMode = () => {
     if (inPlayground) {
-      return <Playground />; // If in Playground, render Playground
+      return <Playground />;
     }
 
     switch (currentMode) {
-      case 'pulse':
-        return <PulseMode onComplete={() => unlockMode('craft')} />;
-      case 'craft':
-        return <CraftMode onComplete={() => unlockMode('echo')} />;
-      case 'echo':
-        return <EchoMode
-          onComplete={unlockPlayground}
-          playgroundUnlocked={playgroundUnlocked}
-          enterPlayground={enterPlayground}
-        />;
+      case "pulse":
+        return <PulseInterface onComplete={handlePulseComplete} />;
+      case "craft":
+        return (
+          <CraftMode
+            onComplete={handleCraftComplete}
+            selectedWords={selectedWords}
+            // Add an enabled prop to control when craft mode can be used
+            enabled={!lockedModes.craft}
+          />
+        );
+      case "echo":
+        return (
+          <EchoMode
+            onComplete={unlockPlayground}
+            playgroundUnlocked={playgroundUnlocked}
+            enterPlayground={enterPlayground}
+            enabled={!lockedModes.echo}
+          />
+        );
       default:
-        return <PulseMode />;
+        return <PulseInterface onComplete={handlePulseComplete} />;
     }
   };
 
-  // If not authenticated, show login page
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} enterPlayground={enterPlayground} />;
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+        <Login
+          onLogin={() => setIsAuthenticated(true)}
+          enterPlayground={enterPlayground}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="app">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
       <Navigation
         currentMode={currentMode}
         setCurrentMode={setCurrentMode}
         lockedModes={lockedModes}
-        inPlayground={inPlayground} // Pass flag to Navigation
+        inPlayground={inPlayground}
+        className="bg-white shadow-md"
       />
-      <main className="main-content">{renderMode()}</main>
+      <main className="flex-1 w-full">{renderMode()}</main>
     </div>
   );
 }
