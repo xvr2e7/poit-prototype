@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import Navigation from "./components/Navigation";
-import Login from "./components/Login";
-import PulseInterface from "./components/Pulse/PulseMode";
-import CraftMode from "./components/Craft/CraftMode";
-import EchoMode from "./components/Echo/EchoMode";
-import Playground from "./components/Playground";
-import "./index.css";
+import Navigation from "./components/shared/Navigation";
+import Login from "./components/auth/Login";
+import PulseMode from "./components/core/pulse/PulseMode";
+import CraftMode from "./components/core/craft/CraftMode";
+import EchoMode from "./components/core/echo/EchoMode";
+import Playground from "./components/playground/PlayMode";
+import "./styles/index.css";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -49,7 +49,7 @@ function App() {
 
     switch (currentMode) {
       case "pulse":
-        return <PulseInterface onComplete={handlePulseComplete} />;
+        return <PulseMode onComplete={handlePulseComplete} />;
       case "craft":
         return (
           <CraftMode
@@ -69,7 +69,7 @@ function App() {
           />
         );
       default:
-        return <PulseInterface onComplete={handlePulseComplete} />;
+        return <PulseMode onComplete={handlePulseComplete} />;
     }
   };
 

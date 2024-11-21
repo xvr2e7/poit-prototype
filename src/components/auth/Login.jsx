@@ -18,7 +18,6 @@ function Login({ onLogin, enterPlayground }) {
         {/* Logo/Branding */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">POiT</h1>
-          <p className="text-gray-600">Poetry of Interconnected Thoughts</p>
         </div>
 
         {/* Main Card */}
@@ -125,7 +124,7 @@ function Login({ onLogin, enterPlayground }) {
 
         {/* Footer */}
         <p className="text-center mt-8 text-sm text-gray-600">
-          Experience poetry in a whole new way
+          &copy; 2024 POiT.
         </p>
       </div>
     </div>

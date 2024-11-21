@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import PulseInterface from "./Pulse/PulseMode";
-import CraftMode from "./Craft/CraftMode";
+import PulseMode from "../core/pulse/PulseMode";
+import CraftMode from "../core/craft/CraftMode";
 
 function Playground() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -28,7 +28,7 @@ function Playground() {
   const renderMode = () => {
     switch (currentMode) {
       case "pulse":
-        return <PulseInterface onComplete={completePulse} />;
+        return <PulseMode onComplete={completePulse} />;
       case "craft":
         return (
           <CraftMode
@@ -38,7 +38,7 @@ function Playground() {
           />
         );
       default:
-        return <PulseInterface onComplete={completePulse} />;
+        return <PulseMode onComplete={completePulse} />;
     }
   };
 

@@ -3,7 +3,7 @@ import ForceGraph2D from "react-force-graph-2d";
 import { Search, Filter, TrendingUp, Calendar, Star, Info } from "lucide-react";
 
 const EchoMode = ({ onComplete, playgroundUnlocked, enterPlayground }) => {
-  // Sample data - in production this would come from your backend
+  
   const [graphData] = useState({
     nodes: [
       {
