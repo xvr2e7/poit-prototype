@@ -52,7 +52,7 @@ const EchoMode = ({ onComplete, playgroundUnlocked, enterPlayground }) => {
   });
 
   const [selectedNode, setSelectedNode] = useState(null);
-  const [filterBy, setFilterBy] = useState("trending"); // trending, recent, popular
+  const [filterBy, setFilterBy] = useState("trending");
   const [searchTerm, setSearchTerm] = useState("");
   const [hoveredNode, setHoveredNode] = useState(null);
 
