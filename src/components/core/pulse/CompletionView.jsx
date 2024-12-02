@@ -1,92 +1,32 @@
-import React, { useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import { WordCard } from "./components/WordCard";
-import { TimeDisplay } from "./components/TimeDisplay";
-import { CompletionView } from "./components/CompletionView";
-import { useWindowSize } from "../../../utils/useWindowSize";
+import React from "react";
+import { motion } from "framer-motion";
 
-const PulseMode = ({ onComplete }) => {
-  const [words] = useState([
-    "ethereal",
-    "whisper",
-    "cascade",
-    "luminous",
-    "serenity",
-    "velvet",
-    "cipher",
-    "eclipse",
-    "nebula",
-    "harmony",
-  ]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedWords, setSelectedWords] = useState([]);
-  const [savedSelection, setSavedSelection] = useState(false);
-  const { isMobile } = useWindowSize();
-
-  const handleKeepWord = () => {
-    if (currentIndex < words.length) {
-      setSelectedWords((prev) => [...prev, words[currentIndex]]);
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleDiscardWord = () => {
-    if (currentIndex < words.length) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleSaveSelection = () => {
-    onComplete(selectedWords);
-    setSavedSelection(true);
-  };
-
+export const CompletionView = ({
+  selectedCount,
+  totalCount,
+  onSave,
+  saved,
+}) => {
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      <div className="w-full h-full flex flex-col items-center px-4 py-8">
-        {/* Header */}
-        <div className="w-full max-w-4xl mb-8 flex items-center justify-between p-4 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-gray-800">Pulse</h1>
-          <TimeDisplay />
-        </div>
-
-        {/* Progress bar */}
-        <div className="w-full max-w-4xl mb-8">
-          <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
-              style={{ width: `${(currentIndex / words.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="relative w-full max-w-4xl h-[60vh] flex items-center justify-center">
-          <AnimatePresence mode="popLayout">
-            {currentIndex < words.length ? (
-              <WordCard
-                word={words[currentIndex]}
-                onKeep={handleKeepWord}
-                onDiscard={handleDiscardWord}
-              />
-            ) : (
-              <CompletionView
-                selectedCount={selectedWords.length}
-                totalCount={words.length}
-                onSave={handleSaveSelection}
-                saved={savedSelection}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Selected count */}
-        <div className="mt-8 text-gray-600">
-          Selected: {selectedWords.length} / {words.length}
-        </div>
-      </div>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white p-8 rounded-xl shadow-xl text-center"
+    >
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">All done!</h2>
+      <p className="text-gray-600 mb-6">
+        You've selected {selectedCount} out of {totalCount} words
+      </p>
+      {!saved ? (
+        <button
+          onClick={onSave}
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Save Selection
+        </button>
+      ) : (
+        <p className="text-green-600 font-medium">✓ Selection saved</p>
+      )}
+    </motion.div>
   );
 };
-
-export default PulseMode;
