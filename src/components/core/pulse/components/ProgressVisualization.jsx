@@ -1,7 +1,7 @@
 // components/ProgressVisualization.jsx
 import React from "react";
 import { motion } from "framer-motion";
-import { useWindowSize } from "../../../../utils/useWindowSize";
+import { useWindowSize } from "../../../../utils/hooks/useWindowSize";
 
 export const ProgressVisualization = ({
   words,

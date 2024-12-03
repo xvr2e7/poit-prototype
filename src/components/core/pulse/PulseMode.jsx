@@ -4,7 +4,7 @@ import { WordCard } from "./components/WordCard";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 import { ProgressVisualization } from "./components/ProgressVisualization";
-import { useWindowSize } from "../../../utils/useWindowSize";
+import { useWindowSize } from "../../../utils/hooks/useWindowSize";
 
 const PulseMode = ({ onComplete }) => {
   const [words] = useState([
