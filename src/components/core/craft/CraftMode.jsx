@@ -1,4 +1,17 @@
 import React from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import ToolBar from "./components/ToolBar";
 import WordCanvas from "./components/WordCanvas";
 import { useCraftState } from "./hooks/useCraftState";
@@ -12,9 +25,49 @@ const CraftMode = ({ onComplete, selectedWords = [] }) => {
     handleFontSizeChange,
     handleAlignmentChange,
     handlePreviewToggle,
-    handleWordUpdate,
+    setWords,
     handleComplete,
   } = useCraftState(selectedWords, onComplete);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setWords((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleDuplicate = (wordId) => {
+    setWords((words) => {
+      const wordToDuplicate = words.find((w) => w.id === wordId);
+      if (wordToDuplicate) {
+        return [
+          ...words,
+          {
+            ...wordToDuplicate,
+            id: `word-${words.length}`,
+          },
+        ];
+      }
+      return words;
+    });
+  };
+
+  const handleRemove = (wordId) => {
+    setWords((words) => words.filter((w) => w.id !== wordId));
+  };
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-4">
@@ -28,13 +81,20 @@ const CraftMode = ({ onComplete, selectedWords = [] }) => {
           onPreviewToggle={handlePreviewToggle}
         />
 
-        <WordCanvas
-          words={words}
-          fontSize={fontSize}
-          alignment={alignment}
-          preview={preview}
-          onWordUpdate={handleWordUpdate}
-        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <WordCanvas
+            words={words}
+            fontSize={fontSize}
+            alignment={alignment}
+            preview={preview}
+            onDuplicate={handleDuplicate}
+            onRemove={handleRemove}
+          />
+        </DndContext>
 
         <div className="mt-4 flex justify-center">
           <button

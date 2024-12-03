@@ -1,46 +1,40 @@
 import React from "react";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import WordCard from "./WordCard";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import SortableWord from "./SortableWord";
 
-const WordCanvas = ({ words, fontSize, alignment, preview, onWordUpdate }) => {
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    onWordUpdate("reorder", {
-      sourceIndex: result.source.index,
-      destinationIndex: result.destination.index,
-    });
-  };
-
+const WordCanvas = ({
+  words,
+  fontSize,
+  alignment,
+  preview,
+  onDuplicate,
+  onRemove,
+}) => {
   return (
     <div
       className={`bg-white rounded-lg shadow-md p-8 min-h-[600px] ${alignment}`}
     >
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="poetry-canvas">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="min-h-[500px]"
-            >
-              {words.map((word, index) => (
-                <WordCard
-                  key={word.id}
-                  word={word}
-                  index={index}
-                  fontSize={fontSize}
-                  preview={preview}
-                  onDuplicate={() =>
-                    onWordUpdate("duplicate", { wordId: word.id })
-                  }
-                  onRemove={() => onWordUpdate("remove", { wordId: word.id })}
-                />
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <SortableContext
+        items={words.map((w) => w.id)}
+        strategy={horizontalListSortingStrategy}
+      >
+        <div className="min-h-[500px]">
+          {words.map((word) => (
+            <SortableWord
+              key={word.id}
+              id={word.id}
+              word={word}
+              fontSize={fontSize}
+              preview={preview}
+              onDuplicate={onDuplicate}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
+      </SortableContext>
     </div>
   );
 };
