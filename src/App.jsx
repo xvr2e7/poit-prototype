@@ -5,7 +5,6 @@ import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
-import "./styles/index.css";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -16,7 +15,7 @@ function App() {
   const [selectedWords, setSelectedWords] = useState([]);
 
   const unlockMode = (mode) => {
-    console.log(`Unlocking ${mode} mode`); // Debug log
+    console.log(`Unlocking ${mode} mode`);
     setLockedModes((prev) => ({ ...prev, [mode]: false }));
   };
 
@@ -36,9 +35,8 @@ function App() {
   };
 
   const handleCraftComplete = () => {
-    console.log("Craft completed"); // Debug log
+    console.log("Craft completed");
     unlockMode("echo");
-    // Automatically switch to echo mode when craft is completed
     setCurrentMode("echo");
   };
 
@@ -55,7 +53,6 @@ function App() {
           <CraftMode
             onComplete={handleCraftComplete}
             selectedWords={selectedWords}
-            // Add an enabled prop to control when craft mode can be used
             enabled={!lockedModes.craft}
           />
         );
@@ -86,13 +83,14 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      <Navigation
-        currentMode={currentMode}
-        setCurrentMode={setCurrentMode}
-        lockedModes={lockedModes}
-        inPlayground={inPlayground}
-        className="bg-white shadow-md"
-      />
+      {currentMode !== "pulse" && (
+        <Navigation
+          currentMode={currentMode}
+          setCurrentMode={setCurrentMode}
+          lockedModes={lockedModes}
+          inPlayground={inPlayground}
+        />
+      )}
       <main className="flex-1 w-full">{renderMode()}</main>
     </div>
   );
