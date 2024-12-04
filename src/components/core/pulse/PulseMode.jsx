@@ -1,6 +1,8 @@
+// src/components/core/pulse/PulseMode.jsx
+
 import React, { useState, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
-import { WordCard } from "./components/WordCard";
+import { motion, AnimatePresence } from "framer-motion";
+import WordCard from "./components/WordCard";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 import { ProgressVisualization } from "./components/ProgressVisualization";
@@ -19,6 +21,7 @@ const PulseMode = ({ onComplete }) => {
     "nebula",
     "harmony",
   ]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedWords, setSelectedWords] = useState([]);
   const [savedSelection, setSavedSelection] = useState(false);
@@ -43,13 +46,20 @@ const PulseMode = ({ onComplete }) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      <div className="w-full min-h-screen flex flex-col items-center p-4 md:p-8">
-        {/* Header */}
-        <div className="w-full max-w-4xl flex items-center justify-between p-4 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-gray-800">Pulse</h1>
-          <TimeDisplay />
-        </div>
+    <div className="w-full min-h-screen bg-[#1a1f3d] relative overflow-hidden">
+      {/* Deep water gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-cyan-900/20 to-transparent pointer-events-none" />
+
+      <div className="relative z-10 w-full min-h-screen flex flex-col items-center p-4 md:p-8">
+        {/* Header - Now more subtle */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-4xl flex items-center justify-between p-4 bg-white/5 backdrop-blur-lg rounded-lg"
+        >
+          <h1 className="text-2xl font-bold text-cyan-300">Pulse</h1>
+          <TimeDisplay darkMode />
+        </motion.div>
 
         {/* Main content area */}
         <div className="w-full max-w-4xl flex-1 flex flex-col justify-center my-8 relative">
@@ -60,6 +70,7 @@ const PulseMode = ({ onComplete }) => {
                 words={words}
                 selectedWords={selectedWords}
                 currentIndex={currentIndex}
+                darkMode
               />
             </div>
           )}
@@ -69,6 +80,7 @@ const PulseMode = ({ onComplete }) => {
             <AnimatePresence mode="popLayout">
               {currentIndex < words.length ? (
                 <WordCard
+                  key={currentIndex}
                   word={words[currentIndex]}
                   onKeep={handleKeepWord}
                   onDiscard={handleDiscardWord}
@@ -79,27 +91,33 @@ const PulseMode = ({ onComplete }) => {
                   totalCount={words.length}
                   onSave={handleSaveSelection}
                   saved={savedSelection}
+                  darkMode
                 />
               )}
             </AnimatePresence>
           </div>
 
-          {/* Mobile progress bar */}
+          {/* Mobile progress */}
           {isMobile && (
             <div className="w-full mt-8">
               <ProgressVisualization
                 words={words}
                 selectedWords={selectedWords}
                 currentIndex={currentIndex}
+                darkMode
               />
             </div>
           )}
         </div>
 
         {/* Word count */}
-        <div className="text-gray-600">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-cyan-300/60"
+        >
           Selected: {selectedWords.length} / {words.length}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
