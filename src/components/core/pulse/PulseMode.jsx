@@ -1,11 +1,10 @@
-// src/components/core/pulse/PulseMode.jsx
-
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WordCard from "./components/WordCard";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 import { ProgressVisualization } from "./components/ProgressVisualization";
+import AnimatedBackground from "./components/AnimatedBackground";
 import { useWindowSize } from "../../../utils/hooks/useWindowSize";
 
 const PulseMode = ({ onComplete }) => {
@@ -46,24 +45,32 @@ const PulseMode = ({ onComplete }) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#1a1f3d] relative overflow-hidden">
-      {/* Deep water gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-cyan-900/20 to-transparent pointer-events-none" />
+    <div className="w-full min-h-screen relative overflow-hidden">
+      <AnimatedBackground />
 
       <div className="relative z-10 w-full min-h-screen flex flex-col items-center p-4 md:p-8">
-        {/* Header - Now more subtle */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-4xl flex items-center justify-between p-4 bg-white/5 backdrop-blur-lg rounded-lg"
+          className="w-full max-w-4xl flex items-center justify-between p-4 rounded-xl border border-cyan-500/20 backdrop-blur-sm bg-white/5"
         >
-          <h1 className="text-2xl font-bold text-cyan-300">Pulse</h1>
+          <motion.h1
+            className="text-2xl font-bold text-cyan-300"
+            animate={{
+              opacity: [0.7, 1, 0.7],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            Pulse
+          </motion.h1>
           <TimeDisplay darkMode />
         </motion.div>
 
-        {/* Main content area */}
         <div className="w-full max-w-4xl flex-1 flex flex-col justify-center my-8 relative">
-          {/* Desktop constellation */}
           {!isMobile && (
             <div className="absolute inset-0 flex items-center justify-center">
               <ProgressVisualization
@@ -75,7 +82,6 @@ const PulseMode = ({ onComplete }) => {
             </div>
           )}
 
-          {/* Word card */}
           <div className="relative z-10 w-full max-w-lg mx-auto">
             <AnimatePresence mode="popLayout">
               {currentIndex < words.length ? (
@@ -97,7 +103,6 @@ const PulseMode = ({ onComplete }) => {
             </AnimatePresence>
           </div>
 
-          {/* Mobile progress */}
           {isMobile && (
             <div className="w-full mt-8">
               <ProgressVisualization
@@ -110,7 +115,6 @@ const PulseMode = ({ onComplete }) => {
           )}
         </div>
 
-        {/* Word count */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
