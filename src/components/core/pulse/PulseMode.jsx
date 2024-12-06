@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import WordCard from "./components/WordCard";
+import WordCard from "./components/WordPool";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 import { ProgressVisualization } from "./components/ProgressVisualization";

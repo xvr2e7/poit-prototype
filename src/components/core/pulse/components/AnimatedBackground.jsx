@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 
 const AnimatedBackground = () => {
   const canvasRef = useRef(null);
@@ -12,21 +11,29 @@ const AnimatedBackground = () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Create particles with depth layers
+    // Create layered particle systems for depth effect
     const createParticleSystems = () => {
       const layers = [
-        { count: 10, speedRange: [0.3, 0.5], sizeRange: [2, 3], opacity: 0.8 }, // Foreground
+        {
+          count: 10,
+          speedRange: [0.3, 0.5],
+          sizeRange: [2, 3],
+          opacity: 0.8,
+          depth: 1,
+        }, // Foreground
         {
           count: 15,
           speedRange: [0.15, 0.25],
           sizeRange: [1.5, 2.5],
           opacity: 0.6,
+          depth: 2,
         }, // Midground
         {
           count: 25,
           speedRange: [0.05, 0.15],
           sizeRange: [0.5, 1.5],
           opacity: 0.4,
+          depth: 3,
         }, // Background
       ];
 
@@ -34,6 +41,7 @@ const AnimatedBackground = () => {
         Array.from({ length: layer.count }, () => ({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
+          z: layer.depth,
           angle: Math.random() * Math.PI * 2,
           speed:
             layer.speedRange[0] +
@@ -47,9 +55,7 @@ const AnimatedBackground = () => {
       );
     };
 
-    createParticleSystems();
-
-    // Handle resize
+    // Handle window resize
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -57,52 +63,58 @@ const AnimatedBackground = () => {
     };
 
     window.addEventListener("resize", handleResize);
+    createParticleSystems();
 
-    // Animation loop with optimized rendering
+    // Animation loop
     const animate = (timestamp) => {
       ctx.fillStyle = "#0a1525";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw caustic light patterns
+      // Draw depth-based caustics
       const drawCaustics = () => {
         const time = timestamp * 0.0001;
-        const gradientSize = Math.min(canvas.width, canvas.height) * 1.5;
 
-        // Subtle shifting light rays
-        const centerX = canvas.width / 2 + Math.sin(time * 0.5) * 50;
-        const centerY = -100 + Math.sin(time * 0.3) * 30;
-
-        const gradient = ctx.createRadialGradient(
-          centerX,
-          centerY,
+        // Layer 1 (deepest)
+        const gradient1 = ctx.createRadialGradient(
+          canvas.width / 2 + Math.sin(time * 0.5) * 50,
+          -100 + Math.sin(time * 0.3) * 30,
           0,
-          centerX,
-          centerY,
-          gradientSize
+          canvas.width / 2,
+          -100,
+          canvas.height * 1.5
         );
-        gradient.addColorStop(0, "rgba(56, 189, 248, 0.08)");
-        gradient.addColorStop(1, "transparent");
-        ctx.fillStyle = gradient;
+        gradient1.addColorStop(0, "rgba(56, 189, 248, 0.05)");
+        gradient1.addColorStop(1, "transparent");
+        ctx.fillStyle = gradient1;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Add subtle caustic patterns
-        for (let i = 0; i < 3; i++) {
-          const x = canvas.width / 2 + Math.sin(time + i * 2) * 100;
-          const y = canvas.height / 3 + Math.cos(time + i) * 50;
+        // Layer 2 (middle)
+        const gradient2 = ctx.createRadialGradient(
+          canvas.width * 0.7 + Math.cos(time * 0.4) * 30,
+          -50 + Math.cos(time * 0.6) * 20,
+          0,
+          canvas.width * 0.7,
+          -50,
+          canvas.height
+        );
+        gradient2.addColorStop(0, "rgba(56, 189, 248, 0.03)");
+        gradient2.addColorStop(1, "transparent");
+        ctx.fillStyle = gradient2;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          const causticGradient = ctx.createRadialGradient(
-            x,
-            y,
-            0,
-            x,
-            y,
-            200 + Math.sin(time + i) * 50
-          );
-          causticGradient.addColorStop(0, "rgba(56, 189, 248, 0.02)");
-          causticGradient.addColorStop(1, "transparent");
-          ctx.fillStyle = causticGradient;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
+        // Layer 3 (surface)
+        const gradient3 = ctx.createRadialGradient(
+          canvas.width * 0.3 + Math.sin(time * 0.7) * 20,
+          -20 + Math.sin(time * 0.5) * 10,
+          0,
+          canvas.width * 0.3,
+          -20,
+          canvas.height * 0.7
+        );
+        gradient3.addColorStop(0, "rgba(56, 189, 248, 0.02)");
+        gradient3.addColorStop(1, "transparent");
+        ctx.fillStyle = gradient3;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       };
 
       drawCaustics();
@@ -110,12 +122,12 @@ const AnimatedBackground = () => {
       // Update and draw particles with depth effect
       particleSystemsRef.current.forEach((particles) => {
         particles.forEach((particle) => {
-          // Organic movement pattern
+          // Organic movement
           particle.angle += Math.sin(timestamp * particle.frequency) * 0.02;
           particle.x += Math.cos(particle.angle) * particle.speed;
           particle.y += Math.sin(particle.angle) * particle.speed;
 
-          // Smooth wrapping
+          // Wrap around screen
           if (particle.x > canvas.width + particle.size)
             particle.x = -particle.size;
           if (particle.x < -particle.size)
@@ -125,24 +137,35 @@ const AnimatedBackground = () => {
           if (particle.y < -particle.size)
             particle.y = canvas.height + particle.size;
 
-          // Draw particle with glow effect
-          ctx.beginPath();
+          // Draw with depth-based glow
+          const depthFactor = 1 - (particle.z - 1) / 3;
           const glow = ctx.createRadialGradient(
             particle.x,
             particle.y,
             0,
             particle.x,
             particle.y,
-            particle.size * 3
+            particle.size * 3 * depthFactor
           );
-          glow.addColorStop(0, `rgba(147, 197, 253, ${particle.opacity})`);
+          glow.addColorStop(
+            0,
+            `rgba(147, 197, 253, ${particle.opacity * depthFactor})`
+          );
           glow.addColorStop(
             0.6,
-            `rgba(147, 197, 253, ${particle.opacity * 0.3})`
+            `rgba(147, 197, 253, ${particle.opacity * depthFactor * 0.3})`
           );
           glow.addColorStop(1, "transparent");
+
+          ctx.beginPath();
           ctx.fillStyle = glow;
-          ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2);
+          ctx.arc(
+            particle.x,
+            particle.y,
+            particle.size * 3 * depthFactor,
+            0,
+            Math.PI * 2
+          );
           ctx.fill();
         });
       });
@@ -161,18 +184,11 @@ const AnimatedBackground = () => {
   }, []);
 
   return (
-    <>
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 w-full h-full"
-        style={{ backgroundColor: "#0a1525" }}
-      />
-
-      {/* Ambient depth gradient */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/10 to-blue-950/20" />
-      </div>
-    </>
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 w-full h-full"
+      style={{ backgroundColor: "#0a1525" }}
+    />
   );
 };
 
