@@ -4,7 +4,7 @@ import WordPool from "./components/WordPool";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 import { ProgressVisualization } from "./components/ProgressVisualization";
-import AnimatedBackground from "./components/AnimatedBackground";
+import AnimatedBackground from "./components/PulseBackground";
 import { useWindowSize } from "../../../utils/hooks/useWindowSize";
 
 const PulseMode = ({ onComplete }) => {

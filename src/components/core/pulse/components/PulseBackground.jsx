@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-const AnimatedBackground = () => {
+const PulseBackground = () => {
   const canvasRef = useRef(null);
   const particleSystemsRef = useRef([]);
   const animationRef = useRef(null);
@@ -192,4 +192,4 @@ const AnimatedBackground = () => {
   );
 };
 
-export default AnimatedBackground;
+export default PulseBackground;
