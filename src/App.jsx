@@ -9,13 +9,17 @@ import Playground from "./components/playground/PlayMode";
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [lockedModes, setLockedModes] = useState({ craft: true, echo: true });
+  const [lockedModes, setLockedModes] = useState({ craft: false, echo: false }); // Changed to false for testing
   const [playgroundUnlocked, setPlaygroundUnlocked] = useState(false);
   const [inPlayground, setInPlayground] = useState(false);
   const [selectedWords, setSelectedWords] = useState([]);
 
+  const handleTestModeSelect = (mode) => {
+    setIsAuthenticated(true);
+    setCurrentMode(mode);
+  };
+
   const unlockMode = (mode) => {
-    console.log(`Unlocking ${mode} mode`);
     setLockedModes((prev) => ({ ...prev, [mode]: false }));
   };
 
@@ -29,13 +33,11 @@ function App() {
   };
 
   const handlePulseComplete = (words = []) => {
-    console.log("Pulse completed with words:", words);
     setSelectedWords(words);
     unlockMode("craft");
   };
 
   const handleCraftComplete = () => {
-    console.log("Craft completed");
     unlockMode("echo");
     setCurrentMode("echo");
   };
@@ -76,6 +78,7 @@ function App() {
         <Login
           onLogin={() => setIsAuthenticated(true)}
           enterPlayground={enterPlayground}
+          onTestModeSelect={handleTestModeSelect}
         />
       </div>
     );

@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { LogIn, UserPlus, PlayCircle } from "lucide-react";
+import { LogIn, UserPlus, PlayCircle, Zap, PenLine, Radio } from "lucide-react";
 import { LoginForm } from "./LoginForm";
 import { useAuthForm } from "../../utils/hooks/useAuthForm";
 
-function Login({ onLogin, enterPlayground }) {
+function Login({ onLogin, enterPlayground, onTestModeSelect }) {
   const {
     isRegistering,
     formData,
@@ -67,17 +67,52 @@ function Login({ onLogin, enterPlayground }) {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or</span>
+              <span className="px-2 bg-white text-gray-500">Quick Access</span>
             </div>
           </div>
 
-          <button
-            onClick={enterPlayground}
-            className="w-full py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <PlayCircle size={20} />
-            Try Playground Mode
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => onTestModeSelect("pulse")}
+              className="w-full py-2 px-4 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <Zap size={20} />
+              Test Pulse Mode
+            </button>
+
+            <button
+              onClick={() => onTestModeSelect("craft")}
+              className="w-full py-2 px-4 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <PenLine size={20} />
+              Test Craft Mode
+            </button>
+
+            <button
+              onClick={() => onTestModeSelect("echo")}
+              className="w-full py-2 px-4 bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <Radio size={20} />
+              Test Echo Mode
+            </button>
+
+            <div className="relative my-3">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+
+            <button
+              onClick={enterPlayground}
+              className="w-full py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <PlayCircle size={20} />
+              Try Playground Mode
+            </button>
+          </div>
         </motion.div>
 
         <p className="text-center mt-8 text-sm text-gray-600">
