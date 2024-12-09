@@ -1,162 +1,158 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
 import { Info } from "lucide-react";
 import { perlin } from "../../../../utils/animations/animationUtils";
 
+// Test words array
 const wordPool = [
-  { id: 1, text: "microwave", type: "noun", depth: 1 },
-  { id: 2, text: "fidget", type: "verb", depth: 2 },
-  { id: 3, text: "sneaker", type: "noun", depth: 3 },
-  { id: 4, text: "grumpy", type: "adj", depth: 1 },
-  { id: 5, text: "buffering", type: "verb", depth: 2 },
-  { id: 6, text: "doorknob", type: "noun", depth: 3 },
-  { id: 7, text: "slouch", type: "verb", depth: 1 },
-  { id: 8, text: "glitch", type: "verb", depth: 2 },
-  { id: 9, text: "squeaky", type: "adj", depth: 3 },
-  { id: 10, text: "deadline", type: "noun", depth: 1 },
-  { id: 11, text: "crumple", type: "verb", depth: 2 },
-  { id: 12, text: "sticky", type: "adj", depth: 3 },
-  { id: 13, text: "upload", type: "verb", depth: 1 },
-  { id: 14, text: "awkward", type: "adj", depth: 2 },
-  { id: 15, text: "pixel", type: "noun", depth: 3 },
-  { id: 16, text: "sprint", type: "verb", depth: 1 },
-  { id: 17, text: "crispy", type: "adj", depth: 2 },
-  { id: 18, text: "coffee", type: "noun", depth: 3 },
-  { id: 19, text: "restless", type: "adj", depth: 1 },
-  { id: 20, text: "inbox", type: "noun", depth: 2 },
+  { id: 1, text: "microwave", type: "noun" },
+  { id: 2, text: "fidget", type: "verb" },
+  { id: 3, text: "sneaker", type: "noun" },
+  { id: 4, text: "grumpy", type: "adj" },
+  { id: 5, text: "buffering", type: "verb" },
+  { id: 6, text: "doorknob", type: "noun" },
+  { id: 7, text: "slouch", type: "verb" },
+  { id: 8, text: "glitch", type: "verb" },
+  { id: 9, text: "squeaky", type: "adj" },
+  { id: 10, text: "deadline", type: "noun" },
+  { id: 11, text: "crumple", type: "verb" },
+  { id: 12, text: "sticky", type: "adj" },
+  { id: 13, text: "upload", type: "verb" },
+  { id: 14, text: "awkward", type: "adj" },
+  { id: 15, text: "pixel", type: "noun" },
+  { id: 16, text: "sprint", type: "verb" },
+  { id: 17, text: "crispy", type: "adj" },
+  { id: 18, text: "coffee", type: "noun" },
+  { id: 19, text: "restless", type: "adj" },
+  { id: 20, text: "inbox", type: "noun" },
 ];
 
-const FloatingWord = ({ word, onSelect, onInfo }) => {
+const BioluminescentWord = ({ word, onSelect, onInfo, mousePosition }) => {
+  const controls = useAnimation();
   const [isHovered, setIsHovered] = useState(false);
-  const elementRef = useRef(null);
-  const timeOffset = useRef(Math.random() * 10000).current;
-  
-  // Full viewport range for initial positions
-  const basePosition = useRef({
-    x: Math.random() * 100, // Using percentage of viewport
-    y: Math.random() * 100,
-    z: Math.random() * 1000 - 500
-  }).current;
+  const ref = useRef(null);
+  const timeRef = useRef(0);
 
   useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
+    let rafId;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
 
-    let animationFrameId;
-    let startTime = performance.now();
+    // Random initial position for the word
+    const initialX = Math.random() * screenWidth;
+    const initialY = Math.random() * screenHeight;
 
     const animate = () => {
-      const currentTime = (performance.now() - startTime) * 0.00005;
-      
-      // Wider range for movement (50% of viewport)
-      const xOffset = perlin(currentTime + timeOffset) * 50;
-      const yOffset = perlin(currentTime + timeOffset + 1000) * 50;
-      const zOffset = perlin(currentTime + timeOffset + 2000) * 100;
+      if (!ref.current) return;
+      timeRef.current += 0.001;
 
-      // Add gentle swaying with larger amplitude
-      const swayX = Math.sin(currentTime * 0.1 + timeOffset) * 25;
-      const swayY = Math.cos(currentTime * 0.08 + timeOffset) * 25;
+      // Dynamic movement using Perlin noise
+      const xNoise = perlin(timeRef.current + word.id * 100);
+      const yNoise = perlin(timeRef.current + word.id * 200);
 
-      // Wrap around edges to ensure words stay in viewport
-      const x = ((basePosition.x + xOffset + swayX + 100) % 100);
-      const y = ((basePosition.y + yOffset + swayY + 100) % 100);
-      const z = zOffset;
+      // Update position with noise and initial offset
+      const x = initialX + xNoise * 300;
+      const y = initialY + yNoise * 300;
 
-      const scale = mapRange(z, -500, 500, 1.5, 2.5);
-      const blur = Math.abs(mapRange(z, -500, 500, 0, 1.5));
-      const opacity = mapRange(Math.abs(z), 0, 500, 1, 0.3);
-      
-      element.style.transform = `translate3d(${x}vw, ${y}vh, ${z}px) scale(${scale})`;
-      element.style.filter = `blur(${blur}px)`;
-      element.style.opacity = opacity;
-      element.style.zIndex = Math.round(1000 - z);
-
-      animationFrameId = requestAnimationFrame(animate);
+      // Apply movement to the word
+      ref.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      rafId = requestAnimationFrame(animate);
     };
 
     animate();
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [timeOffset]);
+    return () => cancelAnimationFrame(rafId);
+  }, [word]);
 
   return (
     <motion.div
-      ref={elementRef}
-      className="absolute text-xl"
+      ref={ref}
+      className="absolute"
       style={{
-        left: 0,
-        top: 0,
-        perspective: 1000,
-        backfaceVisibility: 'hidden',
-        transformStyle: 'preserve-3d',
-        willChange: 'transform, opacity, filter'
+        perspective: "1000px",
+        transformStyle: "preserve-3d",
       }}
       whileHover={{ scale: 1.1 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <div className="relative group">
-        <motion.div
-          className={`py-3 px-6 rounded-lg backdrop-blur-sm cursor-pointer
-            ${isHovered ? "bg-cyan-500/20" : "bg-cyan-500/10"}`}
-          animate={{
-            opacity: [0.7, 1],
-            scale: [1, 1.02],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            repeatType: "mirror",
-          }}
-          onClick={() => onSelect(word)}
-        >
-          <span className="text-white font-medium">{word.text}</span>
-        </motion.div>
+      <svg
+        viewBox="-50 -50 100 100"
+        width={word.text.length * 10}
+        height={word.text.length * 10}
+        onClick={() => onSelect(word)}
+      >
+        <defs>
+          <radialGradient id={`glow-${word.id}`}>
+            <stop offset="0%" stopColor="rgba(147, 197, 253, 0.8)" />
+            <stop offset="100%" stopColor="rgba(59, 130, 246, 0)" />
+          </radialGradient>
+        </defs>
 
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -top-8 left-1/2 transform -translate-x-1/2"
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onInfo(word);
-              }}
-              className="p-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-white"
-            >
-              <Info size={16} />
-            </button>
-          </motion.div>
-        )}
-      </div>
+        <circle
+          r="40"
+          fill={`url(#glow-${word.id})`}
+          className="transition-opacity duration-300"
+          style={{ opacity: isHovered ? 0.9 : 0.7 }}
+        />
+
+        <text
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-white pointer-events-none select-none"
+          style={{ fontSize: Math.max(8, 20 - word.text.length) }}
+        >
+          {word.text}
+        </text>
+      </svg>
+
+      {isHovered && (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute -top-8 left-1/2 transform -translate-x-1/2 p-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            onInfo(word);
+          }}
+        >
+          <Info size={16} />
+        </motion.button>
+      )}
     </motion.div>
   );
 };
 
-const mapRange = (value, inMin, inMax, outMin, outMax) => {
-  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-};
+const WordPool = ({ onWordSelect, onWordInfo }) => {
+  const [mousePosition, setMousePosition] = useState(null);
+  const poolRef = useRef(null);
 
-const WordPool = ({ onWordSelect, onWordDiscard }) => {
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!poolRef.current) return;
+      const rect = poolRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
-    <div 
-      className="fixed inset-0 overflow-hidden"
-      style={{ 
-        perspective: 1000,
-        transformStyle: 'preserve-3d'
-      }}
+    <div
+      ref={poolRef}
+      className="relative w-full h-full"
+      style={{ minHeight: "600px" }}
     >
       {wordPool.map((word) => (
-        <FloatingWord
+        <BioluminescentWord
           key={word.id}
           word={word}
           onSelect={onWordSelect}
-          onInfo={onWordDiscard}
+          onInfo={onWordInfo}
+          mousePosition={mousePosition}
         />
       ))}
     </div>
