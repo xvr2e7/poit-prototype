@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import { perlin } from "../../../../utils/animations/animationUtils";
 
-// Test words array
 const wordPool = [
   { id: 1, text: "microwave", type: "noun" },
   { id: 2, text: "fidget", type: "verb" },
@@ -25,136 +24,152 @@ const wordPool = [
   { id: 18, text: "coffee", type: "noun" },
   { id: 19, text: "restless", type: "adj" },
   { id: 20, text: "inbox", type: "noun" },
-];
+].map((word) => ({
+  ...word,
+  sizeMultiplier: 1 + Math.random() * 0.5,
+  basePosition: {
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+  },
+}));
 
-const BioluminescentWord = ({ word, onSelect, onInfo, mousePosition }) => {
-  const controls = useAnimation();
-  const [isHovered, setIsHovered] = useState(false);
-  const ref = useRef(null);
-  const timeRef = useRef(0);
+const FloatingWord = ({ word, onSelect, onInfo, containerSize }) => {
+  const elementRef = useRef(null);
+  const glowRef = useRef(null);
+  const timeRef = useRef(Math.random() * 1000);
+
+  const baseSize = Math.max(120, word.text.length * 15);
+  const finalSize = baseSize * word.sizeMultiplier;
 
   useEffect(() => {
-    let rafId;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
+    if (!elementRef.current || !containerSize.width || !containerSize.height)
+      return;
 
-    // Random initial position for the word
-    const initialX = Math.random() * screenWidth;
-    const initialY = Math.random() * screenHeight;
+    let rafId;
+
+    // Convert percentage to actual position
+    const baseX = (word.basePosition.x / 100) * containerSize.width;
+    const baseY = (word.basePosition.y / 100) * containerSize.height;
 
     const animate = () => {
-      if (!ref.current) return;
-      timeRef.current += 0.001;
+      timeRef.current += 0.003; // Speed of motion
+      const time = timeRef.current;
 
-      // Dynamic movement using Perlin noise
-      const xNoise = perlin(timeRef.current + word.id * 100);
-      const yNoise = perlin(timeRef.current + word.id * 200);
+      // Generate smooth, random motion using multiple perlin noise sources
+      const xOffset = perlin(time * 0.5) * 150;
+      const yOffset = perlin(time * 0.3 + 1000) * 150;
 
-      // Update position with noise and initial offset
-      const x = initialX + xNoise * 300;
-      const y = initialY + yNoise * 300;
+      // Calculate new position
+      const x = baseX + xOffset;
+      const y = baseY + yOffset;
 
-      // Apply movement to the word
-      ref.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      // Apply gentle rotation
+      const rotation = Math.sin(time * 0.5) * 3;
+
+      // Update position and rotation
+      elementRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg)`;
+
+      // Update glow intensity
+      if (glowRef.current) {
+        const glowIntensity = 0.6 + perlin(time * 0.2) * 0.2;
+        glowRef.current.style.opacity = glowIntensity;
+      }
+
       rafId = requestAnimationFrame(animate);
     };
 
     animate();
-    return () => cancelAnimationFrame(rafId);
-  }, [word]);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [word, containerSize]);
 
   return (
     <motion.div
-      ref={ref}
-      className="absolute"
-      style={{
-        perspective: "1000px",
-        transformStyle: "preserve-3d",
-      }}
+      ref={elementRef}
+      className="absolute left-0 top-0"
       whileHover={{ scale: 1.1 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      onClick={() => onSelect(word)}
     >
-      <svg
-        viewBox="-50 -50 100 100"
-        width={word.text.length * 10}
-        height={word.text.length * 10}
-        onClick={() => onSelect(word)}
-      >
+      <svg viewBox="-50 -50 100 100" width={finalSize} height={finalSize}>
         <defs>
           <radialGradient id={`glow-${word.id}`}>
             <stop offset="0%" stopColor="rgba(147, 197, 253, 0.8)" />
+            <stop offset="40%" stopColor="rgba(147, 197, 253, 0.3)" />
             <stop offset="100%" stopColor="rgba(59, 130, 246, 0)" />
           </radialGradient>
         </defs>
 
         <circle
+          ref={glowRef}
           r="40"
           fill={`url(#glow-${word.id})`}
           className="transition-opacity duration-300"
-          style={{ opacity: isHovered ? 0.9 : 0.7 }}
         />
 
         <text
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-white pointer-events-none select-none"
-          style={{ fontSize: Math.max(8, 20 - word.text.length) }}
+          style={{
+            fontSize: Math.max(12, 24 - word.text.length * 0.8),
+            fontWeight: 500,
+          }}
         >
           {word.text}
         </text>
       </svg>
 
-      {isHovered && (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -top-8 left-1/2 transform -translate-x-1/2 p-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            onInfo(word);
-          }}
-        >
-          <Info size={16} />
-        </motion.button>
-      )}
+      <motion.button
+        className="absolute -top-8 left-1/2 transform -translate-x-1/2 p-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-white opacity-0 group-hover:opacity-100"
+        onClick={(e) => {
+          e.stopPropagation();
+          onInfo(word);
+        }}
+      >
+        <Info size={16} />
+      </motion.button>
     </motion.div>
   );
 };
 
 const WordPool = ({ onWordSelect, onWordInfo }) => {
-  const [mousePosition, setMousePosition] = useState(null);
-  const poolRef = useRef(null);
+  const containerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!poolRef.current) return;
-      const rect = poolRef.current.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerSize({
+          width: rect.width,
+          height: rect.height,
+        });
+      }
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
   }, []);
 
   return (
     <div
-      ref={poolRef}
+      ref={containerRef}
       className="relative w-full h-full"
       style={{ minHeight: "600px" }}
     >
-      {wordPool.map((word) => (
-        <BioluminescentWord
-          key={word.id}
-          word={word}
-          onSelect={onWordSelect}
-          onInfo={onWordInfo}
-          mousePosition={mousePosition}
-        />
-      ))}
+      {containerSize.width > 0 &&
+        wordPool.map((word) => (
+          <FloatingWord
+            key={word.id}
+            word={word}
+            onSelect={onWordSelect}
+            onInfo={onWordInfo}
+            containerSize={containerSize}
+          />
+        ))}
     </div>
   );
 };
