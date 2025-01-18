@@ -9,7 +9,7 @@ import Playground from "./components/playground/PlayMode";
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [lockedModes, setLockedModes] = useState({ craft: false, echo: false }); // Changed to false for testing
+  const [lockedModes, setLockedModes] = useState({ craft: true, echo: true });
   const [playgroundUnlocked, setPlaygroundUnlocked] = useState(false);
   const [inPlayground, setInPlayground] = useState(false);
   const [selectedWords, setSelectedWords] = useState([]);
@@ -35,6 +35,7 @@ function App() {
   const handlePulseComplete = (words = []) => {
     setSelectedWords(words);
     unlockMode("craft");
+    setCurrentMode("craft");
   };
 
   const handleCraftComplete = () => {

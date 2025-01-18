@@ -23,8 +23,9 @@ const PulseMode = ({ onComplete }) => {
   }, []);
 
   const handleSaveSelection = () => {
-    onComplete(selectedWords);
     setSavedSelection(true);
+    // Call the parent component's onComplete with the selected words
+    onComplete(selectedWords);
   };
 
   return (
@@ -34,10 +35,9 @@ const PulseMode = ({ onComplete }) => {
       {/* Progress visualization */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
         <ProgressVisualization
-          words={Array(20).fill("")} // Using total number of words in pool
+          words={Array(20).fill("")}
           selectedWords={selectedWords}
           currentIndex={currentIndex}
-          darkMode
         />
       </div>
 
@@ -61,13 +61,13 @@ const PulseMode = ({ onComplete }) => {
           >
             Pulse
           </motion.h1>
-          <TimeDisplay darkMode />
+          <TimeDisplay />
         </motion.div>
       </div>
 
       {/* Main content */}
       <div className="absolute inset-0 z-10">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="wait">
           {currentIndex < 20 ? (
             <WordPool
               onWordSelect={handleKeepWord}
@@ -79,7 +79,7 @@ const PulseMode = ({ onComplete }) => {
               totalCount={20}
               onSave={handleSaveSelection}
               saved={savedSelection}
-              darkMode
+              selectedWords={selectedWords}
             />
           )}
         </AnimatePresence>
