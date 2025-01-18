@@ -1,32 +1,101 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export const CompletionView = ({
   selectedCount,
   totalCount,
   onSave,
   saved,
+  selectedWords = [],
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-white p-8 rounded-xl shadow-xl text-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="absolute inset-0 flex items-center justify-center backdrop-blur-sm"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">All done!</h2>
-      <p className="text-gray-600 mb-6">
-        You've selected {selectedCount} out of {totalCount} words
-      </p>
-      {!saved ? (
-        <button
-          onClick={onSave}
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Save Selection
-        </button>
-      ) : (
-        <p className="text-green-600 font-medium">✓ Selection saved</p>
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="relative max-w-lg w-full mx-4"
+      >
+        {/* Ambient particle effects */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-cyan-300/30 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [-20, 20],
+                opacity: [0.2, 0.5, 0.2],
+              }}
+              transition={{
+                duration: 2 + Math.random() * 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-8 border border-cyan-500/20">
+          <motion.div
+            className="flex items-center justify-center mb-6"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Sparkles className="w-8 h-8 text-cyan-400" />
+          </motion.div>
+
+          <h2 className="text-2xl font-bold text-cyan-50 text-center mb-4">
+            Words Gathered
+          </h2>
+
+          {/* Selected words display */}
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {selectedWords.map((word, index) => (
+              <motion.div
+                key={word}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-cyan-900/40 rounded-lg p-2 text-center"
+              >
+                <span className="text-cyan-100 text-sm">{word}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          {!saved ? (
+            <motion.button
+              onClick={onSave}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-lg transition-colors group"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span>Continue to Craft Mode</span>
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </motion.button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-cyan-400 font-medium text-center"
+            >
+              <p>✨ Transitioning to Craft Mode ✨</p>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 };
+
+export default CompletionView;
