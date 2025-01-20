@@ -1,47 +1,55 @@
-import React, { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import WordPool from "./components/WordPool";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
-import { ProgressVisualization } from "./components/ProgressVisualization";
-import AnimatedBackground from "./components/PulseBackground";
-import { useWindowSize } from "../../../utils/hooks/useWindowSize";
+import GrowingWordSelector from "./components/GrowingWordSelector";
+import PulseBackground from "./components/PulseBackground";
 
 const PulseMode = ({ onComplete }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedWords, setSelectedWords] = useState([]);
   const [savedSelection, setSavedSelection] = useState(false);
-  const { isMobile } = useWindowSize();
+  const wordPositionsRef = useRef(new Map());
 
-  const handleKeepWord = useCallback((word) => {
-    setSelectedWords((prev) => [...prev, word.text]);
-    setCurrentIndex((prev) => prev + 1);
+  const handleWordPositionUpdate = useCallback((wordId, rect) => {
+    wordPositionsRef.current.set(wordId, rect);
   }, []);
 
-  const handleDiscardWord = useCallback(() => {
-    setCurrentIndex((prev) => prev + 1);
-  }, []);
+  const handleSelectorMove = useCallback(
+    (selectorPos) => {
+      const selectorRadius = 15; // Match this with the selector's visual size
+
+      // Check collision with each word
+      wordPositionsRef.current.forEach((rect, wordId) => {
+        if (selectedWords.includes(wordId)) return; // Skip if already selected
+
+        const wordCenterX = rect.x + rect.width / 2;
+        const wordCenterY = rect.y + rect.height / 2;
+
+        // Calculate distance between selector and word center
+        const dx = selectorPos.x - wordCenterX;
+        const dy = selectorPos.y - wordCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // If collision detected and word not already selected
+        if (distance < selectorRadius + rect.width / 2) {
+          setSelectedWords((prev) => [...prev, wordId]);
+        }
+      });
+    },
+    [selectedWords]
+  );
 
   const handleSaveSelection = () => {
     setSavedSelection(true);
-    // Call the parent component's onComplete with the selected words
     onComplete(selectedWords);
   };
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
+      <PulseBackground />
 
-      {/* Progress visualization */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-        <ProgressVisualization
-          words={Array(20).fill("")}
-          selectedWords={selectedWords}
-          currentIndex={currentIndex}
-        />
-      </div>
-
-      {/* Header with floating effect */}
+      {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 p-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -67,31 +75,41 @@ const PulseMode = ({ onComplete }) => {
 
       {/* Main content */}
       <div className="absolute inset-0 z-10">
-        <AnimatePresence mode="wait">
-          {currentIndex < 20 ? (
+        {selectedWords.length < 45 ? (
+          <>
             <WordPool
-              onWordSelect={handleKeepWord}
-              onWordDiscard={handleDiscardWord}
-            />
-          ) : (
-            <CompletionView
-              selectedCount={selectedWords.length}
-              totalCount={20}
-              onSave={handleSaveSelection}
-              saved={savedSelection}
               selectedWords={selectedWords}
+              onPositionUpdate={handleWordPositionUpdate}
             />
-          )}
-        </AnimatePresence>
+            <GrowingWordSelector
+              selectedWords={selectedWords}
+              minWords={15}
+              maxWords={45}
+              onMove={handleSelectorMove}
+            />
+          </>
+        ) : (
+          <CompletionView
+            selectedCount={selectedWords.length}
+            totalCount={45}
+            onSave={handleSaveSelection}
+            saved={savedSelection}
+            selectedWords={selectedWords}
+          />
+        )}
       </div>
 
       {/* Word counter */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 text-cyan-300/60"
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 text-cyan-300/40 text-sm"
       >
-        Selected: {selectedWords.length} / 20
+        {selectedWords.length < 15
+          ? "Gather more words..."
+          : selectedWords.length <= 45
+          ? "Collection growing nicely"
+          : "Maximum words reached"}
       </motion.div>
     </div>
   );
