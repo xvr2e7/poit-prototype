@@ -3,8 +3,6 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export const CompletionView = ({
-  selectedCount,
-  totalCount,
   onSave,
   saved,
   selectedWords = [],
