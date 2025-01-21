@@ -4,13 +4,13 @@ import { perlin } from "../../../../utils/animations/animationUtils";
 const TRAIL_LENGTH = 100;
 const SEGMENT_SPACING = 20;
 const MOUSE_GLOW_SIZE = 40;
-const DAMPING = 0.92; // Higher = more momentum
-const ACCELERATION = 0.05; // Lower = smoother movement
+const DAMPING = 0.92;
+const ACCELERATION = 0.05;
 
 const GrowingWordSelector = ({
   selectedWords = [],
-  minWords = 15,
-  maxWords = 45,
+  minWords = 5,
+  maxWords = 10,
   onMove = () => {},
   onComplete = () => {},
   onStart = () => {},
@@ -30,6 +30,8 @@ const GrowingWordSelector = ({
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     const updateCanvasSize = () => {
       canvas.width = window.innerWidth;
@@ -84,33 +86,30 @@ const GrowingWordSelector = ({
       const dx = targetRef.current.x - currentRef.current.x;
       const dy = targetRef.current.y - currentRef.current.y;
 
-      // Update velocity with momentum
       velocityRef.current.x =
         velocityRef.current.x * DAMPING + dx * ACCELERATION;
       velocityRef.current.y =
         velocityRef.current.y * DAMPING + dy * ACCELERATION;
 
-      // Add subtle organic drift using perlin noise
       const time = timeRef.current * 0.001;
       const driftX = perlin(time * 0.5) * 2;
       const driftY = perlin(time * 0.3 + 1000) * 2;
 
-      // Update current position
       currentRef.current.x += velocityRef.current.x + driftX * 0.1;
       currentRef.current.y += velocityRef.current.y + driftY * 0.1;
 
-      // Store position in history
       positionHistoryRef.current.unshift({
         x: currentRef.current.x,
         y: currentRef.current.y,
         time: timeRef.current,
       });
 
-      // Keep history length proportional to number of segments
-      const requiredHistory = (selectedWords.length + 3) * SEGMENT_SPACING;
-      const maxHistory = Math.max(requiredHistory, TRAIL_LENGTH);
-
-      if (positionHistoryRef.current.length > maxHistory) {
+      // Calculate required history based on segments (including one extra for head)
+      const requiredHistory = Math.max(
+        (selectedWords.length + 1) * SEGMENT_SPACING,
+        TRAIL_LENGTH
+      );
+      if (positionHistoryRef.current.length > requiredHistory) {
         positionHistoryRef.current.pop();
       }
     };
@@ -148,18 +147,19 @@ const GrowingWordSelector = ({
     };
 
     const drawTrail = () => {
-      const style = getSegmentStyle();
-      const segmentCount = selectedWords.length + 3; // Base segments plus selected words
+      if (!activeRef.current || positionHistoryRef.current.length === 0) return;
 
-      // Draw body segments
-      for (let i = 1; i < segmentCount; i++) {
-        const historyIndex = Math.floor(i * SEGMENT_SPACING);
+      const style = getSegmentStyle();
+      const time = timeRef.current * 0.001;
+
+      // Draw body segments first (one for each selected word)
+      for (let i = 0; i < selectedWords.length; i++) {
+        const historyIndex = Math.floor((i + 1) * SEGMENT_SPACING); // +1 to leave space for head
         if (historyIndex >= positionHistoryRef.current.length) continue;
 
         const pos = positionHistoryRef.current[historyIndex];
-        const time = timeRef.current * 0.001;
 
-        // Calculate wave motion perpendicular to movement direction
+        // Calculate wave motion
         const wavePhase = time * 2 + i * 0.2;
         const waveAmplitude = 2;
 
@@ -177,7 +177,7 @@ const GrowingWordSelector = ({
           pos.y +
           Math.sin(angle + Math.PI / 2) * Math.sin(wavePhase) * waveAmplitude;
 
-        // Calculate segment properties with smoother falloff
+        // Calculate segment properties
         const segmentSize = style.baseSize * (1 - i * 0.03);
         const segmentAlpha = Math.max(0.2, style.alpha - i * 0.02);
         const pulsePhase = time * 3 + i * 0.2;
@@ -192,29 +192,24 @@ const GrowingWordSelector = ({
         );
       }
 
-      // Draw head with enhanced glow
-      if (activeRef.current && positionHistoryRef.current.length > 0) {
-        const headPos = positionHistoryRef.current[0];
-        drawGlowingSegment(
-          headPos.x,
-          headPos.y,
-          style.baseSize * 1.2,
-          style.color,
-          style.alpha,
-          timeRef.current * 0.003
-        );
-      }
+      // Always draw head last (on top)
+      const headPos = positionHistoryRef.current[0];
+      drawGlowingSegment(
+        headPos.x,
+        headPos.y,
+        style.baseSize * 1.2,
+        style.color,
+        style.alpha,
+        time * 3
+      );
     };
 
     const animate = () => {
       timeRef.current = performance.now();
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       updatePosition();
       drawTrail();
       drawMouseGlow(targetRef.current.x, targetRef.current.y);
-
       requestAnimationFrame(animate);
     };
 
