@@ -55,22 +55,30 @@ const PulseMode = ({ onComplete }) => {
       setSelectedWords(newSelectedWords);
 
       // Show completion view immediately if max words reached
-      if (newSelectedWords.length >= 45) {
-        setShowCompletion(true);
+      if (newSelectedWords.length >= 10) {
+        handlePulseComplete();
       }
     }
   };
 
   const handleSelectorMove = (position) => {
-    setSelectorPosition(position);
+    if (!showCompletion) {
+      // Only update position if not in completion view
+      setSelectorPosition(position);
+    }
   };
 
   const handleSelectorStart = () => {
-    setIsActive(true);
+    if (!showCompletion) {
+      // Only start if not in completion view
+      setIsActive(true);
+    }
   };
 
   const handlePulseComplete = () => {
     setShowCompletion(true);
+    // Reset selector position to prevent any lingering effects
+    setSelectorPosition(null);
   };
 
   const handleCompletionSave = () => {
@@ -118,33 +126,39 @@ const PulseMode = ({ onComplete }) => {
           />
         </WordInteraction>
 
-        <GrowingWordSelector
-          selectedWords={selectedWords}
-          minWords={5} // TODO: Adjust based on word count
-          maxWords={10} // TODO: Adjust based on word count
-          onMove={handleSelectorMove}
-          onComplete={handlePulseComplete}
-          onStart={handleSelectorStart}
-          active={isActive}
-        />
+        {/* Only render selector if not in completion view */}
+        {!showCompletion && (
+          <GrowingWordSelector
+            selectedWords={selectedWords}
+            minWords={5}
+            maxWords={10}
+            onMove={handleSelectorMove}
+            onComplete={handlePulseComplete}
+            onStart={handleSelectorStart}
+            active={isActive}
+          />
+        )}
 
         <AnimatePresence>
           {showCompletion && (
-            <CompletionView
-              onSave={handleCompletionSave}
-              saved={isSaved}
-              selectedWords={selectedWords}
-            />
+            <div className="absolute inset-0 z-30">
+              <CompletionView
+                onSave={handleCompletionSave}
+                saved={isSaved}
+                selectedWords={selectedWords}
+              />
+            </div>
           )}
         </AnimatePresence>
       </div>
 
+      {/* Only show status message if not in completion view */}
       {!showCompletion && (
         <StatusMessage
           isActive={isActive}
           selectedWords={selectedWords}
-          minWords={5} // TODO: Adjust based on word count
-          maxWords={10} // TODO: Adjust based on word count
+          minWords={5}
+          maxWords={10}
         />
       )}
     </div>
