@@ -47,11 +47,21 @@ const FloatingWord = ({
   const currentPosition = useRef({ x: 0, y: 0 });
   const targetPosition = useRef({ x: 0, y: 0 });
   const [isAbsorbed, setIsAbsorbed] = useState(false);
+  const isMountedRef = useRef(true);
   const isInteracting = interactingWord === word.id;
   const baseSize = Math.max(120, word.text.length * 15);
   const finalSize = baseSize * word.sizeMultiplier;
   const proximity = proximityMap?.get(word.id) || 0;
 
+  // Setup and cleanup mounted state
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Main animation loop
   useEffect(() => {
     if (!elementRef.current) return;
 
@@ -66,11 +76,14 @@ const FloatingWord = ({
     }
 
     const animate = () => {
+      if (!isMountedRef.current || !elementRef.current) {
+        return;
+      }
+
       timeRef.current += 0.002; // Slowed down base time increment
       const time = timeRef.current;
 
       // Calculate base motion using perlin noise
-      // Reduced amplitude and using different frequencies for more natural motion
       const xNoise = perlin(time * 0.3) * 100;
       const yNoise = perlin(time * 0.2 + 1000) * 100;
 
@@ -102,7 +115,9 @@ const FloatingWord = ({
       // Gentle rotation based on movement
       const rotation = Math.sin(time * 0.2) * 2 * slowFactor;
 
-      elementRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg)`;
+      if (elementRef.current) {
+        elementRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg)`;
+      }
 
       // Update glow effects
       if (glowRef.current) {
@@ -120,17 +135,21 @@ const FloatingWord = ({
         glowRef.current.style.opacity = lerp(currentGlow, totalGlow, 0.1);
       }
 
-      if (!isAbsorbed) {
+      if (!isAbsorbed && elementRef.current) {
         onPositionUpdate(word.id, elementRef.current.getBoundingClientRect());
       }
 
-      rafId = requestAnimationFrame(animate);
+      if (isMountedRef.current) {
+        rafId = requestAnimationFrame(animate);
+      }
     };
 
     animate();
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, [
     word,
@@ -141,12 +160,12 @@ const FloatingWord = ({
     proximity,
   ]);
 
+  // Handle selection state changes
   useEffect(() => {
     if (isSelected && !isAbsorbed) {
       setIsAbsorbed(true);
     }
-  }, [isSelected]);
-
+  }, [isSelected, isAbsorbed]);
   return (
     <motion.div
       ref={elementRef}
@@ -338,6 +357,7 @@ const WordPool = ({
   interactionProgress,
   proximityMap,
 }) => {
+  // Initialize words with size multipliers and base positions
   const [words] = useState(
     WORD_LIST.map((word) => ({
       ...word,
