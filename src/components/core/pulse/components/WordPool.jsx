@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { perlin } from "../../../../utils/animations/animationUtils";
 
-const WORD_LIST = [
+export const WORD_LIST = [
   { id: 1, text: "microwave", type: "noun" },
   { id: 2, text: "fidget", type: "verb" },
   { id: 3, text: "sneaker", type: "noun" },

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import WordPool from "./components/WordPool";
+import WordPool, { WORD_LIST } from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
 import PulseBackground from "./components/PulseBackground";
@@ -54,11 +54,17 @@ const PulseMode = ({ onComplete }) => {
       const newSelectedWords = [...selectedWords, wordId];
       setSelectedWords(newSelectedWords);
 
-      // Show completion view immediately if max words reached
       if (newSelectedWords.length >= 10) {
         handlePulseComplete();
       }
     }
+  };
+
+  const getSelectedWordTexts = () => {
+    return selectedWords.map((id) => {
+      const word = WORD_LIST.find((w) => w.id === id);
+      return word ? word.text : "";
+    });
   };
 
   const handleSelectorMove = (position) => {
@@ -85,7 +91,7 @@ const PulseMode = ({ onComplete }) => {
     setIsSaved(true);
     // Add a slight delay before transitioning to allow save animation to play
     setTimeout(() => {
-      onComplete(selectedWords);
+      onComplete(getSelectedWordTexts());
     }, 1000);
   };
 
@@ -145,7 +151,7 @@ const PulseMode = ({ onComplete }) => {
               <CompletionView
                 onSave={handleCompletionSave}
                 saved={isSaved}
-                selectedWords={selectedWords}
+                selectedWords={getSelectedWordTexts()}
               />
             </div>
           )}
