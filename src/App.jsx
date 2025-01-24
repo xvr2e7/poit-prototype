@@ -6,6 +6,9 @@ import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
 
+// [TEST MODE] Import WORD_LIST for test mode word selection
+import { WORD_LIST } from "./components/core/pulse/components/WordPool";
+
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,9 +17,24 @@ function App() {
   const [inPlayground, setInPlayground] = useState(false);
   const [selectedWords, setSelectedWords] = useState([]);
 
+  // [TEST MODE] Add state to track when we're in test mode
+  const [isTestMode, setIsTestMode] = useState(false);
+
+  // [TEST MODE] Enhanced handleTestModeSelect for direct mode access
   const handleTestModeSelect = (mode) => {
     setIsAuthenticated(true);
     setCurrentMode(mode);
+
+    if (mode === "craft") {
+      // For test mode, select 15 random words from WORD_LIST
+      const shuffled = [...WORD_LIST]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 15)
+        .map((word) => word.text);
+      setSelectedWords(shuffled);
+      setLockedModes((prev) => ({ ...prev, craft: false }));
+      setIsTestMode(true);
+    }
   };
 
   const unlockMode = (mode) => {
@@ -56,7 +74,8 @@ function App() {
           <CraftMode
             onComplete={handleCraftComplete}
             selectedWords={selectedWords}
-            enabled={!lockedModes.craft}
+            // [TEST MODE] Modified enabled prop to allow access in test mode
+            enabled={!lockedModes.craft || isTestMode}
           />
         );
       case "echo":
@@ -79,6 +98,7 @@ function App() {
         <Login
           onLogin={() => setIsAuthenticated(true)}
           enterPlayground={enterPlayground}
+          // [TEST MODE] Pass the test mode handler to Login component
           onTestModeSelect={handleTestModeSelect}
         />
       </div>
