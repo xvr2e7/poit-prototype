@@ -1,49 +1,40 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import WordPool, { WORD_LIST } from "./components/WordPool";
+import WordPool from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
 import UIBackground from "../../shared/UIBackground";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 
-const StatusMessage = ({ isActive, selectedWords, minWords, maxWords }) => (
-  <AnimatePresence mode="wait">
-    {!isActive ? (
-      <motion.div
-        key="start"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
-      >
-        Click anywhere to begin
-      </motion.div>
-    ) : (
-      <motion.div
-        key="progress"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
-      >
-        {selectedWords.length < minWords
-          ? `Words collected: ${selectedWords.length}/${minWords} minimum`
-          : selectedWords.length < maxWords
-          ? `${selectedWords.length} words collected (double-click to finish)`
-          : "Maximum words reached"}
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
 const PulseMode = ({ onComplete }) => {
+  // State management
   const [selectedWords, setSelectedWords] = useState([]);
   const [selectorPosition, setSelectorPosition] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [availableWords, setAvailableWords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const wordPositionsRef = useRef(new Map());
+
+  // Fetch words on component mount
+  useEffect(() => {
+    const fetchWords = async () => {
+      try {
+        const response = await fetch("http://localhost:5001/api/words");
+        if (!response.ok) throw new Error("Failed to fetch words");
+        const data = await response.json();
+        setAvailableWords(data);
+      } catch (error) {
+        console.error("Error fetching words:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWords();
+  }, []);
 
   const handleWordPositionUpdate = (wordId, rect) => {
     wordPositionsRef.current.set(wordId, rect);
@@ -62,38 +53,45 @@ const PulseMode = ({ onComplete }) => {
 
   const getSelectedWordTexts = () => {
     return selectedWords.map((id) => {
-      const word = WORD_LIST.find((w) => w.id === id);
+      const word = availableWords.find((w) => w._id === id);
       return word ? word.text : "";
     });
   };
 
   const handleSelectorMove = (position) => {
     if (!showCompletion) {
-      // Only update position if not in completion view
       setSelectorPosition(position);
     }
   };
 
   const handleSelectorStart = () => {
     if (!showCompletion) {
-      // Only start if not in completion view
       setIsActive(true);
     }
   };
 
   const handlePulseComplete = () => {
     setShowCompletion(true);
-    // Reset selector position to prevent any lingering effects
     setSelectorPosition(null);
   };
 
   const handleCompletionSave = () => {
     setIsSaved(true);
-    // Add a slight delay before transitioning to allow save animation to play
     setTimeout(() => {
       onComplete(getSelectedWordTexts());
     }, 1000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen relative overflow-hidden">
+        <UIBackground mode="pulse" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-cyan-300">Loading words...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden">
@@ -132,7 +130,6 @@ const PulseMode = ({ onComplete }) => {
           />
         </WordInteraction>
 
-        {/* Only render selector if not in completion view */}
         {!showCompletion && (
           <GrowingWordSelector
             selectedWords={selectedWords}
@@ -158,7 +155,7 @@ const PulseMode = ({ onComplete }) => {
         </AnimatePresence>
       </div>
 
-      {/* Only show status message if not in completion view */}
+      {/* Status message */}
       {!showCompletion && (
         <StatusMessage
           isActive={isActive}
@@ -170,5 +167,35 @@ const PulseMode = ({ onComplete }) => {
     </div>
   );
 };
+
+const StatusMessage = ({ isActive, selectedWords, minWords, maxWords }) => (
+  <AnimatePresence mode="wait">
+    {!isActive ? (
+      <motion.div
+        key="start"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
+      >
+        Click anywhere to begin
+      </motion.div>
+    ) : (
+      <motion.div
+        key="progress"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
+      >
+        {selectedWords.length < minWords
+          ? `Words collected: ${selectedWords.length}/${minWords} minimum`
+          : selectedWords.length < maxWords
+          ? `${selectedWords.length} words collected (double-click to finish)`
+          : "Maximum words reached"}
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 export default PulseMode;

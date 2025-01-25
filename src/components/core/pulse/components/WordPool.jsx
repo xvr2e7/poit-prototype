@@ -2,29 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { perlin } from "../../../../utils/animations/animationUtils";
 
-export const WORD_LIST = [
-  { id: 1, text: "microwave", type: "noun" },
-  { id: 2, text: "fidget", type: "verb" },
-  { id: 3, text: "sneaker", type: "noun" },
-  { id: 4, text: "grumpy", type: "adj" },
-  { id: 5, text: "buffering", type: "verb" },
-  { id: 6, text: "doorknob", type: "noun" },
-  { id: 7, text: "slouch", type: "verb" },
-  { id: 8, text: "glitch", type: "verb" },
-  { id: 9, text: "squeaky", type: "adj" },
-  { id: 10, text: "deadline", type: "noun" },
-  { id: 11, text: "crumple", type: "verb" },
-  { id: 12, text: "sticky", type: "adj" },
-  { id: 13, text: "upload", type: "verb" },
-  { id: 14, text: "awkward", type: "adj" },
-  { id: 15, text: "pixel", type: "noun" },
-  { id: 16, text: "sprint", type: "verb" },
-  { id: 17, text: "crispy", type: "adj" },
-  { id: 18, text: "coffee", type: "noun" },
-  { id: 19, text: "restless", type: "adj" },
-  { id: 20, text: "inbox", type: "noun" },
-];
-
 const MAX_SLOW_FACTOR = 0.15; // Reduced maximum slowdown
 const MOTION_SMOOTHING = 0.08; // Lower = smoother transitions
 
@@ -48,10 +25,10 @@ const FloatingWord = ({
   const targetPosition = useRef({ x: 0, y: 0 });
   const [isAbsorbed, setIsAbsorbed] = useState(false);
   const isMountedRef = useRef(true);
-  const isInteracting = interactingWord === word.id;
+  const isInteracting = interactingWord === word._id;
   const baseSize = Math.max(120, word.text.length * 15);
   const finalSize = baseSize * word.sizeMultiplier;
-  const proximity = proximityMap?.get(word.id) || 0;
+  const proximity = proximityMap?.get(word._id) || 0;
 
   // Setup and cleanup mounted state
   useEffect(() => {
@@ -136,7 +113,7 @@ const FloatingWord = ({
       }
 
       if (!isAbsorbed && elementRef.current) {
-        onPositionUpdate(word.id, elementRef.current.getBoundingClientRect());
+        onPositionUpdate(word._id, elementRef.current.getBoundingClientRect());
       }
 
       if (isMountedRef.current) {
@@ -191,7 +168,7 @@ const FloatingWord = ({
     >
       <svg viewBox="-50 -50 100 100" width={finalSize} height={finalSize}>
         <defs>
-          <radialGradient id={`glow-${word.id}`}>
+          <radialGradient id={`glow-${word._id}`}>
             <stop
               offset="0%"
               stopColor={`rgba(147, 197, 253, ${
@@ -208,7 +185,7 @@ const FloatingWord = ({
           </radialGradient>
 
           {(isInteracting || proximity > 0) && (
-            <radialGradient id={`progress-${word.id}`}>
+            <radialGradient id={`progress-${word._id}`}>
               <stop offset="0%" stopColor="rgba(147, 197, 253, 0.25)" />
               <stop
                 offset={`${(interactionProgress + proximity) * 100}%`}
@@ -223,7 +200,7 @@ const FloatingWord = ({
         {(isInteracting || proximity > 0) && (
           <circle
             r="45"
-            fill={`url(#progress-${word.id})`}
+            fill={`url(#progress-${word._id})`}
             className="transition-opacity duration-500"
           />
         )}
@@ -285,7 +262,7 @@ const FloatingWord = ({
         <circle
           ref={glowRef}
           r="40"
-          fill={`url(#glow-${word.id})`}
+          fill={`url(#glow-${word._id})`}
           className="transition-opacity duration-500"
         />
 
@@ -357,26 +334,63 @@ const WordPool = ({
   interactionProgress,
   proximityMap,
 }) => {
-  // Initialize words with size multipliers and base positions
-  const [words] = useState(
-    WORD_LIST.map((word) => ({
-      ...word,
-      sizeMultiplier: 1 + Math.random() * 0.4,
-      basePosition: {
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-      },
-    }))
-  );
+  const [words, setWords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchWords = async () => {
+      try {
+        const response = await fetch("http://localhost:5001/api/words");
+        if (!response.ok) {
+          throw new Error("Failed to fetch words");
+        }
+        const data = await response.json();
+
+        const processedWords = data.map((word) => ({
+          ...word,
+          sizeMultiplier: 1 + Math.random() * 0.4,
+          basePosition: {
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+          },
+        }));
+
+        setWords(processedWords);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWords();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="text-cyan-300">Loading words...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <AnimatePresence>
         {words.map((word) => (
           <FloatingWord
-            key={word.id}
+            key={word._id}
             word={word}
-            isSelected={selectedWords.includes(word.id)}
+            isSelected={selectedWords.includes(word._id)}
             interactingWord={interactingWord}
             interactionProgress={interactionProgress}
             proximityMap={proximityMap}
