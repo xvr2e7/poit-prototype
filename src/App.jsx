@@ -5,9 +5,7 @@ import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
-
-// [TEST MODE] Import WORD_LIST for test mode word selection
-import { WORD_LIST } from "./components/core/pulse/components/WordPool";
+import { TEST_WORDS } from "./utils/TestData";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -17,24 +15,18 @@ function App() {
   const [inPlayground, setInPlayground] = useState(false);
   const [selectedWords, setSelectedWords] = useState([]);
 
-  // [TEST MODE] Add state to track when we're in test mode
-  const [isTestMode, setIsTestMode] = useState(false);
-
-  // [TEST MODE] Enhanced handleTestModeSelect for direct mode access
   const handleTestModeSelect = (mode) => {
     setIsAuthenticated(true);
-    setCurrentMode(mode);
-
     if (mode === "craft") {
-      // For test mode, select 15 random words from WORD_LIST
-      const shuffled = [...WORD_LIST]
-        .sort(() => 0.5 - Math.random())
+      // For testing Craft Mode, select 15 random words from TEST_WORDS
+      const randomWords = [...TEST_WORDS]
+        .sort(() => Math.random() - 0.5)
         .slice(0, 15)
         .map((word) => word.text);
-      setSelectedWords(shuffled);
-      setLockedModes((prev) => ({ ...prev, craft: false }));
-      setIsTestMode(true);
+      setSelectedWords(randomWords);
+      unlockMode("craft");
     }
+    setCurrentMode(mode);
   };
 
   const unlockMode = (mode) => {
@@ -74,8 +66,7 @@ function App() {
           <CraftMode
             onComplete={handleCraftComplete}
             selectedWords={selectedWords}
-            // [TEST MODE] Modified enabled prop to allow access in test mode
-            enabled={!lockedModes.craft || isTestMode}
+            enabled={!lockedModes.craft}
           />
         );
       case "echo":
@@ -98,7 +89,6 @@ function App() {
         <Login
           onLogin={() => setIsAuthenticated(true)}
           enterPlayground={enterPlayground}
-          // [TEST MODE] Pass the test mode handler to Login component
           onTestModeSelect={handleTestModeSelect}
         />
       </div>
