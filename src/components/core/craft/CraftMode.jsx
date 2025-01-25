@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import ToolBar from "./components/ToolBar";
 import WordCanvas from "./components/WordCanvas";
-import CraftBackground from "./components/CraftBackground";
+import UIBackground from "../../shared/UIBackground";
 import { useCraftState } from "./hooks/useCraftState";
 
 const CraftMode = ({ onComplete, selectedWords = [] }) => {
@@ -72,7 +72,7 @@ const CraftMode = ({ onComplete, selectedWords = [] }) => {
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden bg-transparent">
-      <CraftBackground />
+      <UIBackground mode="craft" />
 
       <div className="relative z-10 w-full min-h-screen p-4">
         <div className="max-w-4xl mx-auto space-y-4">

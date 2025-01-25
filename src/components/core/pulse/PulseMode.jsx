@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import WordPool, { WORD_LIST } from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
-import PulseBackground from "./components/PulseBackground";
+import UIBackground from "../../shared/UIBackground";
 import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 
@@ -97,7 +97,7 @@ const PulseMode = ({ onComplete }) => {
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden">
-      <PulseBackground />
+      <UIBackground mode="pulse" />
 
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 p-4">

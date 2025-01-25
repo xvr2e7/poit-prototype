@@ -3,7 +3,7 @@ import SearchControls from "./components/SearchControls";
 import PoemDetails from "./components/PoemDetails";
 import GraphVisualization from "./components/GraphVisualization";
 import ControlBar from "./components/ControlBar";
-import EchoBackground from "./components/EchoBackground";
+import UIBackground from "../../shared/UIBackground";
 import { useEchoState } from "./hooks/useEchoState";
 import { useGraphLayout } from "./hooks/useGraphLayout";
 
@@ -28,7 +28,7 @@ const EchoMode = ({ onComplete, playgroundUnlocked, enterPlayground }) => {
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden bg-transparent">
-      <EchoBackground />
+      <UIBackground mode="echo" />
 
       <div className="relative z-10 w-full h-full flex flex-col p-4">
         <div className="max-w-6xl mx-auto w-full space-y-4">
