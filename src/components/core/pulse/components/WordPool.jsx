@@ -347,6 +347,7 @@ const WordPool = ({
         }
         const data = await response.json();
 
+        // Process words with visual properties
         const processedWords = data.map((word) => ({
           ...word,
           sizeMultiplier: 1 + Math.random() * 0.4,
@@ -357,14 +358,32 @@ const WordPool = ({
         }));
 
         setWords(processedWords);
+        setIsLoading(false);
       } catch (err) {
+        console.error("Error fetching words:", err);
         setError(err.message);
-      } finally {
         setIsLoading(false);
       }
     };
 
     fetchWords();
+
+    // Set up daily refresh
+    const checkRefresh = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      const timeUntilRefresh = tomorrow - now;
+      setTimeout(() => {
+        fetchWords();
+        // Set up next day's refresh
+        setInterval(fetchWords, 24 * 60 * 60 * 1000);
+      }, timeUntilRefresh);
+    };
+
+    checkRefresh();
   }, []);
 
   if (isLoading) {
