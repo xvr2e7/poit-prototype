@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const wordSchema = new mongoose.Schema({
+const wordSchema = new Schema({
   text: {
     type: String,
     required: true,
     unique: true,
   },
-  type: {
-    type: String,
-    required: true,
-    enum: ["noun", "verb", "adj"],
+  score: {
+    type: Number,
+    default: 0,
   },
-  createdAt: {
+  refreshedAt: {
     type: Date,
     default: Date.now,
   },
@@ -21,4 +21,6 @@ const wordSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Word", wordSchema);
+// Export the model directly
+const Word = mongoose.model("Word", wordSchema);
+module.exports = Word;

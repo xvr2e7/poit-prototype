@@ -9,6 +9,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  if (err.name === "APIError") {
+    res.status(err.status || 500).json({
+      error: err.message,
+      type: "api_error",
+    });
+  } else {
+    res.status(500).json({
+      error: "Internal server error",
+      type: "server_error",
+    });
+  }
+});
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI)

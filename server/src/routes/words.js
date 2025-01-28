@@ -1,63 +1,86 @@
 const express = require("express");
 const router = express.Router();
 const Word = require("../models/Word");
+const DatamuseService = require("../services/datamuseService");
 
-// Get all active words
+// Check if words need refresh (24 hours)
+const needsRefresh = (refreshedAt) => {
+  if (!refreshedAt) return true;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  return Date.now() - refreshedAt.getTime() > oneDayMs;
+};
+
+// Get random items from array
+const getRandomItems = (array, count) => {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
+
+// Get active words
 router.get("/", async (req, res) => {
   try {
-    const words = await Word.find({ isActive: true });
+    console.log("Fetching words...");
+    let words = await Word.find({ isActive: true });
+    console.log(`Found ${words.length} active words`);
+
+    const shouldRefresh =
+      words.length === 0 || needsRefresh(words[0]?.refreshedAt);
+    console.log(`Should refresh: ${shouldRefresh}`);
+
+    if (shouldRefresh) {
+      console.log("Starting refresh process...");
+
+      // Deactivate old words
+      await Word.updateMany({}, { isActive: false });
+      console.log("Deactivated old words");
+
+      // Get new words from Datamuse
+      console.log("Fetching new words from Datamuse...");
+      const newWords = await DatamuseService.getWords();
+      console.log(`Received ${newWords.length} words from Datamuse`);
+
+      // Select 50 random words
+      const selectedWords = getRandomItems(newWords, 50);
+      console.log(`Selected ${selectedWords.length} random words`);
+
+      // Save new words
+      words = await Word.insertMany(
+        selectedWords.map((word) => ({
+          ...word,
+          refreshedAt: new Date(),
+          isActive: true,
+        }))
+      );
+      console.log(`Saved ${words.length} new words to database`);
+    }
+
     res.json(words);
   } catch (err) {
+    console.error("Error in words route:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Add a new word
-router.post("/", async (req, res) => {
-  const word = new Word({
-    text: req.body.text,
-    type: req.body.type,
-  });
-
+// Force refresh (for testing)
+router.post("/refresh", async (req, res) => {
   try {
-    const newWord = await word.save();
-    res.status(201).json(newWord);
+    console.log("Force refreshing words...");
+    await Word.updateMany({}, { isActive: false });
+    const newWords = await DatamuseService.getWords();
+    console.log(`Got ${newWords.length} words from Datamuse`);
+    const selectedWords = getRandomItems(newWords, 50);
+    const words = await Word.insertMany(
+      selectedWords.map((word) => ({
+        ...word,
+        refreshedAt: new Date(),
+        isActive: true,
+      }))
+    );
+    console.log(`Saved ${words.length} new words`);
+    res.json(words);
   } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Seed initial words
-router.post("/seed", async (req, res) => {
-  const initialWords = [
-    { text: "microwave", type: "noun" },
-    { text: "fidget", type: "verb" },
-    { text: "sneaker", type: "noun" },
-    { text: "grumpy", type: "adj" },
-    { text: "buffering", type: "verb" },
-    { text: "doorknob", type: "noun" },
-    { text: "slouch", type: "verb" },
-    { text: "glitch", type: "verb" },
-    { text: "squeaky", type: "adj" },
-    { text: "deadline", type: "noun" },
-    { text: "crumple", type: "verb" },
-    { text: "sticky", type: "adj" },
-    { text: "upload", type: "verb" },
-    { text: "awkward", type: "adj" },
-    { text: "pixel", type: "noun" },
-    { text: "sprint", type: "verb" },
-    { text: "crispy", type: "adj" },
-    { text: "coffee", type: "noun" },
-    { text: "restless", type: "adj" },
-    { text: "inbox", type: "noun" },
-  ];
-
-  try {
-    await Word.deleteMany({}); // Clear existing words
-    const words = await Word.insertMany(initialWords);
-    res.status(201).json(words);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Error in force refresh:", err);
+    res.status(500).json({ message: err.message });
   }
 });
 
