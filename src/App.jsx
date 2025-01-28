@@ -5,7 +5,8 @@ import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
-import { TEST_WORDS } from "./utils/TestData";
+import { TEST_WORDS } from "./utils/testData/craftTestData";
+import { TEST_POEMS } from "./utils/testData/echoTestData";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -14,6 +15,8 @@ function App() {
   const [playgroundUnlocked, setPlaygroundUnlocked] = useState(false);
   const [inPlayground, setInPlayground] = useState(false);
   const [selectedWords, setSelectedWords] = useState([]);
+  const [currentPoem, setCurrentPoem] = useState(null);
+  const [testPoems, setTestPoems] = useState([]);
 
   const handleTestModeSelect = (mode) => {
     setIsAuthenticated(true);
@@ -25,6 +28,10 @@ function App() {
         .map((word) => word.text);
       setSelectedWords(randomWords);
       unlockMode("craft");
+    } else if (mode === "echo") {
+      // For testing Echo Mode, load test poems
+      setTestPoems(TEST_POEMS);
+      unlockMode("echo");
     }
     setCurrentMode(mode);
   };
@@ -43,12 +50,15 @@ function App() {
   };
 
   const handlePulseComplete = (words = []) => {
+    console.log("Pulse completed with words:", words);
     setSelectedWords(words);
     unlockMode("craft");
     setCurrentMode("craft");
   };
 
-  const handleCraftComplete = () => {
+  const handleCraftComplete = (poem) => {
+    console.log("Craft completed");
+    setCurrentPoem(poem);
     unlockMode("echo");
     setCurrentMode("echo");
   };
@@ -76,6 +86,13 @@ function App() {
             playgroundUnlocked={playgroundUnlocked}
             enterPlayground={enterPlayground}
             enabled={!lockedModes.echo}
+            poems={
+              testPoems.length > 0
+                ? testPoems
+                : currentPoem
+                ? [currentPoem]
+                : []
+            }
           />
         );
       default:
