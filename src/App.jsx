@@ -6,7 +6,7 @@ import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
 import { TEST_WORDS } from "./utils/testData/craftTestData";
-import { TEST_POEMS } from "./utils/testData/echoTestData";
+import { TEST_POEMS, isHighlightedWord } from "./utils/testData/echoTestData";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -18,19 +18,40 @@ function App() {
   const [currentPoem, setCurrentPoem] = useState(null);
   const [testPoems, setTestPoems] = useState([]);
 
+  // Process words from test data to include type and positioning
+  const processTestWords = (words) => {
+    return words.map((word, index) => ({
+      ...word,
+      type: "word", // All test words are regular words, not punctuation
+      position: {
+        x: Math.random() * 600,
+        y: Math.random() * 400,
+      },
+    }));
+  };
+
   const handleTestModeSelect = (mode) => {
     setIsAuthenticated(true);
     if (mode === "craft") {
-      // For testing Craft Mode, select 15 random words from TEST_WORDS
-      const randomWords = [...TEST_WORDS]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 15)
-        .map((word) => word.text);
+      // For testing Craft Mode, select some random words from TEST_WORDS
+      const randomWords = processTestWords(
+        [...TEST_WORDS].sort(() => Math.random() - 0.5).slice(0, 15)
+      );
       setSelectedWords(randomWords);
       unlockMode("craft");
     } else if (mode === "echo") {
-      // For testing Echo Mode, load test poems
-      setTestPoems(TEST_POEMS);
+      // For testing Echo Mode, process test poems
+      const processedPoems = TEST_POEMS.map((poem) => ({
+        ...poem,
+        // Update highlighted word count based on TEST_WORDS
+        metadata: {
+          ...poem.metadata,
+          highlightedWordCount: poem.components.filter((component) =>
+            isHighlightedWord(component, TEST_WORDS)
+          ).length,
+        },
+      }));
+      setTestPoems(processedPoems);
       unlockMode("echo");
     }
     setCurrentMode(mode);
@@ -49,16 +70,29 @@ function App() {
     setInPlayground(true);
   };
 
+  // Handle completion of Pulse mode - words should be processed into components
   const handlePulseComplete = (words = []) => {
-    console.log("Pulse completed with words:", words);
-    setSelectedWords(words);
+    const processedWords = words.map((word) => ({
+      text: word,
+      type: "word",
+      id: `word-${Math.random().toString(36).substr(2, 9)}`,
+    }));
+    setSelectedWords(processedWords);
     unlockMode("craft");
     setCurrentMode("craft");
   };
 
+  // Handle completion of Craft mode - poem should maintain component structure
   const handleCraftComplete = (poem) => {
-    console.log("Craft completed");
-    setCurrentPoem(poem);
+    // Here we would get the spatially arranged words from Craft mode
+    // and preserve their positions, types (word/punctuation), etc.
+    setCurrentPoem({
+      ...poem,
+      components: poem.words.map((word) => ({
+        ...word,
+        type: "word",
+      })),
+    });
     unlockMode("echo");
     setCurrentMode("echo");
   };
@@ -71,6 +105,7 @@ function App() {
     switch (currentMode) {
       case "pulse":
         return <PulseMode onComplete={handlePulseComplete} />;
+
       case "craft":
         return (
           <CraftMode
@@ -79,22 +114,32 @@ function App() {
             enabled={!lockedModes.craft}
           />
         );
-      case "echo":
+
+      case "echo": {
+        // Determine which poem data to use
+        const poemData =
+          testPoems.length > 0
+            ? testPoems[0] // Use first test poem
+            : currentPoem; // Use poem from regular flow
+
+        // Determine word pool for highlighting
+        const wordPool =
+          testPoems.length > 0
+            ? TEST_WORDS // Use test word pool
+            : selectedWords; // Use words from Pulse mode
+
         return (
           <EchoMode
             onComplete={unlockPlayground}
             playgroundUnlocked={playgroundUnlocked}
             enterPlayground={enterPlayground}
             enabled={!lockedModes.echo}
-            poems={
-              testPoems.length > 0
-                ? testPoems
-                : currentPoem
-                ? [currentPoem]
-                : []
-            }
+            poem={poemData}
+            wordPool={wordPool}
           />
         );
+      }
+
       default:
         return <PulseMode onComplete={handlePulseComplete} />;
     }
