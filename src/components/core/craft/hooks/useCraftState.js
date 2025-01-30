@@ -5,6 +5,7 @@ export const useCraftState = (selectedWords, onComplete) => {
   const [fontSize, setFontSize] = useState("text-base");
   const [alignment, setAlignment] = useState("text-left");
   const [preview, setPreview] = useState(false);
+  const [canvasWords, setCanvasWords] = useState([]);
 
   useEffect(() => {
     setWords(
@@ -28,12 +29,26 @@ export const useCraftState = (selectedWords, onComplete) => {
   };
 
   const handleComplete = () => {
-    onComplete();
+    // Create a properly structured poem object
+    const poemData = {
+      words: canvasWords, // Using the current canvas words
+      metadata: {
+        fontSize,
+        alignment,
+      },
+      components: canvasWords.map((word) => ({
+        ...word,
+        type: "word",
+      })),
+    };
+    onComplete(poemData);
   };
 
   return {
     words,
     setWords,
+    canvasWords,
+    setCanvasWords,
     fontSize,
     alignment,
     preview,
