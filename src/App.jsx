@@ -82,17 +82,21 @@ function App() {
     setCurrentMode("craft");
   };
 
-  // Handle completion of Craft mode - poem should maintain component structure
-  const handleCraftComplete = (poem) => {
-    // Here we would get the spatially arranged words from Craft mode
-    // and preserve their positions, types (word/punctuation), etc.
-    setCurrentPoem({
-      ...poem,
-      components: poem.words.map((word) => ({
-        ...word,
-        type: "word",
-      })),
-    });
+  const handleCraftComplete = (poemData) => {
+    // Create a properly structured poem object for Echo mode
+    const processedPoem = {
+      id: `poem-${Date.now()}`,
+      title: "Untitled Poem", // Add a title input in Craft mode later
+      author: "Anonymous", // Get this from user state later
+      date: new Date().toISOString().split("T")[0],
+      components: poemData.components,
+      metadata: {
+        ...poemData.metadata,
+        highlightedWordCount: poemData.words.length,
+      },
+    };
+
+    setCurrentPoem(processedPoem);
     unlockMode("echo");
     setCurrentMode("echo");
   };
