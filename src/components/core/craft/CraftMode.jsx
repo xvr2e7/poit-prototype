@@ -13,7 +13,7 @@ const WordPool = ({ words, onWordSelect }) => (
     <div className="p-4 space-y-2">
       {words.map((word) => (
         <motion.div
-          key={word.id}
+          key={word.id || `word-${word.text}`}
           className="group p-2 bg-white/5 rounded-lg border border-cyan-500/10 
             hover:bg-white/10 hover:border-cyan-500/20 cursor-pointer
             transition-all duration-300"
@@ -77,23 +77,30 @@ const TemplateOverlay = ({ show, onClose, onSelect }) => (
 );
 
 const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
-  const { words, setWords, preview, handlePreviewToggle, handleComplete } =
-    useCraftState(selectedWords, onComplete);
+  const {
+    preview,
+    handlePreviewToggle,
+    handleComplete,
+    canvasWords,
+    setCanvasWords,
+  } = useCraftState(selectedWords, onComplete);
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState(null);
   const [selectedWordId, setSelectedWordId] = useState(null);
-  const [canvasWords, setCanvasWords] = useState([]);
   const [poolWords, setPoolWords] = useState([]);
 
   // Initialize pool words when selectedWords prop changes
   useEffect(() => {
-    const initialWords = selectedWords.map((text, index) => ({
-      id: `word-${index}`,
-      text,
-      depth: 1,
-      scale: 1,
-    }));
+    const initialWords = selectedWords.map((word) => {
+      const text = typeof word === "string" ? word : word.text;
+      return {
+        id: `word-${Math.random().toString(36).substr(2, 9)}`,
+        text,
+        depth: 1,
+        scale: 1,
+      };
+    });
     setPoolWords(initialWords);
   }, [selectedWords]);
 
