@@ -13,30 +13,51 @@ const needsRefresh = (refreshedAt) => {
 // Get active words
 router.get("/", async (req, res) => {
   try {
-    console.log("Checking word pool...");
+    console.log("\n=== Word Pool Check ===");
+    console.log("Time:", new Date().toISOString());
+
     let words = await Word.find({ isActive: true });
+    console.log(`Found ${words.length} active words`);
+
+    if (words.length > 0) {
+      console.log("Last refresh:", words[0]?.refreshedAt);
+    }
 
     const shouldRefresh =
       words.length === 0 || needsRefresh(words[0]?.refreshedAt);
+    console.log("Needs refresh:", shouldRefresh);
 
     if (shouldRefresh) {
-      console.log("Refreshing word pool...");
+      console.log("\n=== Starting Word Refresh ===");
       let newWords = [];
       let attempts = 0;
       const MAX_ATTEMPTS = 3;
 
       while (attempts < MAX_ATTEMPTS && newWords.length < 50) {
         try {
+          console.log(`\nAttempt ${attempts + 1}:`);
+          console.log("Fetching news topics...");
           const wordPool = await DatamuseService.getWords();
+          console.log(`Retrieved ${wordPool.length} words from Datamuse`);
 
           if (wordPool.length >= 50) {
-            // Select random words, ensuring diverse types
             newWords = selectDiverseWords(wordPool, 50);
+            console.log("\nSelected words by type:");
+            const typeCount = newWords.reduce((acc, word) => {
+              const type = getWordType(word);
+              acc[type] = (acc[type] || 0) + 1;
+              return acc;
+            }, {});
+            console.log(typeCount);
+
+            console.log("\nFinal word list:");
+            newWords.forEach((word, i) => {
+              console.log(`${i + 1}. ${word.word} (${getWordType(word)})`);
+            });
             break;
           }
 
           attempts++;
-          console.log(`Attempt ${attempts}: Got ${wordPool.length} words`);
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error) {
           console.error(`Attempt ${attempts + 1} failed:`, error);
@@ -45,10 +66,7 @@ router.get("/", async (req, res) => {
       }
 
       if (newWords.length >= 50) {
-        // Deactivate old words only if we have new ones
         await Word.updateMany({}, { isActive: false });
-
-        // Insert new words
         words = await Word.insertMany(
           newWords.map((word) => ({
             text: word.word,
@@ -59,10 +77,9 @@ router.get("/", async (req, res) => {
             isActive: true,
           }))
         );
-
-        console.log(`Successfully refreshed with ${words.length} new words`);
+        console.log(`\nSuccessfully refreshed with ${words.length} new words`);
       } else {
-        console.log("Keeping existing words active");
+        console.log("\nKeeping existing words active");
         if (words.length === 0) {
           return res.status(500).json({
             message:

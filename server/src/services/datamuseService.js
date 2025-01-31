@@ -56,7 +56,6 @@ class DatamuseService {
 
   async getNewsTopics() {
     try {
-      // Fetch from multiple categories to get diverse topics
       const categories = [
         "technology",
         "entertainment",
@@ -65,27 +64,35 @@ class DatamuseService {
         "sports",
         "business",
       ];
+      console.log("\n=== Fetching News Topics ===");
+      console.log("Categories:", categories.join(", "));
 
       let allKeywords = new Set();
+      let sourceKeywords = new Map();
 
       for (const category of categories) {
         try {
+          console.log(`\nFetching ${category} news...`);
           const response = await axios.get(
             `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${process.env.NEWS_API_KEY}`
           );
 
-          const keywords = response.data.articles.flatMap((article) => {
-            // Extract words from both title and description
+          const categoryKeywords = new Set();
+          response.data.articles.forEach((article) => {
             const text = `${article.title} ${article.description || ""}`;
-            return text
+            const words = text
               .toLowerCase()
               .split(/\W+/)
               .filter((word) => this.isGoodTopic(word));
+
+            words.forEach((word) => {
+              categoryKeywords.add(word);
+              allKeywords.add(word);
+            });
           });
 
-          keywords.forEach((word) => allKeywords.add(word));
-
-          // Respect API rate limits
+          sourceKeywords.set(category, Array.from(categoryKeywords));
+          console.log(`Found ${categoryKeywords.size} keywords in ${category}`);
           await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (error) {
           console.error(`Error fetching ${category} news:`, error);
@@ -93,11 +100,20 @@ class DatamuseService {
         }
       }
 
-      // Convert Set to array and take top 15 keywords
-      return Array.from(allKeywords).slice(0, 15);
+      console.log("\n=== News Topics Summary ===");
+      sourceKeywords.forEach((keywords, category) => {
+        console.log(`\n${category.toUpperCase()}:`);
+        console.log(keywords.join(", "));
+      });
+
+      const finalTopics = Array.from(allKeywords).slice(0, 15);
+      console.log("\nFinal selected topics:", finalTopics.join(", "));
+      return finalTopics;
     } catch (error) {
       console.error("Error fetching news:", error);
-      return this.getFallbackTopics();
+      const fallbackTopics = this.getFallbackTopics();
+      console.log("\nUsing fallback topics:", fallbackTopics.join(", "));
+      return fallbackTopics;
     }
   }
 
