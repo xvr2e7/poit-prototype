@@ -18,14 +18,21 @@ const PulseMode = ({ onComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
   const wordPositionsRef = useRef(new Map());
 
-  // Fetch words on component mount
   useEffect(() => {
     const fetchWords = async () => {
       try {
         const response = await fetch("http://localhost:5001/api/words");
         if (!response.ok) throw new Error("Failed to fetch words");
         const data = await response.json();
-        setAvailableWords(data);
+        console.log("Fetched words:", data);
+
+        // Transform the data to match expected format
+        const transformedWords = data.map((word) => ({
+          ...word,
+          id: `${word.text}-${word.type}`, // Create stable IDs
+        }));
+
+        setAvailableWords(transformedWords);
       } catch (error) {
         console.error("Error fetching words:", error);
       } finally {
@@ -41,6 +48,7 @@ const PulseMode = ({ onComplete }) => {
   };
 
   const handleWordSelect = (wordId) => {
+    console.log("Word selected:", wordId);
     if (!selectedWords.includes(wordId)) {
       const newSelectedWords = [...selectedWords, wordId];
       setSelectedWords(newSelectedWords);
@@ -50,7 +58,6 @@ const PulseMode = ({ onComplete }) => {
       }
     }
   };
-
   const getSelectedWordTexts = () => {
     return selectedWords.map((id) => {
       const word = availableWords.find((w) => w._id === id);
@@ -125,6 +132,7 @@ const PulseMode = ({ onComplete }) => {
           onWordSelect={handleWordSelect}
         >
           <WordPool
+            words={availableWords}
             selectedWords={selectedWords}
             onPositionUpdate={handleWordPositionUpdate}
           />
@@ -135,22 +143,23 @@ const PulseMode = ({ onComplete }) => {
             selectedWords={selectedWords}
             minWords={5}
             maxWords={10}
-            onMove={handleSelectorMove}
-            onComplete={handlePulseComplete}
-            onStart={handleSelectorStart}
+            onMove={setSelectorPosition}
+            onComplete={() => setShowCompletion(true)}
+            onStart={() => setIsActive(true)}
             active={isActive}
           />
         )}
 
         <AnimatePresence>
           {showCompletion && (
-            <div className="absolute inset-0 z-30">
-              <CompletionView
-                onSave={handleCompletionSave}
-                saved={isSaved}
-                selectedWords={getSelectedWordTexts()}
-              />
-            </div>
+            <CompletionView
+              onSave={() => {
+                setIsSaved(true);
+                setTimeout(() => onComplete(selectedWords), 1000);
+              }}
+              saved={isSaved}
+              selectedWords={selectedWords}
+            />
           )}
         </AnimatePresence>
       </div>
