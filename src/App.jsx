@@ -7,6 +7,7 @@ import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
 import { TEST_WORDS } from "./utils/testData/craftTestData";
 import { TEST_POEMS, isHighlightedWord } from "./utils/testData/echoTestData";
+import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -151,7 +152,8 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="w-full min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+      <div className="w-full min-h-screen relative">
+        <AdaptiveBackground />
         <Login
           onLogin={() => setIsAuthenticated(true)}
           enterPlayground={enterPlayground}
@@ -162,7 +164,11 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+    <div className="flex flex-col min-h-screen">
+      {/* Background that adapts to theme */}
+      <AdaptiveBackground />
+
+      {/* Navigation with theme-aware styling */}
       {currentMode !== "pulse" && (
         <Navigation
           currentMode={currentMode}
@@ -171,7 +177,9 @@ function App() {
           inPlayground={inPlayground}
         />
       )}
-      <main className="flex-1 w-full">{renderMode()}</main>
+
+      {/* Main content */}
+      <main className="flex-1 w-full relative">{renderMode()}</main>
     </div>
   );
 }
