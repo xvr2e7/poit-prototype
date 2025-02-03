@@ -1,214 +1,271 @@
 import React, { useEffect, useRef } from "react";
-
-const PRESETS = {
-  pulse: {
-    // active and engaging
-    particles: {
-      deep: {
-        count: 25,
-        speedRange: [0.02, 0.06],
-        sizeRange: [3, 6],
-        opacity: [0.15, 0.3],
-        colorStop: [147, 197, 253],
-        pulseSpeed: [0.0003, 0.0008],
-        pulseRange: [0.6, 1],
-      },
-      mid: {
-        count: 35,
-        speedRange: [0.04, 0.1],
-        sizeRange: [1.8, 4.2],
-        opacity: [0.2, 0.45],
-        colorStop: [167, 207, 253],
-        pulseSpeed: [0.0005, 0.001],
-        pulseRange: [0.7, 1],
-      },
-      surface: {
-        count: 20,
-        speedRange: [0.08, 0.15],
-        sizeRange: [1, 2.5],
-        opacity: [0.3, 0.5],
-        colorStop: [187, 217, 253],
-        pulseSpeed: [0.0008, 0.0015],
-        pulseRange: [0.8, 1],
-      },
-      micro: {
-        count: 45,
-        speedRange: [0.1, 0.2],
-        sizeRange: [0.5, 1.5],
-        opacity: [0.2, 0.4],
-        colorStop: [207, 227, 253],
-        pulseSpeed: [0.001, 0.002],
-        pulseRange: [0.9, 1],
-      },
-    },
-    caustics: {
-      primary: {
-        count: 5,
-        opacityRange: [0.02, 0.03],
-        sizeRange: [300, 400],
-        speed: 0.0001,
-      },
-      secondary: {
-        count: 3,
-        opacityRange: [0.01, 0.02],
-        sizeRange: [400, 500],
-        speed: 0.00008,
-      },
-    },
-    rayPenetration: {
-      intensity: 0.15,
-      speed: 0.00007,
-      count: 3,
-    },
-    deepGlow: {
-      stops: [
-        { stop: 0, color: "rgba(7, 89, 133, 0.15)" },
-        { stop: 0.5, color: "rgba(12, 74, 110, 0.1)" },
-        { stop: 1, color: "rgba(8, 47, 73, 0.05)" },
-      ],
-    },
-  },
-  craft: {
-    // contemplative and focused
-    particles: {
-      deep: {
-        count: 30,
-        speedRange: [0.02, 0.05],
-        sizeRange: [3.5, 7],
-        opacity: [0.12, 0.25],
-        colorStop: [147, 197, 253],
-        pulseSpeed: [0.0002, 0.0006],
-        pulseRange: [0.7, 1],
-      },
-      mid: {
-        count: 40,
-        speedRange: [0.03, 0.08],
-        sizeRange: [2, 4.5],
-        opacity: [0.15, 0.35],
-        colorStop: [167, 207, 253],
-        pulseSpeed: [0.0004, 0.0009],
-        pulseRange: [0.8, 1],
-      },
-      surface: {
-        count: 25,
-        speedRange: [0.06, 0.12],
-        sizeRange: [1.2, 2.8],
-        opacity: [0.2, 0.4],
-        colorStop: [187, 217, 253],
-        pulseSpeed: [0.0006, 0.0012],
-        pulseRange: [0.85, 1],
-      },
-      micro: {
-        count: 50,
-        speedRange: [0.08, 0.15],
-        sizeRange: [0.6, 1.8],
-        opacity: [0.15, 0.35],
-        colorStop: [207, 227, 253],
-        pulseSpeed: [0.0008, 0.0015],
-        pulseRange: [0.9, 1],
-      },
-    },
-    caustics: {
-      primary: {
-        count: 5,
-        opacityRange: [0.015, 0.025],
-        sizeRange: [300, 400],
-        speed: 0.00008,
-      },
-      secondary: {
-        count: 3,
-        opacityRange: [0.01, 0.015],
-        sizeRange: [400, 500],
-        speed: 0.00006,
-      },
-    },
-    rayPenetration: {
-      intensity: 0.12,
-      speed: 0.00006,
-      count: 3,
-    },
-    deepGlow: {
-      stops: [
-        { stop: 0, color: "rgba(7, 89, 133, 0.12)" },
-        { stop: 0.5, color: "rgba(12, 74, 110, 0.08)" },
-        { stop: 1, color: "rgba(8, 47, 73, 0.04)" },
-      ],
-    },
-  },
-  echo: {
-    // dreamy and expansive
-    particles: {
-      deep: {
-        count: 35,
-        speedRange: [0.015, 0.04],
-        sizeRange: [4, 8],
-        opacity: [0.1, 0.2],
-        colorStop: [147, 197, 253],
-        pulseSpeed: [0.0001, 0.0005],
-        pulseRange: [0.8, 1],
-      },
-      mid: {
-        count: 45,
-        speedRange: [0.025, 0.07],
-        sizeRange: [2.2, 5],
-        opacity: [0.12, 0.3],
-        colorStop: [167, 207, 253],
-        pulseSpeed: [0.0003, 0.0007],
-        pulseRange: [0.85, 1],
-      },
-      surface: {
-        count: 30,
-        speedRange: [0.04, 0.1],
-        sizeRange: [1.4, 3],
-        opacity: [0.15, 0.35],
-        colorStop: [187, 217, 253],
-        pulseSpeed: [0.0005, 0.001],
-        pulseRange: [0.9, 1],
-      },
-      micro: {
-        count: 55,
-        speedRange: [0.06, 0.12],
-        sizeRange: [0.7, 2],
-        opacity: [0.1, 0.3],
-        colorStop: [207, 227, 253],
-        pulseSpeed: [0.0007, 0.0013],
-        pulseRange: [0.95, 1],
-      },
-    },
-    caustics: {
-      primary: {
-        count: 5,
-        opacityRange: [0.01, 0.02],
-        sizeRange: [300, 400],
-        speed: 0.00006,
-      },
-      secondary: {
-        count: 3,
-        opacityRange: [0.008, 0.012],
-        sizeRange: [400, 500],
-        speed: 0.00004,
-      },
-    },
-    rayPenetration: {
-      intensity: 0.1,
-      speed: 0.00005,
-      count: 3,
-    },
-    deepGlow: {
-      stops: [
-        { stop: 0, color: "rgba(7, 89, 133, 0.1)" },
-        { stop: 0.5, color: "rgba(12, 74, 110, 0.06)" },
-        { stop: 1, color: "rgba(8, 47, 73, 0.03)" },
-      ],
-    },
-  },
-};
+import { useTheme } from "./AdaptiveBackground";
 
 const UIBackground = ({ mode = "pulse", intensity = 1, className = "" }) => {
   const canvasRef = useRef(null);
   const particleSystemsRef = useRef([]);
   const causticsRef = useRef({ primary: [], secondary: [] });
   const animationRef = useRef(null);
+  const { isDark } = useTheme();
+
+  const PRESETS = {
+    pulse: {
+      // active and engaging
+      particles: {
+        deep: {
+          count: 25,
+          speedRange: [0.02, 0.06],
+          sizeRange: [3, 6],
+          opacity: [0.15, 0.3],
+          colorStop: [147, 197, 253],
+          pulseSpeed: [0.0003, 0.0008],
+          pulseRange: [0.6, 1],
+        },
+        mid: {
+          count: 35,
+          speedRange: [0.04, 0.1],
+          sizeRange: [1.8, 4.2],
+          opacity: [0.2, 0.45],
+          colorStop: [167, 207, 253],
+          pulseSpeed: [0.0005, 0.001],
+          pulseRange: [0.7, 1],
+        },
+        surface: {
+          count: 20,
+          speedRange: [0.08, 0.15],
+          sizeRange: [1, 2.5],
+          opacity: [0.3, 0.5],
+          colorStop: [187, 217, 253],
+          pulseSpeed: [0.0008, 0.0015],
+          pulseRange: [0.8, 1],
+        },
+        micro: {
+          count: 45,
+          speedRange: [0.1, 0.2],
+          sizeRange: [0.5, 1.5],
+          opacity: [0.2, 0.4],
+          colorStop: [207, 227, 253],
+          pulseSpeed: [0.001, 0.002],
+          pulseRange: [0.9, 1],
+        },
+      },
+      caustics: {
+        primary: {
+          count: 5,
+          opacityRange: [0.02, 0.03],
+          sizeRange: [300, 400],
+          speed: 0.0001,
+        },
+        secondary: {
+          count: 3,
+          opacityRange: [0.01, 0.02],
+          sizeRange: [400, 500],
+          speed: 0.00008,
+        },
+      },
+      rayPenetration: {
+        intensity: 0.15,
+        speed: 0.00007,
+        count: 3,
+      },
+      deepGlow: {
+        stops: [
+          { stop: 0, color: "rgba(7, 89, 133, 0.15)" },
+          { stop: 0.5, color: "rgba(12, 74, 110, 0.1)" },
+          { stop: 1, color: "rgba(8, 47, 73, 0.05)" },
+        ],
+      },
+    },
+    craft: {
+      // contemplative and focused
+      particles: {
+        deep: {
+          count: 30,
+          speedRange: [0.02, 0.05],
+          sizeRange: [3.5, 7],
+          opacity: [0.12, 0.25],
+          colorStop: [147, 197, 253],
+          pulseSpeed: [0.0002, 0.0006],
+          pulseRange: [0.7, 1],
+        },
+        mid: {
+          count: 40,
+          speedRange: [0.03, 0.08],
+          sizeRange: [2, 4.5],
+          opacity: [0.15, 0.35],
+          colorStop: [167, 207, 253],
+          pulseSpeed: [0.0004, 0.0009],
+          pulseRange: [0.8, 1],
+        },
+        surface: {
+          count: 25,
+          speedRange: [0.06, 0.12],
+          sizeRange: [1.2, 2.8],
+          opacity: [0.2, 0.4],
+          colorStop: [187, 217, 253],
+          pulseSpeed: [0.0006, 0.0012],
+          pulseRange: [0.85, 1],
+        },
+        micro: {
+          count: 50,
+          speedRange: [0.08, 0.15],
+          sizeRange: [0.6, 1.8],
+          opacity: [0.15, 0.35],
+          colorStop: [207, 227, 253],
+          pulseSpeed: [0.0008, 0.0015],
+          pulseRange: [0.9, 1],
+        },
+      },
+      caustics: {
+        primary: {
+          count: 5,
+          opacityRange: [0.015, 0.025],
+          sizeRange: [300, 400],
+          speed: 0.00008,
+        },
+        secondary: {
+          count: 3,
+          opacityRange: [0.01, 0.015],
+          sizeRange: [400, 500],
+          speed: 0.00006,
+        },
+      },
+      rayPenetration: {
+        intensity: 0.12,
+        speed: 0.00006,
+        count: 3,
+      },
+      deepGlow: {
+        stops: [
+          { stop: 0, color: "rgba(7, 89, 133, 0.12)" },
+          { stop: 0.5, color: "rgba(12, 74, 110, 0.08)" },
+          { stop: 1, color: "rgba(8, 47, 73, 0.04)" },
+        ],
+      },
+    },
+    echo: {
+      // dreamy and expansive
+      particles: {
+        deep: {
+          count: 35,
+          speedRange: [0.015, 0.04],
+          sizeRange: [4, 8],
+          opacity: [0.1, 0.2],
+          colorStop: [147, 197, 253],
+          pulseSpeed: [0.0001, 0.0005],
+          pulseRange: [0.8, 1],
+        },
+        mid: {
+          count: 45,
+          speedRange: [0.025, 0.07],
+          sizeRange: [2.2, 5],
+          opacity: [0.12, 0.3],
+          colorStop: [167, 207, 253],
+          pulseSpeed: [0.0003, 0.0007],
+          pulseRange: [0.85, 1],
+        },
+        surface: {
+          count: 30,
+          speedRange: [0.04, 0.1],
+          sizeRange: [1.4, 3],
+          opacity: [0.15, 0.35],
+          colorStop: [187, 217, 253],
+          pulseSpeed: [0.0005, 0.001],
+          pulseRange: [0.9, 1],
+        },
+        micro: {
+          count: 55,
+          speedRange: [0.06, 0.12],
+          sizeRange: [0.7, 2],
+          opacity: [0.1, 0.3],
+          colorStop: [207, 227, 253],
+          pulseSpeed: [0.0007, 0.0013],
+          pulseRange: [0.95, 1],
+        },
+      },
+      caustics: {
+        primary: {
+          count: 5,
+          opacityRange: [0.01, 0.02],
+          sizeRange: [300, 400],
+          speed: 0.00006,
+        },
+        secondary: {
+          count: 3,
+          opacityRange: [0.008, 0.012],
+          sizeRange: [400, 500],
+          speed: 0.00004,
+        },
+      },
+      rayPenetration: {
+        intensity: 0.1,
+        speed: 0.00005,
+        count: 3,
+      },
+      deepGlow: {
+        stops: [
+          { stop: 0, color: "rgba(7, 89, 133, 0.1)" },
+          { stop: 0.5, color: "rgba(12, 74, 110, 0.06)" },
+          { stop: 1, color: "rgba(8, 47, 73, 0.03)" },
+        ],
+      },
+    },
+  };
+
+  const colorSchemes = {
+    light: {
+      pulse: {
+        base: "#f0f9ff",
+        particles: {
+          deep: [180, 220, 255],
+          mid: [160, 200, 255],
+          surface: [140, 180, 255],
+        },
+      },
+      craft: {
+        base: "#f5f3ff",
+        particles: {
+          deep: [170, 210, 255],
+          mid: [150, 190, 255],
+          surface: [130, 170, 255],
+        },
+      },
+      echo: {
+        base: "#f8f9ff",
+        particles: {
+          deep: [160, 200, 255],
+          mid: [140, 180, 255],
+          surface: [120, 160, 255],
+        },
+      },
+    },
+    dark: {
+      pulse: {
+        base: "#0a1525",
+        particles: {
+          deep: [147, 197, 253],
+          mid: [167, 207, 253],
+          surface: [187, 217, 253],
+        },
+      },
+      craft: {
+        base: "#0f172a",
+        particles: {
+          deep: [147, 197, 253],
+          mid: [167, 207, 253],
+          surface: [187, 217, 253],
+        },
+      },
+      echo: {
+        base: "#0f1629",
+        particles: {
+          deep: [147, 197, 253],
+          mid: [167, 207, 253],
+          surface: [187, 217, 253],
+        },
+      },
+    },
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -360,7 +417,15 @@ const UIBackground = ({ mode = "pulse", intensity = 1, className = "" }) => {
             )
           );
 
-          const [r, g, b] = particle.colorStop;
+          // Adjust colors based on theme
+          const [r, g, b] = isDark
+            ? particle.colorStop // Original dark theme colors
+            : [
+                particle.colorStop[0] + 30, // Lighter colors for light theme
+                particle.colorStop[1] + 30,
+                particle.colorStop[2] + 30,
+              ];
+
           gradient.addColorStop(
             0,
             `rgba(${r}, ${g}, ${b}, ${modifiedOpacity})`
@@ -386,7 +451,8 @@ const UIBackground = ({ mode = "pulse", intensity = 1, className = "" }) => {
     };
 
     const animate = (timestamp) => {
-      ctx.fillStyle = "#0a1525";
+      // Use theme-aware background color
+      ctx.fillStyle = isDark ? "#0a1525" : "#f0f9ff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       drawDeepGlow();
@@ -406,13 +472,15 @@ const UIBackground = ({ mode = "pulse", intensity = 1, className = "" }) => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [mode, intensity]);
+  }, [mode, intensity, isDark]);
 
   return (
     <canvas
       ref={canvasRef}
-      className={`fixed inset-0 w-full h-full ${className}`}
-      style={{ backgroundColor: "#0a1525" }}
+      className={`fixed inset-0 w-full h-full transition-colors duration-500 ${className}`}
+      style={{
+        backgroundColor: isDark ? "#0a1525" : "#f0f9ff",
+      }}
     />
   );
 };
