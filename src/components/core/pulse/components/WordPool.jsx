@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { perlin } from "../../../../utils/animations/animationUtils";
 
@@ -25,10 +25,10 @@ const FloatingWord = ({
   const targetPosition = useRef({ x: 0, y: 0 });
   const [isAbsorbed, setIsAbsorbed] = useState(false);
   const isMountedRef = useRef(true);
-  const isInteracting = interactingWord === word._id;
+  const isInteracting = interactingWord === word.text;
   const baseSize = Math.max(120, word.text.length * 15);
   const finalSize = baseSize * word.sizeMultiplier;
-  const proximity = proximityMap?.get(word._id) || 0;
+  const proximity = proximityMap?.get(word.text) || 0;
 
   // Setup and cleanup mounted state
   useEffect(() => {
@@ -113,7 +113,7 @@ const FloatingWord = ({
       }
 
       if (!isAbsorbed && elementRef.current) {
-        onPositionUpdate(word._id, elementRef.current.getBoundingClientRect());
+        onPositionUpdate(word.text, elementRef.current.getBoundingClientRect());
       }
 
       if (isMountedRef.current) {
@@ -328,88 +328,40 @@ const FloatingWord = ({
 };
 
 const WordPool = ({
+  words = [],
   selectedWords = [],
   onPositionUpdate,
   interactingWord,
   interactionProgress,
   proximityMap,
 }) => {
-  const [words, setWords] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  console.log("WordPool received words:", words); // Debug log
 
-  useEffect(() => {
-    const fetchWords = async () => {
-      try {
-        const response = await fetch("http://localhost:5001/api/words");
-        if (!response.ok) {
-          throw new Error("Failed to fetch words");
-        }
-        const data = await response.json();
+  // Add unique positioning for each word
+  const processedWords = useMemo(
+    () =>
+      words.map((word) => ({
+        ...word,
+        // No need to add type to id, just use the text
+        sizeMultiplier: 1 + Math.random() * 0.4,
+        basePosition: {
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+        },
+      })),
+    [words]
+  );
 
-        // Process words with visual properties
-        const processedWords = data.map((word) => ({
-          ...word,
-          sizeMultiplier: 1 + Math.random() * 0.4,
-          basePosition: {
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-          },
-        }));
-
-        setWords(processedWords);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching words:", err);
-        setError(err.message);
-        setIsLoading(false);
-      }
-    };
-
-    fetchWords();
-
-    // Set up daily refresh
-    const checkRefresh = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      const timeUntilRefresh = tomorrow - now;
-      setTimeout(() => {
-        fetchWords();
-        // Set up next day's refresh
-        setInterval(fetchWords, 24 * 60 * 60 * 1000);
-      }, timeUntilRefresh);
-    };
-
-    checkRefresh();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="text-cyan-300">Loading words...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
+  console.log("Processed words:", processedWords); // Debug log
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <AnimatePresence>
-        {words.map((word) => (
+        {processedWords.map((word) => (
           <FloatingWord
-            key={word._id}
+            key={word.text}
             word={word}
-            isSelected={selectedWords.includes(word._id)}
+            isSelected={selectedWords.includes(word.text)}
             interactingWord={interactingWord}
             interactionProgress={interactionProgress}
             proximityMap={proximityMap}
