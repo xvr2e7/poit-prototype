@@ -2,13 +2,14 @@ import React from "react";
 import { User, Lock } from "lucide-react";
 
 export const LoginForm = ({ formData, onInputChange, onSubmit }) => (
-  <form onSubmit={onSubmit} className="space-y-6">
+  <form onSubmit={onSubmit} className="space-y-5">
+    {/* Username field */}
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700 block">
-        Username
-      </label>
-      <div className="relative">
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+      <div className="relative group">
+        <div
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 
+          group-focus-within:text-blue-500 transition-colors"
+        >
           <User size={20} />
         </div>
         <input
@@ -16,19 +17,31 @@ export const LoginForm = ({ formData, onInputChange, onSubmit }) => (
           name="username"
           value={formData.username}
           onChange={onInputChange}
-          className="w-full px-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
           placeholder="Enter your username"
+          className="w-full bg-white/50 dark:bg-white/5 backdrop-blur-sm border 
+            border-gray-200 dark:border-white/10 rounded-xl px-11 py-3 outline-none
+            text-gray-900 dark:text-white placeholder:text-gray-500 
+            dark:placeholder:text-gray-400
+            focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+            transition-all duration-200"
           required
+        />
+        {/* Subtle glow effect on focus */}
+        <div
+          className="absolute inset-0 rounded-xl opacity-0 
+          group-focus-within:opacity-100 transition-opacity duration-300
+          bg-blue-500/5 -z-10 blur-sm"
         />
       </div>
     </div>
 
+    {/* Password field */}
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700 block">
-        Password
-      </label>
-      <div className="relative">
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+      <div className="relative group">
+        <div
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 
+          group-focus-within:text-blue-500 transition-colors"
+        >
           <Lock size={20} />
         </div>
         <input
@@ -36,9 +49,20 @@ export const LoginForm = ({ formData, onInputChange, onSubmit }) => (
           name="password"
           value={formData.password}
           onChange={onInputChange}
-          className="w-full px-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
           placeholder="Enter your password"
+          className="w-full bg-white/50 dark:bg-white/5 backdrop-blur-sm border 
+            border-gray-200 dark:border-white/10 rounded-xl px-11 py-3 outline-none
+            text-gray-900 dark:text-white placeholder:text-gray-500 
+            dark:placeholder:text-gray-400
+            focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+            transition-all duration-200"
           required
+        />
+        {/* Subtle glow effect on focus */}
+        <div
+          className="absolute inset-0 rounded-xl opacity-0 
+          group-focus-within:opacity-100 transition-opacity duration-300
+          bg-blue-500/5 -z-10 blur-sm"
         />
       </div>
     </div>

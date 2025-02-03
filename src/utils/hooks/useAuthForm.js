@@ -17,10 +17,22 @@ export const useAuthForm = (onLogin) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Here you would typically handle the API call for login/register
+    console.log(
+      `${isRegistering ? "Registering" : "Logging in"} with:`,
+      formData
+    );
     onLogin(formData);
   };
 
-  const toggleMode = () => setIsRegistering((prev) => !prev);
+  const toggleMode = () => {
+    setIsRegistering((prev) => !prev);
+    // Clear form when switching modes
+    setFormData({
+      username: "",
+      password: "",
+    });
+  };
 
   return {
     isRegistering,
