@@ -6,61 +6,93 @@ class WordService {
   async getWords() {
     try {
       let wordPool = new Map();
+      let seeds = ["create", "explore"]; // Default seeds
 
-      // Parallel API calls
-      const [wotd, newsTopics] = await Promise.all([
-        wordnik.getWordOfDay(),
-        news.getTopics(),
-      ]);
-
-      // Add WOTD first (highest priority)
-      if (wotd) {
-        wordPool.set(wotd.text, wotd);
+      // Try to get WOTD
+      try {
+        const wotd = await wordnik.getWordOfDay();
+        if (wotd) {
+          console.log("Successfully fetched WOTD:", wotd.text);
+          wordPool.set(wotd.text, wotd);
+          seeds.unshift(wotd.text);
+        }
+      } catch (error) {
+        console.log("Failed to fetch WOTD:", error.message);
       }
 
-      // Get related words from both WOTD and news topics
-      const seeds = [wotd.text, ...newsTopics].filter(Boolean);
-      const relatedWords = await datamuse.getRelatedWords(seeds);
-
-      // Add related words
-      relatedWords.forEach((word) => {
-        if (!wordPool.has(word.text)) {
-          wordPool.set(word.text, word);
+      // Try to get news topics
+      try {
+        const newsTopics = await news.getNewsTopics();
+        if (newsTopics && newsTopics.length > 0) {
+          console.log("Successfully fetched news topics:", newsTopics);
+          seeds = [...new Set([...seeds, ...newsTopics])];
         }
-      });
+      } catch (error) {
+        console.log("Failed to fetch news topics:", error.message);
+      }
 
-      // Balance word types and ensure 50 words
-      let words = this.balanceWordTypes(Array.from(wordPool.values()));
+      // Keep fetching words until we have enough
+      let attempts = 0;
+      const maxAttempts = 3;
 
-      // If we don't have enough words, get more from Datamuse
-      while (words.length < 50) {
-        const additionalWords = await datamuse.getRelatedWords([
-          "creative",
-          "explore",
-        ]);
-        additionalWords.forEach((word) => {
+      while (wordPool.size < 100 && attempts < maxAttempts) {
+        // Shuffle and take some seeds
+        const shuffledSeeds = seeds.sort(() => Math.random() - 0.5).slice(0, 4);
+
+        console.log("Using seeds for related words:", shuffledSeeds);
+
+        // Get words in parallel
+        const relatedWords = await datamuse.getRelatedWords(shuffledSeeds);
+
+        // Add words to pool
+        relatedWords.forEach((word) => {
           if (!wordPool.has(word.text)) {
             wordPool.set(word.text, word);
           }
         });
-        words = this.balanceWordTypes(Array.from(wordPool.values()));
+
+        // If we don't have enough words, get fallback words using themed seeds
+        if (wordPool.size < 100) {
+          console.log("Getting additional words using fallback seeds...");
+          const fallbackWords = await datamuse.getFallbackWords();
+          fallbackWords.forEach((word) => {
+            if (!wordPool.has(word.text)) {
+              wordPool.set(word.text, word);
+            }
+          });
+        }
+
+        attempts++;
       }
 
-      // Take exactly 50 words
-      return words.slice(0, 50);
+      // Balance and select final words
+      let words = this.balanceWordTypes(Array.from(wordPool.values()));
+
+      // Ensure exactly 50 words
+      words = words.slice(0, 50);
+
+      if (words.length < 50) {
+        console.log("Warning: Could not reach 50 words, got:", words.length);
+      }
+
+      console.log(`Returning ${words.length} words`);
+      return words;
     } catch (error) {
-      console.error("Error getting words:", error);
-      const fallbackWords = await datamuse.getRelatedWords([
-        "create",
-        "explore",
-      ]);
-      return this.balanceWordTypes(fallbackWords).slice(0, 50);
+      console.error("Error in WordService:", error);
+      // Even in emergency, use fallback seeds to get related words
+      return datamuse.getFallbackWords();
     }
   }
 
   balanceWordTypes(words) {
-    // Aim for 20 nouns (40%), 15 verbs (30%), 15 adjectives (30%)
-    const targetCounts = { noun: 20, verb: 15, adj: 15 };
+    // Calculate proportional targets based on total words
+    const total = Math.min(words.length, 50);
+    const targetCounts = {
+      noun: Math.ceil(total * 0.4), // 40%
+      verb: Math.ceil(total * 0.3), // 30%
+      adj: Math.ceil(total * 0.3), // 30%
+    };
+
     const byType = {
       noun: words.filter((w) => w.type === "noun"),
       verb: words.filter((w) => w.type === "verb"),
@@ -68,26 +100,26 @@ class WordService {
     };
 
     let result = [];
-    for (const [type, target] of Object.entries(targetCounts)) {
-      const typeWords = byType[type]
-        .sort((a, b) => b.score - a.score)
-        .slice(0, target);
 
-      // If we don't have enough words of this type, fill with highest scored words of other types
-      if (typeWords.length < target) {
-        const remaining = target - typeWords.length;
-        const otherWords = words
-          .filter((w) => !result.includes(w) && !typeWords.includes(w))
-          .sort((a, b) => b.score - a.score)
-          .slice(0, remaining);
+    // First pass: add words maintaining ratios
+    Object.entries(targetCounts).forEach(([type, target]) => {
+      const available = byType[type];
+      const toAdd = available.sort(() => Math.random() - 0.5).slice(0, target);
+      result.push(...toAdd);
+    });
 
-        result.push(...typeWords, ...otherWords);
-      } else {
-        result.push(...typeWords);
-      }
+    // Second pass: if we're short, fill with any type
+    if (result.length < total) {
+      const remaining = total - result.length;
+      const unusedWords = words.filter((w) => !result.includes(w));
+      const additional = unusedWords
+        .sort(() => Math.random() - 0.5)
+        .slice(0, remaining);
+      result.push(...additional);
     }
 
-    return result;
+    // Final shuffle
+    return result.sort(() => Math.random() - 0.5);
   }
 }
 
