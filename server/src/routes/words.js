@@ -2,100 +2,112 @@ const express = require("express");
 const router = express.Router();
 const WordService = require("../services/wordService");
 
-// In-memory cache with timestamp
-let wordCache = {
-  data: null,
-  timestamp: null,
-};
+// Cache structure now includes timezone information
+const cacheStore = new Map();
 
-// Cache duration (24 hours in milliseconds)
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
-
-// Helper to check if cache needs refresh
-const shouldRefreshCache = () => {
-  if (!wordCache.data || !wordCache.timestamp) {
-    console.log("Cache refresh needed: Cache is empty or has no timestamp");
+const shouldRefreshCache = (timezone = "UTC") => {
+  const cache = cacheStore.get(timezone);
+  if (!cache?.data || !cache?.timestamp) {
+    console.log(`Cache refresh needed: No cache for timezone ${timezone}`);
     return true;
   }
 
-  const now = Date.now();
-  const cacheAge = now - wordCache.timestamp;
+  // Convert timestamps to timezone-specific dates
+  const now = new Date();
+  const userTime = new Date(
+    now.toLocaleString("en-US", { timeZone: timezone })
+  );
+  const lastRefreshTime = new Date(
+    cache.timestamp.toLocaleString("en-US", { timeZone: timezone })
+  );
 
-  // Check if it's a new day (past midnight) since last refresh
-  const lastRefreshDate = new Date(wordCache.timestamp);
-  const currentDate = new Date(now);
+  // Check if it's a new day in the user's timezone
   const isNewDay =
-    currentDate.getDate() !== lastRefreshDate.getDate() ||
-    currentDate.getMonth() !== lastRefreshDate.getMonth() ||
-    currentDate.getFullYear() !== lastRefreshDate.getFullYear();
+    userTime.getDate() !== lastRefreshTime.getDate() ||
+    userTime.getMonth() !== lastRefreshTime.getMonth() ||
+    userTime.getFullYear() !== lastRefreshTime.getFullYear();
+
+  if (isNewDay) {
+    console.log(`Cache refresh needed: New day in timezone ${timezone}`);
+    return true;
+  }
 
   console.log("Cache status:", {
-    cacheAge: `${Math.round(cacheAge / 1000)}s`,
+    timezone,
+    userTime: userTime.toISOString(),
+    lastRefreshTime: lastRefreshTime.toISOString(),
     isNewDay,
-    needsRefresh: cacheAge >= CACHE_DURATION || isNewDay,
   });
 
-  return cacheAge >= CACHE_DURATION || isNewDay;
-};
-
-// Helper to fetch fresh words
-const fetchFreshWords = async () => {
-  console.log("Fetching fresh words from WordService...");
-  const startTime = Date.now();
-  const words = await WordService.getWords();
-  const duration = Date.now() - startTime;
-
-  console.log(`Fetched ${words.length} words in ${duration}ms`);
-
-  wordCache = {
-    data: words,
-    timestamp: Date.now(),
-  };
-
-  return words;
+  return false;
 };
 
 router.get("/", async (req, res) => {
   try {
-    console.log("\n=== Processing GET /words request ===");
+    // Get timezone from request header or query parameter
+    const timezone = req.get("X-Timezone") || req.query.timezone || "UTC";
+    console.log(
+      `\n=== Processing GET /words request for timezone: ${timezone} ===`
+    );
 
-    if (shouldRefreshCache()) {
-      const words = await fetchFreshWords();
-      res.json(words);
+    if (shouldRefreshCache(timezone)) {
+      console.log("Fetching fresh words...");
+      const words = await WordService.getWords();
+
+      cacheStore.set(timezone, {
+        data: words,
+        timestamp: new Date(),
+      });
+
+      console.log(`Words refreshed for timezone ${timezone}`);
     } else {
-      console.log(
-        "Using cached words from:",
-        new Date(wordCache.timestamp).toLocaleString()
-      );
-      res.json(wordCache.data);
+      console.log(`Using cached words for timezone ${timezone}`);
     }
+
+    const cache = cacheStore.get(timezone);
+    res.json({
+      words: cache.data,
+      refreshedAt: cache.timestamp,
+      nextRefresh: getNextRefreshTime(timezone),
+    });
   } catch (err) {
     console.error("Error in words route:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Force refresh endpoint
+// Helper to calculate next refresh time in user's timezone
+const getNextRefreshTime = (timezone) => {
+  const now = new Date();
+  const userTime = new Date(
+    now.toLocaleString("en-US", { timeZone: timezone })
+  );
+  const tomorrow = new Date(userTime);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow;
+};
+
+// Force refresh endpoint now accepts timezone
 router.post("/refresh", async (req, res) => {
   try {
-    console.log("\n=== Processing POST /words/refresh request ===");
+    const timezone = req.get("X-Timezone") || req.query.timezone || "UTC";
+    console.log(
+      `\n=== Processing POST /words/refresh request for timezone: ${timezone} ===`
+    );
 
-    // Clear cache first
-    console.log("Clearing existing cache...");
-    wordCache = {
-      data: null,
-      timestamp: null,
-    };
+    const words = await WordService.getWords();
+    cacheStore.set(timezone, {
+      data: words,
+      timestamp: new Date(),
+    });
 
-    // Immediately fetch new words
-    console.log("Initiating fresh word fetch...");
-    const words = await fetchFreshWords();
-
-    console.log("Refresh completed successfully");
     res.json({
       message: "Cache refreshed successfully",
       wordCount: words.length,
-      timestamp: wordCache.timestamp,
+      timezone,
+      refreshedAt: cacheStore.get(timezone).timestamp,
+      nextRefresh: getNextRefreshTime(timezone),
     });
   } catch (err) {
     console.error("Error during refresh:", err);

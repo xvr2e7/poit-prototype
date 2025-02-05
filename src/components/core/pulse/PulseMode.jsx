@@ -21,18 +21,28 @@ const PulseMode = ({ onComplete }) => {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const response = await fetch("http://localhost:5001/api/words");
+        // Get user's timezone
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timezone;
+
+        const response = await fetch(
+          `http://localhost:5001/api/words?timezone=${timezone}`,
+          {
+            headers: {
+              "X-Timezone": timezone,
+            },
+          }
+        );
+
         if (!response.ok) throw new Error("Failed to fetch words");
         const data = await response.json();
-        console.log("Fetched words:", data);
 
-        // Transform the data to match expected format
-        const transformedWords = data.map((word) => ({
-          ...word,
-          id: `${word.text}-${word.type}`, // Create stable IDs
-        }));
+        // Update available words and next refresh time
+        setAvailableWords(data.words);
 
-        setAvailableWords(transformedWords);
+        // You might want to use this for the TimeDisplay component
+        if (data.nextRefresh) {
+          console.log("Next word refresh at:", new Date(data.nextRefresh));
+        }
       } catch (error) {
         console.error("Error fetching words:", error);
       } finally {
