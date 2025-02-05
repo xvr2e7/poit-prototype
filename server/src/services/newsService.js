@@ -17,6 +17,10 @@ class NewsService {
 
       // Focus on uplifting and creative categories
       const categories = ["technology", "science", "entertainment", "sports"];
+      if (!process.env.NEWS_API_KEY) {
+        console.log("No NEWS_API_KEY found, using fallback topics");
+        return this.getFallbackTopics();
+      }
 
       const allKeywords = new Set();
       const sourceKeywords = new Map();
@@ -28,16 +32,23 @@ class NewsService {
             params: {
               country: "us",
               category,
-              pageSize: 5, // Limit to top 5 articles per category
+              pageSize: 5,
             },
           });
 
+          if (!response.data || !response.data.articles) {
+            console.log(`No articles found for ${category}`);
+            continue;
+          }
+
           const categoryKeywords = new Set();
           response.data.articles.forEach((article) => {
-            const text = `${article.title} ${article.description || ""}`;
+            if (!article.title && !article.description) return;
+
+            const text = `${article.title || ""} ${article.description || ""}`;
             const words = text
               .toLowerCase()
-              .replace(/[^a-z\s-]/g, "") // Remove all non-letter characters except hyphens
+              .replace(/[^a-z\s-]/g, "")
               .split(/\s+/)
               .filter((word) => this.isGoodTopic(word));
 
@@ -50,21 +61,24 @@ class NewsService {
           sourceKeywords.set(category, Array.from(categoryKeywords));
           console.log(`Found ${categoryKeywords.size} keywords in ${category}`);
 
-          // Respect rate limits
           await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (error) {
-          console.error(`Error fetching ${category} news:`, error);
+          console.error(`Error fetching ${category} news:`, error.message);
           continue;
         }
       }
 
-      // Select final topics, prioritizing diversity across categories
       const finalTopics = this.selectDiverseTopics(sourceKeywords, 10);
-      console.log("\nFinal selected topics:", finalTopics.join(", "));
 
+      if (finalTopics.length === 0) {
+        console.log("No topics found from news API, using fallback topics");
+        return this.getFallbackTopics();
+      }
+
+      console.log("\nFinal selected topics:", finalTopics.join(", "));
       return finalTopics;
     } catch (error) {
-      console.error("Error fetching news:", error);
+      console.error("Error fetching news:", error.message);
       return this.getFallbackTopics();
     }
   }
@@ -74,9 +88,7 @@ class NewsService {
     const categories = Array.from(sourceKeywords.keys());
     let currentIndex = 0;
 
-    // Keep selecting words until we reach target count
     while (selected.size < targetCount && currentIndex < 50) {
-      // Rotate through categories
       for (const category of categories) {
         const keywords = sourceKeywords.get(category);
         if (keywords && keywords[currentIndex]) {
@@ -91,13 +103,9 @@ class NewsService {
   }
 
   isGoodTopic(word) {
-    // Basic validation
     if (!word || word.length < 4 || word.length > 12) return false;
     if (!/^[a-z]+$/.test(word)) return false;
-
-    // Skip sensitive topics and common words
     if (this.isSensitiveTopic(word) || this.isCommonWord(word)) return false;
-
     return true;
   }
 
@@ -389,70 +397,30 @@ class NewsService {
   }
 
   getFallbackTopics() {
-    return [
-      // Innovation & Discovery
-      "innovation",
-      "discovery",
+    const fallbackTopics = [
+      "discover",
       "explore",
       "create",
       "design",
-
-      // Nature & Environment
       "garden",
       "forest",
       "ocean",
-      "weather",
       "sunrise",
-
-      // Daily Life & Culture
-      "coffee",
       "music",
       "dance",
-      "food",
-      "travel",
-
-      // Technology & Science
+      "story",
       "robot",
       "space",
       "digital",
-      "mobile",
-      "solar",
-
-      // Arts & Entertainment
-      "movie",
-      "concert",
-      "book",
-      "game",
-      "story",
-
-      // Positive Changes
-      "improve",
-      "grow",
-      "learn",
-      "achieve",
-      "inspire",
-
-      // Creative Activities
       "craft",
       "paint",
       "write",
       "build",
       "imagine",
-
-      // Natural World
-      "flower",
-      "river",
-      "mountain",
-      "breeze",
-      "crystal",
-
-      // Positive Emotions
-      "wonder",
-      "dream",
-      "smile",
-      "laugh",
-      "play",
     ];
+
+    // Randomize and return a subset
+    return fallbackTopics.sort(() => Math.random() - 0.5).slice(0, 10);
   }
 }
 
