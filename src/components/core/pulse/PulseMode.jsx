@@ -8,7 +8,6 @@ import { TimeDisplay } from "./components/TimeDisplay";
 import { CompletionView } from "./components/CompletionView";
 
 const PulseMode = ({ onComplete }) => {
-  // State management
   const [selectedWords, setSelectedWords] = useState([]);
   const [selectorPosition, setSelectorPosition] = useState(null);
   const [isActive, setIsActive] = useState(false);
@@ -22,29 +21,41 @@ const PulseMode = ({ onComplete }) => {
     const fetchWords = async () => {
       try {
         // Get user's timezone
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timezone;
-
-        const response = await fetch(
-          `http://localhost:5001/api/words?timezone=${timezone}`,
-          {
-            headers: {
-              "X-Timezone": timezone,
-            },
-          }
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch words");
-        const data = await response.json();
-
-        // Update available words and next refresh time
-        setAvailableWords(data.words);
-
-        // You might want to use this for the TimeDisplay component
-        if (data.nextRefresh) {
-          console.log("Next word refresh at:", new Date(data.nextRefresh));
+        let timezone;
+        try {
+          const timeZoneDetector = Intl.DateTimeFormat();
+          const resolvedOptions = timeZoneDetector.resolvedOptions();
+          timezone = resolvedOptions.timeZone;
+          console.log("Detected timezone:", timezone); // Debug log
+        } catch (error) {
+          console.error("Timezone detection error:", error);
+          timezone = "UTC";
         }
+
+        console.log("Making request with timezone:", timezone); // Debug log
+
+        const response = await fetch("http://localhost:5001/api/words", {
+          headers: {
+            "X-Timezone": timezone,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Response data:", {
+          wordsCount: data.words?.length,
+          refreshedAt: data.refreshedAt,
+          nextRefresh: data.nextRefresh,
+        }); // Debug log
+
+        setAvailableWords(data.words);
       } catch (error) {
-        console.error("Error fetching words:", error);
+        console.error("Error in fetchWords:", error);
       } finally {
         setIsLoading(false);
       }

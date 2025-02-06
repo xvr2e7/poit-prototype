@@ -2,23 +2,36 @@ const express = require("express");
 const router = express.Router();
 const WordService = require("../services/wordService");
 
-// Cache structure now includes timezone information
+// Cache structure with timezone information
 const cacheStore = new Map();
 
-const shouldRefreshCache = (timezone = "UTC") => {
-  const cache = cacheStore.get(timezone);
+const getValidTimezone = (timezone) => {
+  try {
+    // Test if the timezone is valid
+    new Date().toLocaleString("en-US", { timeZone: timezone });
+    return timezone;
+  } catch (error) {
+    console.log(`Invalid timezone: ${timezone}, falling back to UTC`);
+    return "UTC";
+  }
+};
+
+const shouldRefreshCache = (timezone) => {
+  const validTimezone = getValidTimezone(timezone);
+  const cache = cacheStore.get(validTimezone);
+
   if (!cache?.data || !cache?.timestamp) {
-    console.log(`Cache refresh needed: No cache for timezone ${timezone}`);
+    console.log(`Cache refresh needed: No cache for timezone ${validTimezone}`);
     return true;
   }
 
   // Convert timestamps to timezone-specific dates
   const now = new Date();
   const userTime = new Date(
-    now.toLocaleString("en-US", { timeZone: timezone })
+    now.toLocaleString("en-US", { timeZone: validTimezone })
   );
   const lastRefreshTime = new Date(
-    cache.timestamp.toLocaleString("en-US", { timeZone: timezone })
+    cache.timestamp.toLocaleString("en-US", { timeZone: validTimezone })
   );
 
   // Check if it's a new day in the user's timezone
@@ -28,24 +41,38 @@ const shouldRefreshCache = (timezone = "UTC") => {
     userTime.getFullYear() !== lastRefreshTime.getFullYear();
 
   if (isNewDay) {
-    console.log(`Cache refresh needed: New day in timezone ${timezone}`);
+    console.log(`Cache refresh needed: New day in timezone ${validTimezone}`);
     return true;
   }
-
-  console.log("Cache status:", {
-    timezone,
-    userTime: userTime.toISOString(),
-    lastRefreshTime: lastRefreshTime.toISOString(),
-    isNewDay,
-  });
 
   return false;
 };
 
+// Helper to calculate next refresh time in user's timezone
+const getNextRefreshTime = (timezone) => {
+  const validTimezone = getValidTimezone(timezone);
+  const now = new Date();
+  const userTime = new Date(
+    now.toLocaleString("en-US", { timeZone: validTimezone })
+  );
+  const tomorrow = new Date(userTime);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow;
+};
+
 router.get("/", async (req, res) => {
   try {
-    // Get timezone from request header or query parameter
-    const timezone = req.get("X-Timezone") || req.query.timezone || "UTC";
+    // Log all headers for debugging
+    console.log("\nRequest headers:", req.headers);
+
+    // Get timezone with logging
+    const requestedTimezone = req.get("X-Timezone") || req.query.timezone;
+    console.log("Requested timezone (raw):", requestedTimezone);
+
+    const timezone = getValidTimezone(requestedTimezone);
+    console.log("Validated timezone:", timezone);
+
     console.log(
       `\n=== Processing GET /words request for timezone: ${timezone} ===`
     );
@@ -65,30 +92,26 @@ router.get("/", async (req, res) => {
     }
 
     const cache = cacheStore.get(timezone);
-    res.json({
+    const response = {
       words: cache.data,
       refreshedAt: cache.timestamp,
       nextRefresh: getNextRefreshTime(timezone),
+    };
+
+    console.log("Sending response with metadata:", {
+      wordsCount: response.words.length,
+      refreshedAt: response.refreshedAt,
+      nextRefresh: response.nextRefresh,
     });
+
+    res.json(response);
   } catch (err) {
     console.error("Error in words route:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Helper to calculate next refresh time in user's timezone
-const getNextRefreshTime = (timezone) => {
-  const now = new Date();
-  const userTime = new Date(
-    now.toLocaleString("en-US", { timeZone: timezone })
-  );
-  const tomorrow = new Date(userTime);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  return tomorrow;
-};
-
-// Force refresh endpoint now accepts timezone
+// Force refresh endpoint
 router.post("/refresh", async (req, res) => {
   try {
     const timezone = req.get("X-Timezone") || req.query.timezone || "UTC";
