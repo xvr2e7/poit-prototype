@@ -121,17 +121,11 @@ function App() {
         );
 
       case "echo": {
-        // Determine which poem data to use
-        const poemData =
-          testPoems.length > 0
-            ? testPoems[0] // Use first test poem
-            : currentPoem; // Use poem from regular flow
+        // Use either test poems or real poems
+        const poems = testPoems.length > 0 ? testPoems : [currentPoem];
 
         // Determine word pool for highlighting
-        const wordPool =
-          testPoems.length > 0
-            ? TEST_WORDS // Use test word pool
-            : selectedWords; // Use words from Pulse mode
+        const wordPool = testPoems.length > 0 ? TEST_WORDS : selectedWords;
 
         return (
           <EchoMode
@@ -139,7 +133,7 @@ function App() {
             playgroundUnlocked={playgroundUnlocked}
             enterPlayground={enterPlayground}
             enabled={!lockedModes.echo}
-            poem={poemData}
+            poems={poems}
             wordPool={wordPool}
           />
         );

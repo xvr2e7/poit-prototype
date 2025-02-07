@@ -1,108 +1,48 @@
-import React, { useState, useRef, memo, useCallback } from "react";
-import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
-import { User, Calendar, Clock } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, Calendar, Clock, ArrowLeft } from "lucide-react";
 import UIBackground from "../../shared/UIBackground";
-
-// Memoized word/punctuation component for performance
-const WordComponent = memo(({ component, isHighlighted, onHover }) => {
-  const baseScale = component.type === "punctuation" ? 0.8 : 1;
-
-  return (
-    <motion.div
-      className="absolute pointer-events-auto"
-      style={{
-        left: component.position.x,
-        top: component.position.y,
-      }}
-      initial={{ opacity: 0, scale: baseScale * 0.8 }}
-      animate={{
-        opacity: 1,
-        scale: baseScale,
-      }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      onHoverStart={() => onHover?.(component)}
-      onHoverEnd={() => onHover?.(null)}
-    >
-      <div
-        className={`
-        relative px-6 py-3 rounded-lg backdrop-blur-sm 
-        transition-colors duration-300
-        ${
-          isHighlighted
-            ? "bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
-            : "bg-white/5 text-cyan-200/70 hover:bg-white/10"
-        }
-        ${component.type === "punctuation" ? "text-cyan-300/50" : ""}
-        font-medium
-      `}
-      >
-        {isHighlighted && (
-          <div
-            className="absolute inset-0 -z-10 rounded-lg"
-            style={{
-              background: `
-                radial-gradient(
-                  circle at center,
-                  rgba(34, 211, 238, 0.4) 0%,
-                  rgba(34, 211, 238, 0.2) 40%,
-                  rgba(34, 211, 238, 0) 70%
-                )
-              `,
-              transform: "scale(1.5)",
-              opacity: 0.6,
-            }}
-          />
-        )}
-
-        <span className="relative z-10 select-none whitespace-nowrap">
-          {component.text}
-        </span>
-      </div>
-    </motion.div>
-  );
-});
-
-WordComponent.displayName = "WordComponent";
+import WordDisplay from "./components/WordDisplay";
+import { usePoemNavigation } from "./hooks/usePoemNavigation";
 
 const EchoMode = ({
-  poem,
+  poems = [],
   wordPool = [],
   onComplete,
   playgroundUnlocked,
   enterPlayground,
   enabled = true,
 }) => {
-  const [hoveredComponent, setHoveredComponent] = useState(null);
   const containerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Optimized scroll handling
-  const { scrollY } = useScroll({
-    container: containerRef,
-  });
-
-  const smoothY = useSpring(scrollY, {
-    damping: 50,
-    stiffness: 400,
-  });
-
-  // Memoized highlight check
-  const shouldHighlight = useCallback(
-    (component) => {
-      if (component.type !== "word") return false;
-      return wordPool.some(
-        (word) => word.text.toLowerCase() === component.text.toLowerCase()
-      );
-    },
-    [wordPool]
-  );
+  const {
+    currentPoem,
+    navigationHistory,
+    getWordGlowIntensity,
+    findNextPoemForWord,
+    navigateToPoem,
+    navigateBack,
+  } = usePoemNavigation(poems, wordPool);
 
   React.useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!enabled || !poem) {
+  const handleWordClick = async (word) => {
+    const nextPoem = findNextPoemForWord(word.text);
+    if (nextPoem) {
+      setIsTransitioning(true);
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for exit animations
+      navigateToPoem(nextPoem.id);
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for enter animations
+      setIsTransitioning(false);
+    }
+  };
+
+  if (!enabled || !currentPoem) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <span className="text-cyan-300">Loading poem...</span>
@@ -111,7 +51,7 @@ const EchoMode = ({
   }
 
   return (
-    <div className="w-full h-screen relative overflow-hidden p-8">
+    <div className="w-full h-screen relative overflow-hidden">
       <UIBackground mode="echo" />
 
       <motion.div
@@ -143,13 +83,26 @@ const EchoMode = ({
             bg-gradient-to-r from-cyan-500/10 to-transparent"
           >
             <div className="flex justify-between items-start mb-4">
-              <motion.h2
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-2xl font-semibold text-cyan-50"
-              >
-                {poem.title}
-              </motion.h2>
+              <div className="flex items-center space-x-4">
+                {navigationHistory.length > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={navigateBack}
+                    className="p-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 
+                      text-cyan-300 transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </motion.button>
+                )}
+                <motion.h2
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-2xl font-bold text-cyan-50"
+                >
+                  {currentPoem.title}
+                </motion.h2>
+              </div>
 
               {playgroundUnlocked && (
                 <motion.button
@@ -168,11 +121,11 @@ const EchoMode = ({
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2 text-cyan-300/70">
                 <User className="w-4 h-4" />
-                <span className="text-sm">{poem.author}</span>
+                <span className="text-sm">{currentPoem.author}</span>
               </div>
               <div className="flex items-center space-x-2 text-cyan-300/70">
                 <Calendar className="w-4 h-4" />
-                <span className="text-sm">{poem.date}</span>
+                <span className="text-sm">{currentPoem.date}</span>
               </div>
             </div>
           </div>
@@ -180,24 +133,26 @@ const EchoMode = ({
           {/* Scrollable poem space */}
           <div
             ref={containerRef}
-            className="h-[calc(100%-10rem)] overflow-y-auto overflow-x-hidden"
+            className="h-[calc(100%-10rem)] overflow-auto"
             style={{
               scrollBehavior: "smooth",
               WebkitOverflowScrolling: "touch",
             }}
           >
-            {/* Content container with increased height for scrolling */}
-            <div className="relative min-h-[200%] p-12">
+            {/* Content container with increased dimensions for scrolling */}
+            <div className="relative min-h-[200%] min-w-[150%] p-12">
               <AnimatePresence mode="wait">
-                {!isLoading &&
-                  poem.components.map((component) => (
-                    <WordComponent
-                      key={component.id}
-                      component={component}
-                      isHighlighted={shouldHighlight(component)}
-                      onHover={setHoveredComponent}
-                    />
-                  ))}
+                {!isLoading && (
+                  <WordDisplay
+                    words={currentPoem.components}
+                    highlightedWords={wordPool.map((w) =>
+                      typeof w === "string" ? w : w.text
+                    )}
+                    getWordGlowIntensity={getWordGlowIntensity}
+                    onWordClick={handleWordClick}
+                    isTransitioning={isTransitioning}
+                  />
+                )}
               </AnimatePresence>
             </div>
           </div>
@@ -209,7 +164,7 @@ const EchoMode = ({
           >
             <div className="flex justify-between items-center">
               <div className="text-sm text-cyan-300/60">
-                {`${poem.metadata.highlightedWordCount} highlighted connections`}
+                {`${currentPoem.metadata.highlightedWordCount} highlighted connections`}
               </div>
               <div className="flex items-center space-x-2 text-sm text-cyan-300/60">
                 <Clock className="w-4 h-4" />
