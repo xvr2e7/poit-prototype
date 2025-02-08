@@ -6,25 +6,26 @@ import UIBackground from "../../shared/UIBackground";
 import { useCraftState } from "./hooks/useCraftState";
 
 const WordPool = ({ words, onWordSelect }) => (
-  <div className="w-64 h-full overflow-y-auto bg-white/5 backdrop-blur-sm border-r border-cyan-500/20">
-    <div className="p-4 border-b border-cyan-500/20">
-      <h2 className="text-cyan-300 font-medium">Word Pool</h2>
-    </div>
-    <div className="p-4 space-y-2">
-      {words.map((word) => (
-        <motion.div
-          key={word.id || `word-${word.text}`}
-          className="group p-2 bg-white/5 rounded-lg border border-cyan-500/10 
-            hover:bg-white/10 hover:border-cyan-500/20 cursor-pointer
-            transition-all duration-300"
-          whileHover={{ scale: 1.02 }}
-          onClick={() => onWordSelect(word)}
-        >
-          <span className="text-cyan-100/70 group-hover:text-cyan-100">
+  <div className="w-64 h-full flex flex-col">
+    {/* Fixed header space for menu icon */}
+    <div className="h-20 flex-none" />
+
+    {/* Scrollable word list container */}
+    <div className="flex-1 overflow-y-auto">
+      <div className="space-y-1 px-4">
+        {words.map((word) => (
+          <motion.button
+            key={word.id || `word-${word.text}`}
+            className="w-full text-left p-3
+              text-gray-300/90 hover:text-cyan-300/90
+              hover:bg-white/5 transition-all duration-200"
+            whileHover={{ x: 4 }}
+            onClick={() => onWordSelect(word)}
+          >
             {word.text}
-          </span>
-        </motion.div>
-      ))}
+          </motion.button>
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -36,7 +37,7 @@ const TemplateOverlay = ({ show, onClose, onSelect }) => (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-8 bg-gradient-to-b from-cyan-950/80 to-cyan-900/80 
+        className="absolute inset-4 bg-gradient-to-b from-cyan-950/80 to-cyan-900/80 
           backdrop-blur-sm rounded-3xl border border-cyan-500/20 z-30"
       >
         <div className="p-8">
@@ -90,7 +91,6 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [poolWords, setPoolWords] = useState([]);
 
-  // Initialize pool words when selectedWords prop changes
   useEffect(() => {
     const initialWords = selectedWords.map((word) => {
       const text = typeof word === "string" ? word : word.text;
@@ -130,55 +130,72 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   if (!enabled) return null;
 
   return (
-    <div className="flex h-screen bg-gray-950">
+    <div className="relative h-screen bg-gray-950">
       <UIBackground mode="craft" />
 
-      {/* Left Sidebar - Word Pool */}
-      <div className="relative z-10">
-        <WordPool words={poolWords} onWordSelect={handleAddToCanvas} />
-      </div>
+      <div className="absolute inset-0 flex">
+        {/* Left Sidebar */}
+        <div className="relative">
+          <div className="h-full w-64 backdrop-blur-sm bg-gray-950/30">
+            <WordPool words={poolWords} onWordSelect={handleAddToCanvas} />
+          </div>
+          {/* Soft edge gradient */}
+          <div className="absolute top-0 right-0 h-full w-1 bg-gradient-to-r from-cyan-500/10 to-transparent" />
+        </div>
 
-      {/* Main Composition Area */}
-      <div className="relative flex-1 p-4">
-        <WordCanvas
-          words={canvasWords}
-          selectedWordId={selectedWordId}
-          onSelect={handleWordSelect}
-          onMove={handleWordMove}
-          template={activeTemplate}
-          preview={preview}
-        />
+        {/* Main Composition Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Top gradient border */}
+          <div className="h-1 bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-cyan-500/10 rounded-full mx-6 mt-6" />
 
-        <TemplateOverlay
-          show={showTemplates}
-          onClose={() => setShowTemplates(false)}
-          onSelect={setActiveTemplate}
-        />
-      </div>
+          {/* Canvas Container */}
+          <div className="flex-1 relative mx-6 mb-">
+            <div className="absolute inset-0">
+              <WordCanvas
+                words={canvasWords}
+                selectedWordId={selectedWordId}
+                onSelect={handleWordSelect}
+                onMove={handleWordMove}
+                template={activeTemplate}
+                preview={preview}
+              />
+            </div>
 
-      {/* Right Sidebar - Tools */}
-      <div className="relative z-10">
-        <ToolBar
-          onDepthChange={() => {
-            if (selectedWordId) {
-              setCanvasWords((prev) =>
-                prev.map((word) =>
-                  word.id === selectedWordId
-                    ? { ...word, depth: ((word.depth || 0) + 0.2) % 1 }
-                    : word
-                )
-              );
-            }
-          }}
-          onPreviewToggle={handlePreviewToggle}
-          onTemplateToggle={() => setShowTemplates(!showTemplates)}
-          onComplete={handleComplete}
-          activeTools={[
-            ...(showTemplates ? ["template"] : []),
-            ...(preview ? ["preview"] : []),
-            ...(selectedWordId ? ["depth"] : []),
-          ]}
-        />
+            <TemplateOverlay
+              show={showTemplates}
+              onClose={() => setShowTemplates(false)}
+              onSelect={setActiveTemplate}
+            />
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="relative">
+          <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-r from-transparent to-cyan-500/10" />
+          <div className="h-full w-20 backdrop-blur-sm bg-gray-950/30">
+            <ToolBar
+              onDepthChange={() => {
+                if (selectedWordId) {
+                  setCanvasWords((prev) =>
+                    prev.map((word) =>
+                      word.id === selectedWordId
+                        ? { ...word, depth: ((word.depth || 0) + 0.2) % 1 }
+                        : word
+                    )
+                  );
+                }
+              }}
+              onPreviewToggle={handlePreviewToggle}
+              onTemplateToggle={() => setShowTemplates(!showTemplates)}
+              onComplete={handleComplete}
+              activeTools={[
+                ...(showTemplates ? ["template"] : []),
+                ...(preview ? ["preview"] : []),
+                ...(selectedWordId ? ["depth"] : []),
+              ]}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
