@@ -10,7 +10,6 @@ function Navigation({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Fixed color values instead of dynamic classes
   const modeColors = {
     pulse: "rgb(34, 211, 238)", // cyan-400
     craft: "rgb(52, 211, 153)", // emerald-400
@@ -21,7 +20,7 @@ function Navigation({
 
   return (
     <>
-      {/* Simplified Menu Button */}
+      {/* Menu Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-6 left-6 z-[100] p-4 rounded-xl
@@ -31,7 +30,7 @@ function Navigation({
         whileTap={{ scale: 0.98 }}
       >
         <div className="relative w-7 h-7">
-          {/* Menu lines with modern styling */}
+          {/* Menu lines */}
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
@@ -61,7 +60,7 @@ function Navigation({
               }
               transition={{
                 duration: 0.3,
-                ease: [0.4, 0.0, 0.2, 1], // Smooth easing
+                ease: [0.4, 0.0, 0.2, 1],
               }}
             />
           ))}

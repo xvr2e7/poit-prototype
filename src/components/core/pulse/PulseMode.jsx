@@ -5,6 +5,7 @@ import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
 import UIBackground from "../../shared/UIBackground";
 import { TimeDisplay } from "./components/TimeDisplay";
+import Navigation from "../../shared/Navigation";
 import { CompletionView } from "./components/CompletionView";
 
 const PulseMode = ({ onComplete }) => {
@@ -125,25 +126,14 @@ const PulseMode = ({ onComplete }) => {
     <div className="w-full min-h-screen relative overflow-hidden">
       <UIBackground mode="pulse" />
 
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between p-4 mt-4 rounded-xl border border-cyan-500/20 backdrop-blur-sm bg-white/5">
-          <motion.h1
-            className="text-2xl font-bold text-cyan-300"
-            animate={{
-              opacity: [0.7, 1, 0.7],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            Pulse
-          </motion.h1>
-          <TimeDisplay />
-        </div>
-      </div>
+      {/* Navigation and TimeDisplay */}
+      <Navigation
+        currentMode="pulse"
+        setCurrentMode={() => {}}
+        lockedModes={{}}
+        inPlayground={false}
+      />
+      <TimeDisplay />
 
       {/* Main content */}
       <div className="absolute inset-0 z-10">
