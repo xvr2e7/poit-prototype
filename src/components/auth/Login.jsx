@@ -1,5 +1,6 @@
 import React from "react";
 import { LogIn, UserPlus, Zap, PenLine, Radio, PlayCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import { LoginForm } from "./LoginForm";
 import { useAuthForm } from "../../utils/hooks/useAuthForm";
 import { ThemeToggle } from "../shared/AdaptiveBackground";
@@ -17,12 +18,16 @@ function Login({ onLogin, enterPlayground, onTestModeSelect }) {
     <div className="min-h-screen w-full flex items-center justify-center p-4">
       <ThemeToggle />
 
-      <div className="w-full max-w-md space-y-8">
-        {/* Logo */}
-        <div className="flex justify-center">
-          <img src="/poit-logo.svg" alt="POiT" className="h-12 w-auto" />
-        </div>
+      {/* Logo */}
+      <div className="fixed top-6 left-6">
+        <img
+          src="../../../public/favicon.svg"
+          alt="POiT"
+          className="h-14 w-auto"
+        />
+      </div>
 
+      <div className="w-full max-w-md space-y-8">
         {/* Login Card */}
         <div
           className="bg-white/90 dark:bg-gray-900/50 backdrop-blur-md rounded-3xl 
