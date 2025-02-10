@@ -149,8 +149,8 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
           <div className="h-1 bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-cyan-500/10 rounded-full mx-6 mt-6" />
 
           {/* Canvas Container */}
-          <div className="flex-1 relative mx-6 mb-">
-            <div className="absolute inset-0">
+          <div className="flex-1 relative mx-6 mb-0">
+            <div className="absolute inset-0 h-full">
               <WordCanvas
                 words={canvasWords}
                 selectedWordId={selectedWordId}

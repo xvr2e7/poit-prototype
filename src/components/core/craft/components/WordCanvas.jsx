@@ -18,7 +18,7 @@ const WordCanvas = ({
 
   return (
     <div
-      className="relative w-full h-[600px] rounded-lg bg-gray-950/20 
+      className="relative w-full h-[770px] rounded-lg bg-gray-950/20 
         border border-cyan-500/20 overflow-hidden"
       onClick={handleCanvasClick}
     >
