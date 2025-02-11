@@ -17,15 +17,14 @@ const ToolButton = ({
   variant = "default",
 }) => {
   const baseClasses =
-    "group relative p-3 rounded-lg backdrop-blur-sm transition-all duration-300";
+    "group relative p-3 rounded-xl backdrop-blur-sm transition-all duration-300";
   const variantClasses = {
     default: `${
       isActive
-        ? "bg-white/10 border-cyan-400/30"
-        : "bg-white/5 border-cyan-500/20"
-    }
-      border hover:bg-white/10 hover:border-cyan-500/30`,
-    primary: "bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/30 border",
+        ? "bg-[#2C8C7C]/20 border-[#2C8C7C]"
+        : "bg-white/5 hover:bg-[#2C8C7C]/10 border-[#2C8C7C]/30"
+    } border`,
+    primary: "bg-[#2C8C7C]/20 hover:bg-[#2C8C7C]/30 border-[#2C8C7C] border",
   };
 
   return (
@@ -35,28 +34,27 @@ const ToolButton = ({
       onClick={onClick}
       className={`${baseClasses} ${variantClasses[variant]}`}
     >
-      {/* Ambient glow for active state */}
+      {/* Active state glow */}
       {isActive && (
-        <div className="absolute inset-0 rounded-lg bg-cyan-400/10 blur-sm" />
+        <div className="absolute inset-0 rounded-xl bg-[#2C8C7C]/10 blur-sm" />
       )}
 
       <Icon
         className={`
           relative z-10 w-5 h-5 transition-colors duration-300
-          ${isActive ? "text-cyan-300" : "text-cyan-400/70"}
-          ${variant === "primary" ? "text-cyan-300" : ""}
-          group-hover:text-cyan-300
+          ${isActive ? "text-[#2C8C7C]" : "text-[#2C8C7C]/70"}
+          group-hover:text-[#2C8C7C]
         `}
       />
 
-      {/* Label tooltip */}
+      {/* Tooltip */}
       <div
         className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-        bg-gray-950/90 border border-cyan-500/20 rounded-lg
+        bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
         opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-        pointer-events-none px-3 py-2"
+        pointer-events-none px-3 py-2 shadow-lg"
       >
-        <span className="text-sm text-cyan-300/90 whitespace-nowrap font-medium">
+        <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
           {label}
         </span>
       </div>
@@ -80,7 +78,7 @@ const ToolBar = ({
   activeTools = [],
 }) => {
   return (
-    <div className="h-full w-20 bg-white/5 backdrop-blur-sm border-l border-cyan-500/20 flex flex-col">
+    <div className="h-full w-20 flex flex-col">
       <div className="flex-1 p-4 flex flex-col">
         {/* Primary tools */}
         <ToolGroup>
@@ -128,6 +126,9 @@ const ToolBar = ({
           />
         </ToolGroup>
       </div>
+
+      {/* Bottom decorative element */}
+      <div className="h-px w-full bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0" />
     </div>
   );
 };
