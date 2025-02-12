@@ -15,7 +15,7 @@ const WordComponent = ({
         left: word.position?.x || 0,
         top: word.position?.y || 0,
       }}
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{
         opacity: 1,
         scale: 1,
@@ -23,71 +23,125 @@ const WordComponent = ({
       }}
       exit={{
         opacity: 0,
-        scale: 0.8,
+        scale: 0.95,
         transition: { duration: 0.3 },
       }}
-      whileHover={glowIntensity > 0 ? { scale: 1.05 } : undefined}
     >
       <motion.div
         className={`
-          relative px-4 py-2 rounded-lg backdrop-blur-sm transition-all
-          ${glowIntensity > 0 ? "cursor-pointer" : ""}
+          relative px-3 py-1.5
+          group cursor-pointer select-none
+          transition-all duration-500 ease-out
           ${
             isHighlighted
-              ? "bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
-              : "bg-white/5 text-cyan-200/70 hover:bg-white/10"
+              ? "text-base scale-110 font-medium"
+              : "text-sm font-normal"
+          }
+          ${
+            glowIntensity > 0
+              ? "cursor-pointer hover:scale-115"
+              : "cursor-default"
           }
         `}
-        onClick={() => glowIntensity > 0 && onWordClick?.(word)}
+        onClick={(e) => glowIntensity > 0 && onWordClick?.(word, e)}
+        whileHover={{ scale: 1.02 }}
       >
-        {/* Base highlight for word pool words */}
+        {/* Hover container - only visible on hover */}
+        <div
+          className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100
+          bg-[#2C8C7C]/5 dark:bg-[#2C8C7C]/10
+          transition-all duration-300"
+        />
+
+        {/* Interactive word styling */}
         {isHighlighted && (
-          <div
-            className="absolute inset-0 -z-10 rounded-lg"
-            style={{
-              background: `
-                radial-gradient(
-                  circle at center,
-                  rgba(34, 211, 238, 0.4) 0%,
-                  rgba(34, 211, 238, 0.2) 40%,
-                  rgba(34, 211, 238, 0) 70%
-                )
-              `,
-              transform: "scale(1.5)",
-              opacity: 0.6,
-            }}
-          />
+          <motion.div
+            className="absolute inset-0 -z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="absolute inset-0 bg-gradient-radial from-[#2C8C7C]/5 to-transparent opacity-50" />
+          </motion.div>
         )}
 
-        {/* Additional glow for shared words */}
+        {/* Connection glow for interactive words */}
         {glowIntensity > 0 && (
           <motion.div
-            className="absolute inset-0 -z-20 rounded-lg"
+            className="absolute inset-0 -z-10 rounded-lg opacity-0 group-hover:opacity-100"
             animate={{
-              opacity: [0.5, 0.8, 0.5],
-              scale: [1.8, 2, 1.8],
+              scale: [1, 1.05, 1],
             }}
             transition={{
-              duration: 3,
+              duration: 2,
               repeat: Infinity,
               ease: "easeInOut",
             }}
             style={{
-              background: `
-                radial-gradient(
-                  circle at center,
-                  rgba(56, 189, 248, ${0.3 + glowIntensity * 0.4}) 0%,
-                  rgba(56, 189, 248, ${0.2 + glowIntensity * 0.3}) 40%,
-                  rgba(56, 189, 248, 0) 70%
-                )
-              `,
+              background: `radial-gradient(
+                circle at center,
+                rgba(44, 140, 124, ${0.1 + glowIntensity * 0.2}) 0%,
+                transparent 70%
+              )`,
             }}
           />
         )}
 
-        <span className="relative z-10 select-none pointer-events-none font-medium">
+        {/* Word text with dynamic styling */}
+        <span
+          className={`
+            relative z-10
+            transition-all duration-500 ease-out
+            ${
+              isHighlighted
+                ? "text-[#2C8C7C] dark:text-[#2C8C7C]"
+                : "text-gray-600 dark:text-gray-300"
+            }
+            ${
+              glowIntensity > 0
+                ? "group-hover:text-[#2C8C7C] dark:group-hover:text-[#2C8C7C]"
+                : ""
+            }
+            hover:tracking-wide tracking-normal
+          `}
+        >
           {word.text}
         </span>
+
+        {/* Subtle underline - only visible on hover */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-px 
+          bg-[#2C8C7C]/0 group-hover:bg-[#2C8C7C]/20
+          transition-all duration-300"
+        />
+
+        {/* Interactive particles for connected words */}
+        {glowIntensity > 0.3 && (
+          <div
+            className="absolute inset-0 pointer-events-none opacity-0 
+            group-hover:opacity-100 transition-opacity duration-300"
+          >
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-0.5 h-0.5 rounded-full bg-[#2C8C7C]/40"
+                style={{
+                  left: `${50 + Math.cos((i * Math.PI * 2) / 3) * 15}%`,
+                  top: `${50 + Math.sin((i * Math.PI * 2) / 3) * 15}%`,
+                }}
+                animate={{
+                  opacity: [0, 1, 0],
+                  scale: [1, 1.5, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  delay: i * 0.3,
+                  repeat: Infinity,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -101,7 +155,6 @@ const WordDisplay = ({
   isTransitioning = false,
   className = "",
 }) => {
-  // Create a Set of highlighted words for quick lookup
   const highlightedWordSet = useMemo(
     () => new Set(highlightedWords.map((w) => w.toLowerCase())),
     [highlightedWords]
