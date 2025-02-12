@@ -2,11 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 
-export const CompletionView = ({
-  onSave,
-  saved,
-  selectedWords = [],
-}) => {
+export const CompletionView = ({ onSave, saved, selectedWords = [] }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -24,7 +20,7 @@ export const CompletionView = ({
           {[...Array(20)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1 h-1 bg-cyan-300/30 rounded-full"
+              className="absolute w-1 h-1 rounded-full bg-[#2C8C7C]/30"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -43,16 +39,16 @@ export const CompletionView = ({
           ))}
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-8 border border-cyan-500/20">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-8 border border-[#2C8C7C]/20">
           <motion.div
             className="flex items-center justify-center mb-6"
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <Sparkles className="w-8 h-8 text-cyan-400" />
+            <Sparkles className="w-8 h-8 text-[#2C8C7C]" />
           </motion.div>
 
-          <h2 className="text-2xl font-bold text-cyan-50 text-center mb-4">
+          <h2 className="text-2xl font-bold text-[#2C8C7C] text-center mb-4">
             Words Gathered
           </h2>
 
@@ -64,9 +60,9 @@ export const CompletionView = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-cyan-900/40 rounded-lg p-2 text-center"
+                className="bg-[#2C8C7C]/10 rounded-lg p-2 text-center"
               >
-                <span className="text-cyan-100 text-sm">{word}</span>
+                <span className="text-[#2C8C7C] text-sm">{word}</span>
               </motion.div>
             ))}
           </div>
@@ -74,7 +70,9 @@ export const CompletionView = ({
           {!saved ? (
             <motion.button
               onClick={onSave}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-lg transition-colors group"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 
+                bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white rounded-lg 
+                transition-colors group"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -85,7 +83,7 @@ export const CompletionView = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-cyan-400 font-medium text-center"
+              className="text-[#2C8C7C] font-medium text-center"
             >
               <p>✨ Transitioning to Craft Mode ✨</p>
             </motion.div>
@@ -95,5 +93,3 @@ export const CompletionView = ({
     </motion.div>
   );
 };
-
-export default CompletionView;

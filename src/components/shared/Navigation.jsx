@@ -9,14 +9,7 @@ function Navigation({
   inPlayground,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const modeColors = {
-    pulse: "rgb(34, 211, 238)", // cyan-400
-    craft: "rgb(52, 211, 153)", // emerald-400
-    echo: "rgb(167, 139, 250)", // violet-400
-  };
-
-  const currentColor = modeColors[currentMode];
+  const accentColor = "#2C8C7C";
 
   return (
     <>
@@ -36,11 +29,11 @@ function Navigation({
               key={i}
               className="absolute h-0.5 w-7 rounded-full"
               style={{
-                backgroundColor: currentColor,
+                backgroundColor: accentColor,
                 top: `${i * 9 + 8}px`,
                 opacity: 0.95,
                 transformOrigin: "center",
-                boxShadow: `0 0 10px ${currentColor}40`,
+                boxShadow: `0 0 10px ${accentColor}40`,
               }}
               initial={false}
               animate={
@@ -86,8 +79,9 @@ function Navigation({
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -20, scale: 0.95 }}
               className="fixed top-6 left-[5.5rem] z-[100] w-48
-                bg-gray-900/80 rounded-lg
-                border border-white/10 overflow-hidden"
+                bg-white/80 dark:bg-gray-900/80 rounded-lg
+                border border-[#2C8C7C]/20 overflow-hidden
+                backdrop-blur-sm"
               transition={{
                 type: "spring",
                 stiffness: 300,
@@ -96,8 +90,8 @@ function Navigation({
             >
               {/* Mode name */}
               <div
-                className="px-4 py-3 border-b border-white/10"
-                style={{ color: currentColor }}
+                className="px-4 py-3 border-b border-[#2C8C7C]/20"
+                style={{ color: accentColor }}
               >
                 {currentMode.charAt(0).toUpperCase() + currentMode.slice(1)}
               </div>
@@ -107,19 +101,19 @@ function Navigation({
                 <MenuOption
                   icon={Save}
                   label="Save Progress"
-                  color={currentColor}
+                  color={accentColor}
                   onClick={() => setIsOpen(false)}
                 />
                 <MenuOption
                   icon={HelpCircle}
                   label="Help"
-                  color={currentColor}
+                  color={accentColor}
                   onClick={() => setIsOpen(false)}
                 />
                 <MenuOption
                   icon={LogOut}
                   label="Return to Menu"
-                  color={currentColor}
+                  color={accentColor}
                   onClick={() => setIsOpen(false)}
                 />
               </div>
@@ -135,7 +129,7 @@ const MenuOption = ({ icon: Icon, label, color, onClick }) => (
   <motion.button
     onClick={onClick}
     className="w-full flex items-center gap-3 px-3 py-2 rounded-md
-      hover:bg-white/5 transition-colors duration-200"
+      hover:bg-[#2C8C7C]/5 transition-colors duration-200"
     style={{ color }}
     whileHover={{ x: 4 }}
   >

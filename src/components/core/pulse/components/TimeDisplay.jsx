@@ -23,12 +23,12 @@ export const TimeDisplay = () => {
       animate={{ opacity: 1 }}
       className="fixed top-6 right-6 z-50"
     >
-      <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 backdrop-blur-sm border border-cyan-500/20">
-        <Moon className="w-4 h-4 text-cyan-300/70" />
+      <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20">
+        <Moon className="w-4 h-4 text-[#2C8C7C]" />
         <div className="relative flex items-center">
-          <div className="absolute inset-0 bg-cyan-500/10 blur-xl rounded-full" />
+          <div className="absolute inset-0 bg-[#2C8C7C]/10 blur-xl rounded-full" />
           <motion.span
-            className="text-sm text-cyan-300/70"
+            className="text-sm text-[#2C8C7C]"
             animate={{
               opacity: [0.7, 1, 0.7],
             }}
