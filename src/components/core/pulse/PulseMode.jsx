@@ -7,6 +7,7 @@ import UIBackground from "../../shared/UIBackground";
 import { TimeDisplay } from "./components/TimeDisplay";
 import Navigation from "../../shared/Navigation";
 import { CompletionView } from "./components/CompletionView";
+import StatusMessage from "./components/StatusMessage";
 
 const PulseMode = ({ onComplete }) => {
   const [selectedWords, setSelectedWords] = useState([]);
@@ -126,7 +127,6 @@ const PulseMode = ({ onComplete }) => {
     <div className="w-full min-h-screen relative overflow-hidden">
       <UIBackground mode="pulse" />
 
-      {/* Navigation and TimeDisplay */}
       <Navigation
         currentMode="pulse"
         setCurrentMode={() => {}}
@@ -187,35 +187,5 @@ const PulseMode = ({ onComplete }) => {
     </div>
   );
 };
-
-const StatusMessage = ({ isActive, selectedWords, minWords, maxWords }) => (
-  <AnimatePresence mode="wait">
-    {!isActive ? (
-      <motion.div
-        key="start"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
-      >
-        Click anywhere to begin
-      </motion.div>
-    ) : (
-      <motion.div
-        key="progress"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 text-cyan-300/60 text-sm"
-      >
-        {selectedWords.length < minWords
-          ? `Words collected: ${selectedWords.length}/${minWords} minimum`
-          : selectedWords.length < maxWords
-          ? `${selectedWords.length} words collected (double-click to finish)`
-          : "Maximum words reached"}
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
 
 export default PulseMode;
