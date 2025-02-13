@@ -14,6 +14,20 @@ const WordComposer = ({
   const elementRef = useRef(null);
   const lastClickTime = useRef(0);
 
+  const getDisplayText = (word) => {
+    const text = word.text || word.content;
+    if (word.type === "punctuation") return text;
+
+    switch (word.capitalization) {
+      case "first":
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+      case "all":
+        return text.toUpperCase();
+      default:
+        return text;
+    }
+  };
+
   const handlePointerDown = (e) => {
     e.stopPropagation();
     if (preview) return;
@@ -108,7 +122,9 @@ const WordComposer = ({
           }
         `}
       >
-        <span className="text-[#2C8C7C] font-medium">{word.text}</span>
+        <span className="text-[#2C8C7C] font-medium">
+          {getDisplayText(word)}
+        </span>
 
         {/* Selection indicator */}
         {isSelected && !isDragging && (

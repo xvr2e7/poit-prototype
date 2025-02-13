@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import WordCanvas from "./components/WordCanvas";
 import ToolBar from "./components/ToolBar";
 import UIBackground from "../../shared/UIBackground";
@@ -9,10 +9,7 @@ import { useCraftState } from "./hooks/useCraftState";
 const WordPool = ({ words, onWordSelect }) => {
   return (
     <div className="w-72 h-full flex flex-col">
-      {/* Spacer for menu */}
       <div className="h-20" />
-
-      {/* Word list */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-1">
           {words.map((word) => (
@@ -38,91 +35,20 @@ const WordPool = ({ words, onWordSelect }) => {
   );
 };
 
-const TemplateOverlay = ({ show, onClose, onSelect }) => (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="absolute inset-4 bg-gray-950/95 backdrop-blur-md 
-          rounded-2xl border border-cyan-500/20 z-30"
-      >
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-medium text-cyan-50">
-              Choose Template
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl hover:bg-white/5 text-cyan-300
-                transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            {["Sonnet", "Haiku", "Free Verse", "Villanelle"].map((template) => (
-              <button
-                key={template}
-                onClick={() => {
-                  onSelect(template.toLowerCase());
-                  onClose();
-                }}
-                className="p-6 rounded-xl border border-cyan-500/20 
-                  hover:border-cyan-500/40 hover:bg-white/5
-                  transition-all duration-300 group text-left"
-              >
-                <div
-                  className="text-lg font-medium text-cyan-50 
-                  group-hover:text-cyan-300 transition-colors"
-                >
-                  {template}
-                </div>
-                <p className="mt-2 text-sm text-cyan-300/60">
-                  {template === "Sonnet" &&
-                    "14 lines, traditional rhyme schemes"}
-                  {template === "Haiku" && "3 lines, 5-7-5 syllable pattern"}
-                  {template === "Free Verse" &&
-                    "Unrestricted form, natural flow"}
-                  {template === "Villanelle" &&
-                    "19 lines with repeating refrains"}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
-const handleWordReturn = (wordId) => {
-  const word = canvasWords.find((w) => w.id === wordId);
-  if (word) {
-    // Remove from canvas
-    setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
-    // Add back to pool
-    setPoolWords((prev) => [
-      ...prev,
-      {
-        id: word.id,
-        text: word.text,
-        depth: 1,
-        scale: 1,
-      },
-    ]);
-  }
-};
-
 const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const {
-    preview,
-    handlePreviewToggle,
-    handleComplete,
+    words,
     canvasWords,
     setCanvasWords,
+    preview,
+    capitalizationMode,
+    signatures,
+    handleCapitalizationChange,
+    handlePunctuationSelect,
+    handleSignatureAdd,
+    handleSignatureSelect,
+    handlePreviewToggle,
+    handleComplete,
   } = useCraftState(selectedWords, onComplete);
 
   const [showTemplates, setShowTemplates] = useState(false);
@@ -136,8 +62,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
       return {
         id: `word-${Math.random().toString(36).substr(2, 9)}`,
         text,
-        depth: 1,
-        scale: 1,
+        type: "word",
       };
     });
     setPoolWords(initialWords);
@@ -164,6 +89,23 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
 
   const handleWordSelect = (wordId) => {
     setSelectedWordId((prev) => (prev === wordId ? null : wordId));
+  };
+
+  const handleWordReturn = (wordId) => {
+    const word = canvasWords.find((w) => w.id === wordId);
+    if (word && word.type === "word") {
+      setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
+      setPoolWords((prev) => [
+        ...prev,
+        {
+          id: word.id,
+          text: word.text,
+          type: "word",
+        },
+      ]);
+    } else if (word && word.type === "punctuation") {
+      setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
+    }
   };
 
   if (!enabled) return null;
@@ -200,6 +142,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 onReturn={handleWordReturn}
                 template={activeTemplate}
                 preview={preview}
+                capitalizationMode={capitalizationMode}
               />
             </div>
           </div>
@@ -213,25 +156,33 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
             border-l border-[#2C8C7C]/10"
           >
             <ToolBar
-              onDepthChange={() => {
-                if (selectedWordId) {
-                  setCanvasWords((prev) =>
-                    prev.map((word) =>
-                      word.id === selectedWordId
-                        ? { ...word, depth: ((word.depth || 0) + 0.2) % 1 }
-                        : word
-                    )
-                  );
-                }
-              }}
-              onPreviewToggle={handlePreviewToggle}
+              onCapitalizationChange={() =>
+                handleCapitalizationChange(selectedWordId)
+              }
+              onPunctuationSelect={handlePunctuationSelect}
               onTemplateToggle={() => setShowTemplates(!showTemplates)}
+              onSignatureAdd={handleSignatureAdd}
+              onSignatureSelect={handleSignatureSelect}
+              onPreviewToggle={handlePreviewToggle}
+              onReset={() => {
+                const wordsToReturn = canvasWords
+                  .filter((w) => w.type === "word")
+                  .map((word) => ({
+                    id: word.id,
+                    text: word.text || word.content,
+                    type: "word",
+                  }));
+                setPoolWords((prev) => [...prev, ...wordsToReturn]);
+                setCanvasWords([]);
+                setSelectedWordId(null);
+              }}
               onComplete={handleComplete}
               activeTools={[
                 ...(showTemplates ? ["template"] : []),
                 ...(preview ? ["preview"] : []),
-                ...(selectedWordId ? ["depth"] : []),
+                ...(selectedWordId ? ["caps"] : []),
               ]}
+              signatures={signatures}
             />
           </div>
         </div>
