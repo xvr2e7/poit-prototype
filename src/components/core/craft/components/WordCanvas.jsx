@@ -9,6 +9,7 @@ const WordCanvas = ({
   onReturn,
   template,
   preview,
+  capitalizationMode,
 }) => {
   const handleCanvasClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -55,16 +56,20 @@ const WordCanvas = ({
         </div>
       )}
 
-      {/* Words */}
+      {/* Words and Punctuation */}
       {words.map((word) => (
         <WordComposer
           key={word.id}
-          word={word}
+          word={{
+            ...word,
+            text: word.text || word.content, // Handle both text and content properties
+          }}
           isSelected={selectedWordId === word.id}
           onSelect={onSelect}
           onMove={onMove}
           onReturn={onReturn}
           preview={preview}
+          capitalizationMode={capitalizationMode}
         />
       ))}
 

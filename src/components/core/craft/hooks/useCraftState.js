@@ -12,16 +12,46 @@ export const useCraftState = (selectedWords, onComplete) => {
       selectedWords.map((word, index) => ({
         id: `word-${index}`,
         content: word,
+        type: "word",
+        capitalization: "none",
       }))
     );
   }, [selectedWords]);
 
-  const handleFontSizeChange = () => {
-    setFontSize((prev) => (prev === "text-base" ? "text-lg" : "text-base"));
+  const handleCapitalizationChange = (selectedWordId) => {
+    if (!selectedWordId) return;
+
+    setCanvasWords((prev) =>
+      prev.map((word) => {
+        if (word.id === selectedWordId && word.type === "word") {
+          const nextState = {
+            none: "first",
+            first: "all",
+            all: "none",
+          }[word.capitalization || "none"];
+
+          return {
+            ...word,
+            capitalization: nextState,
+            originalText: word.originalText || word.text,
+          };
+        }
+        return word;
+      })
+    );
   };
 
-  const handleAlignmentChange = (newAlignment) => {
-    setAlignment(newAlignment);
+  const handlePunctuationSelect = (symbol) => {
+    const newPunctuation = {
+      id: `punct-${Date.now()}`,
+      text: symbol,
+      type: "punctuation",
+      position: {
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+      },
+    };
+    setCanvasWords((prev) => [...prev, newPunctuation]);
   };
 
   const handlePreviewToggle = () => {
@@ -29,16 +59,15 @@ export const useCraftState = (selectedWords, onComplete) => {
   };
 
   const handleComplete = () => {
-    // Create a properly structured poem object
     const poemData = {
-      words: canvasWords, // Using the current canvas words
+      words: canvasWords,
       metadata: {
         fontSize,
         alignment,
       },
       components: canvasWords.map((word) => ({
         ...word,
-        type: "word",
+        type: word.type,
       })),
     };
     onComplete(poemData);
@@ -52,8 +81,8 @@ export const useCraftState = (selectedWords, onComplete) => {
     fontSize,
     alignment,
     preview,
-    handleFontSizeChange,
-    handleAlignmentChange,
+    handleCapitalizationChange,
+    handlePunctuationSelect,
     handlePreviewToggle,
     handleComplete,
   };
