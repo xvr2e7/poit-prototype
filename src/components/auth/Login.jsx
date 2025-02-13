@@ -26,7 +26,7 @@ function Login({ onLogin, enterPlayground, onTestModeSelect }) {
         {/* Logo Area */}
         <div className="p-12">
           <motion.img
-            src="../../../public/favicon.svg"
+            src="./favicon.svg"
             alt="POiT"
             className="h-16 w-auto"
             initial={{ scale: 0.9 }}
