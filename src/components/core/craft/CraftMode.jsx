@@ -55,6 +55,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [activeTemplate, setActiveTemplate] = useState(null);
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [poolWords, setPoolWords] = useState([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     const initialWords = selectedWords.map((word) => {
@@ -165,16 +166,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
               onSignatureSelect={handleSignatureSelect}
               onPreviewToggle={handlePreviewToggle}
               onReset={() => {
-                const wordsToReturn = canvasWords
-                  .filter((w) => w.type === "word")
-                  .map((word) => ({
-                    id: word.id,
-                    text: word.text || word.content,
-                    type: "word",
-                  }));
-                setPoolWords((prev) => [...prev, ...wordsToReturn]);
-                setCanvasWords([]);
-                setSelectedWordId(null);
+                setShowResetConfirm(true);
               }}
               onComplete={handleComplete}
               activeTools={[
@@ -187,6 +179,50 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
           </div>
         </div>
       </div>
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setShowResetConfirm(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-950 rounded-xl border border-[#2C8C7C]/20 p-6 w-80 shadow-xl">
+            <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
+              Reset Canvas?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              This will return all words to the word pool. This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 text-[#2C8C7C] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const wordsToReturn = canvasWords
+                    .filter((w) => w.type === "word")
+                    .map((word) => ({
+                      id: word.id,
+                      text: word.text || word.content,
+                      type: "word",
+                    }));
+                  setPoolWords((prev) => [...prev, ...wordsToReturn]);
+                  setCanvasWords([]);
+                  setSelectedWordId(null);
+                  setShowResetConfirm(false);
+                }}
+                className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

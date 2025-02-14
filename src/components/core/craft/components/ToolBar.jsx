@@ -11,12 +11,7 @@ import {
   ArrowRightCircle,
 } from "lucide-react";
 
-import {
-  ToolButton,
-  ToolSeparator,
-  ToolGroup,
-  ConfirmDialog,
-} from "./ToolBarElements";
+import { ToolButton, ToolSeparator, ToolGroup } from "./ToolBarElements";
 
 import { ToolBarPanels } from "./ToolBarPanels";
 
@@ -32,7 +27,6 @@ const ToolBar = ({
   activeTools = [],
 }) => {
   const [openPanel, setOpenPanel] = useState(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [signatures, setSignatures] = useState(Array(5).fill(""));
 
   const handlePanelToggle = (panel) => {
@@ -106,11 +100,7 @@ const ToolBar = ({
         {/* Action Tools */}
         <ToolGroup className="mt-auto">
           <ToolSeparator />
-          <ToolButton
-            icon={RotateCcw}
-            label="Reset Canvas"
-            onClick={() => setShowResetConfirm(true)}
-          />
+          <ToolButton icon={RotateCcw} label="Reset Canvas" onClick={onReset} />
           <ToolButton
             icon={BookMarked}
             label="Preview Poem"
@@ -156,16 +146,6 @@ const ToolBar = ({
         signatures={signatures}
         onUpdate={setSignatures}
         onSelect={handleSignatureSelect}
-      />
-
-      {/* Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showResetConfirm}
-        onConfirm={() => {
-          onReset();
-          setShowResetConfirm(false);
-        }}
-        onCancel={() => setShowResetConfirm(false)}
       />
     </div>
   );
