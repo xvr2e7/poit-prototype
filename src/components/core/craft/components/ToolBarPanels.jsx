@@ -149,6 +149,22 @@ export const ToolBarPanels = {
 
   StopWords: ({ isOpen, onClose, onSelect }) => {
     const stopWords = [
+      { word: "I", category: "Pronouns" },
+      { word: "you", category: "Pronouns" },
+      { word: "he", category: "Pronouns" },
+      { word: "she", category: "Pronouns" },
+      { word: "it", category: "Pronouns" },
+      { word: "we", category: "Pronouns" },
+      { word: "they", category: "Pronouns" },
+      { word: "me", category: "Pronouns" },
+      { word: "him", category: "Pronouns" },
+      { word: "her", category: "Pronouns" },
+      { word: "us", category: "Pronouns" },
+      { word: "them", category: "Pronouns" },
+      { word: "my", category: "Pronouns" },
+      { word: "your", category: "Pronouns" },
+      { word: "our", category: "Pronouns" },
+      { word: "their", category: "Pronouns" },
       { word: "and", category: "Connectors" },
       { word: "but", category: "Connectors" },
       { word: "or", category: "Connectors" },
@@ -171,19 +187,19 @@ export const ToolBarPanels = {
 
     return (
       <Panel isOpen={isOpen} onClose={onClose} title="Common Words">
-        <div className="w-48 space-y-4">
+        <div className="w-96 space-y-4">
           {categories.map((category) => (
             <div key={category}>
               <h4 className="text-[#2C8C7C]/70 text-sm mb-2">{category}</h4>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {stopWords
                   .filter((w) => w.category === category)
                   .map(({ word }) => (
                     <button
                       key={word}
                       onClick={() => onSelect(word)}
-                      className="p-2 rounded-lg text-sm hover:bg-[#2C8C7C]/10 
-                        text-[#2C8C7C] text-center transition-colors"
+                      className="px-2 py-1.5 rounded-lg text-sm hover:bg-[#2C8C7C]/10 
+                      text-[#2C8C7C] text-center transition-colors"
                     >
                       {word}
                     </button>
