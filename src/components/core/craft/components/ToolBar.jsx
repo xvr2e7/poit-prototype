@@ -7,12 +7,8 @@ import {
   Star,
   RotateCcw,
   BookMarked,
-  Save,
-  ArrowRightCircle,
 } from "lucide-react";
-
 import { ToolButton, ToolSeparator, ToolGroup } from "./ToolBarElements";
-
 import { ToolBarPanels } from "./ToolBarPanels";
 
 const ToolBar = ({
@@ -21,9 +17,7 @@ const ToolBar = ({
   onTemplateToggle,
   onSignatureSelect,
   onPreviewToggle,
-  onSave,
   onReset,
-  onComplete,
   activeTools = [],
 }) => {
   const [openPanel, setOpenPanel] = useState(null);
@@ -35,15 +29,7 @@ const ToolBar = ({
 
   const handleSignatureSelect = (signature) => {
     if (signature.trim()) {
-      onSignatureSelect({
-        id: `word-${Date.now()}`,
-        text: signature,
-        type: "word",
-        position: {
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-        },
-      });
+      onSignatureSelect(signature);
       setOpenPanel(null);
     }
   };
@@ -106,14 +92,6 @@ const ToolBar = ({
             label="Preview Poem"
             onClick={onPreviewToggle}
             isActive={activeTools.includes("preview")}
-          />
-          {onSave && (
-            <ToolButton icon={Save} label="Save Draft" onClick={onSave} />
-          )}
-          <ToolButton
-            icon={ArrowRightCircle}
-            label="Complete Poem"
-            onClick={onComplete}
           />
         </ToolGroup>
       </div>
