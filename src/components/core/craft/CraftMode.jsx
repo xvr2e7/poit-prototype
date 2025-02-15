@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle } from "lucide-react";
+import { toPng } from "html-to-image";
 import WordCanvas from "./components/WordCanvas";
 import ToolBar from "./components/ToolBar";
+import PreviewModal from "./components/PreviewModal";
 import UIBackground from "../../shared/UIBackground";
 import { useCraftState } from "./hooks/useCraftState";
 
@@ -40,15 +42,14 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     words,
     canvasWords,
     setCanvasWords,
+    fontSize,
+    alignment,
     preview,
-    capitalizationMode,
-    signatures,
     handleCapitalizationChange,
     handlePunctuationSelect,
     handleSignatureAdd,
     handleSignatureSelect,
     handlePreviewToggle,
-    handleComplete,
   } = useCraftState(selectedWords, onComplete);
 
   const [showTemplates, setShowTemplates] = useState(false);
@@ -56,7 +57,10 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [poolWords, setPoolWords] = useState([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const canvasRef = useRef(null);
 
+  // Initialize pool words from selected words
   useEffect(() => {
     const initialWords = selectedWords.map((word) => {
       const text = typeof word === "string" ? word : word.text;
@@ -109,6 +113,103 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!canvasRef.current) return;
+
+    try {
+      // Get the container dimensions
+      const container = canvasRef.current;
+      const { width, height } = container.getBoundingClientRect();
+
+      // Create a temporary wrapper with specific styling for capture
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "absolute";
+      wrapper.style.left = "-9999px";
+      wrapper.style.top = "-9999px";
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+      wrapper.style.transform = "none";
+      wrapper.style.transformOrigin = "top left";
+
+      // Clone the content for capture
+      const clone = container.cloneNode(true);
+      clone.style.transform = "none";
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      // Capture the content
+      const dataUrl = await toPng(clone, {
+        quality: 1,
+        width: width,
+        height: height,
+        style: {
+          transform: "none",
+          transformOrigin: "top left",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "40px",
+          background: "white",
+        },
+        filter: (node) => {
+          return !node.classList?.contains("ui-control");
+        },
+      });
+
+      // Clean up
+      document.body.removeChild(wrapper);
+
+      // Trigger download
+      const link = document.createElement("a");
+      link.download = `poit-poem-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Error saving image:", err);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!canvasRef.current) return;
+
+    try {
+      const dataUrl = await toPng(canvasRef.current, {
+        quality: 0.95,
+        backgroundColor: "white",
+      });
+
+      window.open(
+        `https://x.com/intent/post?text=Check%20out%20my%20poem%20on%20POiT!`
+      );
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
+  const handleContinue = () => {
+    setIsPreviewOpen(false);
+    const poemData = {
+      words: canvasWords,
+      metadata: {
+        createdAt: new Date().toISOString(),
+        layout: {
+          fontSize,
+          alignment,
+          template: activeTemplate,
+        },
+      },
+      components: canvasWords.map((word) => ({
+        ...word,
+        type: word.type || "word",
+        position: {
+          x: word.position?.x || 0,
+          y: word.position?.y || 0,
+        },
+      })),
+    };
+    onComplete(poemData);
+  };
+
   if (!enabled) return null;
 
   return (
@@ -143,7 +244,6 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 onReturn={handleWordReturn}
                 template={activeTemplate}
                 preview={preview}
-                capitalizationMode={capitalizationMode}
               />
             </div>
           </div>
@@ -164,22 +264,40 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
               onTemplateToggle={() => setShowTemplates(!showTemplates)}
               onSignatureAdd={handleSignatureAdd}
               onSignatureSelect={handleSignatureSelect}
-              onPreviewToggle={handlePreviewToggle}
-              onReset={() => {
-                setShowResetConfirm(true);
-              }}
-              onComplete={handleComplete}
+              onPreviewToggle={() => setIsPreviewOpen(true)}
+              onReset={() => setShowResetConfirm(true)}
               activeTools={[
                 ...(showTemplates ? ["template"] : []),
                 ...(preview ? ["preview"] : []),
                 ...(selectedWordId ? ["caps"] : []),
               ]}
-              signatures={signatures}
             />
           </div>
         </div>
       </div>
 
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onDownload={handleDownload}
+        onShare={handleShare}
+        onContinue={handleContinue}
+      >
+        <div ref={canvasRef} className="w-full h-full">
+          <WordCanvas
+            words={canvasWords}
+            preview={true}
+            selectedWordId={null}
+            onSelect={() => {}}
+            onMove={() => {}}
+            onReturn={() => {}}
+            template={activeTemplate}
+          />
+        </div>
+      </PreviewModal>
+
+      {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
