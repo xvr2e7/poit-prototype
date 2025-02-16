@@ -7,6 +7,7 @@ function Navigation({
   setCurrentMode,
   lockedModes,
   inPlayground,
+  onExit,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const accentColor = "#2C8C7C";
@@ -114,7 +115,7 @@ function Navigation({
                   icon={LogOut}
                   label="Return to Menu"
                   color={accentColor}
-                  onClick={() => setIsOpen(false)}
+                  onClick={onExit}
                 />
               </div>
             </motion.div>
