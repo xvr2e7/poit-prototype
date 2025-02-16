@@ -37,7 +37,13 @@ const WordPool = ({ words, onWordSelect }) => {
   );
 };
 
-const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
+const CraftMode = ({
+  selectedWords = [],
+  onComplete,
+  enabled = true,
+  isPlayground = false,
+  onPremiumFeature,
+}) => {
   const {
     words,
     canvasWords,
@@ -48,7 +54,6 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     handleCapitalizationChange,
     handlePunctuationSelect,
     handleSignatureAdd,
-    handleSignatureSelect,
     handlePreviewToggle,
   } = useCraftState(selectedWords, onComplete);
 
@@ -58,6 +63,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [poolWords, setPoolWords] = useState([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState(null);
   const canvasRef = useRef(null);
 
   // Initialize pool words from selected words
@@ -113,7 +119,31 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     }
   };
 
+  // Premium and template handlers
+  const handlePremiumFeature = (feature) => {
+    if (isPlayground && onPremiumFeature) {
+      onPremiumFeature(feature);
+    }
+  };
+
+  const handleTemplateToggle = () => {
+    setShowTemplates(!showTemplates);
+  };
+
+  const handleSignatureSelect = () => {
+    if (isPlayground) {
+      handlePremiumFeature("signature");
+    } else {
+      handleSignatureAdd();
+    }
+  };
+
   const handleDownload = async () => {
+    if (isPlayground) {
+      handlePremiumFeature("download");
+      return;
+    }
+
     if (!canvasRef.current) return;
 
     try {
@@ -170,6 +200,11 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   };
 
   const handleShare = async () => {
+    if (isPlayground) {
+      handlePremiumFeature("share");
+      return;
+    }
+
     if (!canvasRef.current) return;
 
     try {
@@ -187,6 +222,11 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   };
 
   const handleContinue = () => {
+    if (isPlayground) {
+      handlePremiumFeature("continue");
+      return;
+    }
+
     setIsPreviewOpen(false);
     const poemData = {
       words: canvasWords,
@@ -261,7 +301,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 handleCapitalizationChange(selectedWordId)
               }
               onPunctuationSelect={handlePunctuationSelect}
-              onTemplateToggle={() => setShowTemplates(!showTemplates)}
+              onTemplateToggle={handleTemplateToggle}
               onSignatureAdd={handleSignatureAdd}
               onSignatureSelect={handleSignatureSelect}
               onPreviewToggle={() => setIsPreviewOpen(true)}
@@ -271,6 +311,8 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 ...(preview ? ["preview"] : []),
                 ...(selectedWordId ? ["caps"] : []),
               ]}
+              isPlayground={isPlayground}
+              onPremiumFeature={handlePremiumFeature}
             />
           </div>
         </div>
@@ -283,6 +325,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
         onDownload={handleDownload}
         onShare={handleShare}
         onContinue={handleContinue}
+        isPlayground={isPlayground}
       >
         <div ref={canvasRef} className="w-full h-full">
           <WordCanvas
