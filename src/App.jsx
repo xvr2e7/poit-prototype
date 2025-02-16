@@ -5,9 +5,9 @@ import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import Playground from "./components/playground/PlayMode";
+import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 import { TEST_WORDS } from "./utils/testData/craftTestData";
 import { TEST_POEMS, isHighlightedWord } from "./utils/testData/echoTestData";
-import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 
 function App() {
   const [currentMode, setCurrentMode] = useState("pulse");
@@ -18,6 +18,8 @@ function App() {
   const [selectedWords, setSelectedWords] = useState([]);
   const [currentPoem, setCurrentPoem] = useState(null);
   const [testPoems, setTestPoems] = useState([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authSource, setAuthSource] = useState(null);
 
   // Process words from test data to include type and positioning
   const processTestWords = (words) => {
@@ -44,7 +46,6 @@ function App() {
       // For testing Echo Mode, process test poems
       const processedPoems = TEST_POEMS.map((poem) => ({
         ...poem,
-        // Update highlighted word count based on TEST_WORDS
         metadata: {
           ...poem.metadata,
           highlightedWordCount: poem.components.filter((component) =>
@@ -67,11 +68,22 @@ function App() {
   };
 
   const enterPlayground = () => {
-    setIsAuthenticated(true);
     setInPlayground(true);
   };
 
-  // Handle completion of Pulse mode - words should be processed into components
+  const exitPlayground = () => {
+    setInPlayground(false);
+    setCurrentMode("pulse");
+    setSelectedWords([]);
+  };
+
+  // Handle login request from playground
+  const handleLoginRequest = (source) => {
+    setAuthSource(source);
+    setShowAuthModal(true);
+  };
+
+  // Handle completion of Pulse mode
   const handlePulseComplete = (words = []) => {
     const processedWords = words.map((word) => ({
       text: word,
@@ -84,11 +96,10 @@ function App() {
   };
 
   const handleCraftComplete = (poemData) => {
-    // Create a properly structured poem object for Echo mode
     const processedPoem = {
       id: `poem-${Date.now()}`,
-      title: "Untitled Poem", // Add a title input in Craft mode later
-      author: "Anonymous", // Get this from user state later
+      title: "Untitled Poem",
+      author: "Anonymous",
       date: new Date().toISOString().split("T")[0],
       components: poemData.components,
       metadata: {
@@ -102,49 +113,7 @@ function App() {
     setCurrentMode("echo");
   };
 
-  const renderMode = () => {
-    if (inPlayground) {
-      return <Playground />;
-    }
-
-    switch (currentMode) {
-      case "pulse":
-        return <PulseMode onComplete={handlePulseComplete} />;
-
-      case "craft":
-        return (
-          <CraftMode
-            onComplete={handleCraftComplete}
-            selectedWords={selectedWords}
-            enabled={!lockedModes.craft}
-          />
-        );
-
-      case "echo": {
-        // Use either test poems or real poems
-        const poems = testPoems.length > 0 ? testPoems : [currentPoem];
-
-        // Determine word pool for highlighting
-        const wordPool = testPoems.length > 0 ? TEST_WORDS : selectedWords;
-
-        return (
-          <EchoMode
-            onComplete={unlockPlayground}
-            playgroundUnlocked={playgroundUnlocked}
-            enterPlayground={enterPlayground}
-            enabled={!lockedModes.echo}
-            poems={poems}
-            wordPool={wordPool}
-          />
-        );
-      }
-
-      default:
-        return <PulseMode onComplete={handlePulseComplete} />;
-    }
-  };
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !inPlayground) {
     return (
       <div className="w-full min-h-screen relative">
         <AdaptiveBackground />
@@ -152,6 +121,21 @@ function App() {
           onLogin={() => setIsAuthenticated(true)}
           enterPlayground={enterPlayground}
           onTestModeSelect={handleTestModeSelect}
+          showAuthModal={showAuthModal}
+          onCloseAuthModal={() => setShowAuthModal(false)}
+          authSource={authSource}
+        />
+      </div>
+    );
+  }
+
+  if (inPlayground) {
+    return (
+      <div className="w-full min-h-screen relative">
+        <AdaptiveBackground />
+        <Playground
+          onExit={exitPlayground}
+          onLoginRequest={handleLoginRequest}
         />
       </div>
     );
@@ -159,10 +143,8 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Background that adapts to theme */}
       <AdaptiveBackground />
 
-      {/* Navigation with theme-aware styling */}
       {currentMode !== "pulse" && (
         <Navigation
           currentMode={currentMode}
@@ -172,8 +154,30 @@ function App() {
         />
       )}
 
-      {/* Main content */}
-      <main className="flex-1 w-full relative">{renderMode()}</main>
+      <main className="flex-1 w-full relative">
+        {currentMode === "pulse" && (
+          <PulseMode onComplete={handlePulseComplete} />
+        )}
+
+        {currentMode === "craft" && (
+          <CraftMode
+            onComplete={handleCraftComplete}
+            selectedWords={selectedWords}
+            enabled={!lockedModes.craft}
+          />
+        )}
+
+        {currentMode === "echo" && (
+          <EchoMode
+            onComplete={unlockPlayground}
+            playgroundUnlocked={playgroundUnlocked}
+            enterPlayground={enterPlayground}
+            enabled={!lockedModes.echo}
+            poems={testPoems.length > 0 ? testPoems : [currentPoem]}
+            wordPool={testPoems.length > 0 ? TEST_WORDS : selectedWords}
+          />
+        )}
+      </main>
     </div>
   );
 }
