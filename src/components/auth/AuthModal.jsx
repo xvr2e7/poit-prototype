@@ -89,7 +89,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, feature }) => {
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800
                       border border-gray-200 dark:border-gray-700 rounded-xl
-                      focus:outline-none focus:ring-2 focus:ring-violet-500
+                      focus:outline-none focus:ring-2 focus:ring-[#2C8C7C]
                       text-gray-900 dark:text-white placeholder:text-gray-500"
                   />
                 </div>
@@ -103,7 +103,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, feature }) => {
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800
                       border border-gray-200 dark:border-gray-700 rounded-xl
-                      focus:outline-none focus:ring-2 focus:ring-violet-500
+                      focus:outline-none focus:ring-2 focus:ring-[#2C8C7C]
                       text-gray-900 dark:text-white placeholder:text-gray-500"
                   />
                 </div>
@@ -112,7 +112,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, feature }) => {
               {/* Sign In Button */}
               <button
                 onClick={handleSubmit}
-                className="w-full py-2 px-4 bg-violet-500 hover:bg-violet-600
+                className="w-full py-2 px-4 bg-[#2C8C7C] hover:bg-[#2C8C7C]/90
                   text-white rounded-xl transition-colors duration-200"
               >
                 {mode === "login" ? "Sign In" : "Create Account"}
@@ -176,8 +176,8 @@ const AuthModal = ({ isOpen, onClose, onLogin, feature }) => {
                   onClick={() =>
                     setMode(mode === "login" ? "register" : "login")
                   }
-                  className="text-sm text-violet-500 hover:text-violet-600
-                    dark:text-violet-400 dark:hover:text-violet-300 transition-colors"
+                  className="text-sm text-[#2C8C7C] hover:text-[#2C8C7C]/90
+                    dark:text-[#2C8C7C] dark:hover:text-[#2C8C7C]/90 transition-colors"
                 >
                   {mode === "login"
                     ? "Don't have an account?"
