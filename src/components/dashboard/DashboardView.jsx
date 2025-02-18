@@ -20,22 +20,31 @@ const DashboardView = ({ userData, onStartPoiT, onOpenPoemlet }) => {
       {/* Main Content */}
       <main className="container mx-auto max-w-[1400px] pt-24">
         <div className="grid grid-cols-12 gap-12">
-          {/* Left Column */}
+          {/* Left Column: Poemlet */}
           <div className="col-span-3">
             <div className="space-y-6">
               <PoemletCard poems={userData.poems} onOpen={onOpenPoemlet} />
             </div>
           </div>
 
-          {/* Center Column */}
+          {/* Center Column: Featured & Feed */}
           <div className="col-span-6">
             <FeaturedBoard poems={userData.featured} className="mb-12" />
             <PoemFeed className="mt-12" />
           </div>
 
-          {/* Right Column */}
+          {/* Right Column: Daily Portal */}
           <div className="col-span-3">
-            <div className="sticky top-1/2 -translate-y-1/2 pt-12">
+            <div className="w-full h-px" />
+            <div
+              className="fixed"
+              style={{
+                right: "calc((100vw - 1400px) / 2 + 24px)",
+                top: "50vh",
+                transform: "translateY(-50%)",
+                width: "calc((1400px / 12) * 3 - 48px)",
+              }}
+            >
               <DailyPortal onEnter={onStartPoiT} />
             </div>
           </div>
