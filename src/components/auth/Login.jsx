@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "../shared/AdaptiveBackground";
 import { InitialView, AuthModal } from "./InitialView";
+import DailyPoemPanel from "./DailyPoemPanel";
 
 function Login({ onLogin, enterPlayground, onTestModeSelect }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -16,7 +17,7 @@ function Login({ onLogin, enterPlayground, onTestModeSelect }) {
 
   return (
     <div className="w-full min-h-screen flex">
-      {/* Left Panel - Decorative Content */}
+      {/* Left Panel */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -35,40 +36,8 @@ function Login({ onLogin, enterPlayground, onTestModeSelect }) {
           />
         </div>
 
-        {/* Decorative Poetry */}
-        <div className="flex-1 relative p-12">
-          <div className="space-y-6">
-            {[
-              "Do not go gentle into that good night,",
-              "Old age should burn and rave at close of day;",
-              "Rage, rage against the dying of the light.",
-              "Though wise men at their end know dark is right,",
-              "Because their words had forked no lightning they",
-              "Do not go gentle into that good night.",
-            ].map((text, i) => (
-              <motion.div
-                key={text}
-                className="relative"
-                animate={{
-                  y: [0, -10, 0],
-                  opacity: [0.7, 1, 0.7],
-                }}
-                transition={{
-                  duration: 4 + i,
-                  repeat: Infinity,
-                  delay: i * 0.5,
-                }}
-              >
-                <h2
-                  className="text-xl font-light dark:text-white/40 text-gray-400/90"
-                  style={{ fontFamily: "Space Mono, monospace" }}
-                >
-                  {text}
-                </h2>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+        {/* Daily Poem Panel */}
+        <DailyPoemPanel />
 
         {/* Footnote */}
         <div className="text-xl font-light text-gray-600/90 dark:text-white/60 mb-6 ml-6">
