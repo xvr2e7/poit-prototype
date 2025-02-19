@@ -34,13 +34,11 @@ const WordComposer = ({
 
     const now = Date.now();
     if (now - lastClickTime.current < 300) {
-      // Double click detected
       onReturn?.(word.id);
       return;
     }
     lastClickTime.current = now;
 
-    // Calculate offset from the word's top-left corner
     const rect = elementRef.current.getBoundingClientRect();
     dragOffset.current = {
       x: e.clientX - rect.left,
@@ -49,7 +47,6 @@ const WordComposer = ({
 
     setIsDragging(true);
     onSelect?.(word.id);
-
     elementRef.current.setPointerCapture(e.pointerId);
   };
 

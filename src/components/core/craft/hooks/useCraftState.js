@@ -18,6 +18,19 @@ export const useCraftState = (selectedWords, onComplete) => {
     );
   }, [selectedWords]);
 
+  const handleSignatureAdd = (signature) => {
+    const newSignature = {
+      id: `signature-${Date.now()}`,
+      text: signature,
+      type: "signature",
+      position: {
+        x: Math.random() * 300 + 50,
+        y: Math.random() * 200 + 50,
+      },
+    };
+    setCanvasWords((prev) => [...prev, newSignature]);
+  };
+
   const handleCapitalizationChange = (selectedWordId) => {
     if (!selectedWordId) return;
 
@@ -83,7 +96,8 @@ export const useCraftState = (selectedWords, onComplete) => {
     preview,
     handleCapitalizationChange,
     handlePunctuationSelect,
-    handlePreviewToggle,
+    handleSignatureAdd,
+    handlePreviewToggle: () => setPreview((prev) => !prev),
     handleComplete,
   };
 };

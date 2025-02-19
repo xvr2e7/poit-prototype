@@ -104,8 +104,12 @@ const CraftMode = ({
 
   const handleWordReturn = (wordId) => {
     const word = canvasWords.find((w) => w.id === wordId);
-    if (word && word.type === "word") {
-      setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
+    if (!word) return;
+
+    // Remove the word from canvas
+    setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
+
+    if (word.type === "word") {
       setPoolWords((prev) => [
         ...prev,
         {
@@ -114,8 +118,11 @@ const CraftMode = ({
           type: "word",
         },
       ]);
-    } else if (word && word.type === "punctuation") {
-      setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
+    }
+
+    // Clear selected word if it was selected
+    if (selectedWordId === wordId) {
+      setSelectedWordId(null);
     }
   };
 
@@ -130,11 +137,12 @@ const CraftMode = ({
     setShowTemplates(!showTemplates);
   };
 
-  const handleSignatureSelect = () => {
+  const handleSignatureSelect = (signature) => {
     if (isPlayground) {
       handlePremiumFeature("signature");
     } else {
-      handleSignatureAdd();
+      handleSignatureAdd(signature);
+      setOpenPanel(null);
     }
   };
 
