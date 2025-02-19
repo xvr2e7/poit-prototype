@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { poetryService } from "../../../server/src/services/poetryService";
+import { poetryService } from "../../utils/poetryService";
 
 const LoadingAnimation = () => (
   <motion.div

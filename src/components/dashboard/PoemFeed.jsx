@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Loader, RotateCw } from "lucide-react";
-import { poetryService } from "../../../server/src/services/poetryService";
+import { poetryService } from "../../utils/poetryService";
 import PoemModal from "./PoemModal";
 
 const PoemCard = ({ poem, onSave, onClick }) => (
@@ -52,8 +52,8 @@ const PoemFeed = ({ className = "" }) => {
   const fetchNewPoem = async () => {
     try {
       setIsRegenerating(true);
-      const poems = await poetryService.getPoems(1, 1);
-      setCurrentPoem(poems[0]); // We already have the full poem here
+      const poems = await poetryService.getFeedPoems(1);
+      setCurrentPoem(poems[0]);
     } catch (error) {
       console.error("Error fetching poem:", error);
     } finally {
