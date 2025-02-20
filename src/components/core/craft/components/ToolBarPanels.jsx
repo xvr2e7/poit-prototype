@@ -118,10 +118,75 @@ export const ToolBarPanels = {
 
   Template: ({ isOpen, onClose, onSelect }) => {
     const templates = [
-      { name: "Sonnet", desc: "14 lines, traditional rhyme schemes" },
-      { name: "Haiku", desc: "3 lines, 5-7-5 syllable pattern" },
-      { name: "Free Verse", desc: "Unrestricted form, natural flow" },
-      { name: "Villanelle", desc: "19 lines with repeating refrains" },
+      {
+        id: "sonnet",
+        name: "Sonnet",
+        desc: "14 lines with traditional form",
+        preview: {
+          points: [
+            // First 8 lines (octave)
+            ...Array(8)
+              .fill()
+              .map((_, i) => ({
+                x: 20,
+                y: 15 + i * 8,
+              })),
+            // Last 6 lines (sestet)
+            ...Array(6)
+              .fill()
+              .map((_, i) => ({
+                x: 20,
+                y: 80 + i * 8,
+              })),
+          ],
+        },
+      },
+      {
+        id: "haiku",
+        name: "Haiku",
+        desc: "3 lines in 5-7-5 pattern",
+        preview: {
+          points: [
+            // First line (5)
+            ...Array(5)
+              .fill()
+              .map((_, i) => ({
+                x: 20 + i * 12,
+                y: 30,
+              })),
+            // Second line (7)
+            ...Array(7)
+              .fill()
+              .map((_, i) => ({
+                x: 15 + i * 10,
+                y: 50,
+              })),
+            // Third line (5)
+            ...Array(5)
+              .fill()
+              .map((_, i) => ({
+                x: 20 + i * 12,
+                y: 70,
+              })),
+          ],
+        },
+      },
+      {
+        id: "lushi",
+        name: "Lüshi",
+        desc: "8 lines of regulated verse",
+        preview: {
+          points: [
+            // 8 lines
+            ...Array(8)
+              .fill()
+              .map((_, i) => ({
+                x: 20,
+                y: 20 + i * 8,
+              })),
+          ],
+        },
+      },
     ];
 
     return (
@@ -129,9 +194,9 @@ export const ToolBarPanels = {
         <div className="w-80 grid grid-cols-1 gap-3">
           {templates.map((template) => (
             <button
-              key={template.name}
+              key={template.id}
               onClick={() => {
-                onSelect(template.name.toLowerCase());
+                onSelect(template.id);
                 onClose();
               }}
               className="p-4 rounded-lg border border-[#2C8C7C]/20 
@@ -140,6 +205,22 @@ export const ToolBarPanels = {
             >
               <div className="text-[#2C8C7C] font-medium">{template.name}</div>
               <p className="mt-1 text-sm text-[#2C8C7C]/60">{template.desc}</p>
+
+              {/* Template Preview */}
+              <div className="mt-3 h-24 rounded-md bg-[#2C8C7C]/5 overflow-hidden">
+                <div className="w-full h-full relative">
+                  {template.preview.points.map((point, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-1 h-1 rounded-full bg-[#2C8C7C]/40"
+                      style={{
+                        left: `${point.x}%`,
+                        top: `${point.y}%`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </button>
           ))}
         </div>

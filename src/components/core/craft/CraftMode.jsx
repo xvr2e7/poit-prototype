@@ -7,6 +7,8 @@ import ToolBar from "./components/ToolBar";
 import PreviewModal from "./components/PreviewModal";
 import UIBackground from "../../shared/UIBackground";
 import { useCraftState } from "./hooks/useCraftState";
+import { useTemplate } from "./hooks/useTemplate";
+import TemplateGuide from "./components/TemplateGuide";
 
 const WordPool = ({ words, onWordSelect }) => {
   return (
@@ -27,7 +29,7 @@ const WordPool = ({ words, onWordSelect }) => {
               <span className="flex-1 font-medium">{word.text}</span>
               <PlusCircle
                 className="w-4 h-4 text-[#2C8C7C] opacity-0 
-                  group-hover:opacity-100 transition-opacity"
+                group-hover:opacity-100 transition-opacity"
               />
             </motion.button>
           ))}
@@ -57,13 +59,21 @@ const CraftMode = ({
     handlePreviewToggle,
   } = useCraftState(selectedWords, onComplete);
 
-  const [showTemplates, setShowTemplates] = useState(false);
-  const [activeTemplate, setActiveTemplate] = useState(null);
+  const {
+    activeTemplate,
+    guideIntensity,
+    hoveredPosition,
+    activateTemplate,
+    deactivateTemplate,
+    handlePositionHover,
+    adjustWordPosition,
+  } = useTemplate();
+
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [poolWords, setPoolWords] = useState([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [openPanel, setOpenPanel] = useState(null);
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
   const canvasRef = useRef(null);
 
   // Initialize pool words from selected words
@@ -93,8 +103,15 @@ const CraftMode = ({
   };
 
   const handleWordMove = (wordId, position) => {
+    // Get adjusted position if template is active
+    const adjustedPosition = activeTemplate
+      ? adjustWordPosition(wordId, position)
+      : position;
+
     setCanvasWords((prev) =>
-      prev.map((word) => (word.id === wordId ? { ...word, position } : word))
+      prev.map((word) =>
+        word.id === wordId ? { ...word, position: adjustedPosition } : word
+      )
     );
   };
 
@@ -106,7 +123,6 @@ const CraftMode = ({
     const word = canvasWords.find((w) => w.id === wordId);
     if (!word) return;
 
-    // Remove the word from canvas
     setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
 
     if (word.type === "word") {
@@ -120,13 +136,11 @@ const CraftMode = ({
       ]);
     }
 
-    // Clear selected word if it was selected
     if (selectedWordId === wordId) {
       setSelectedWordId(null);
     }
   };
 
-  // Premium and template handlers
   const handlePremiumFeature = (feature) => {
     if (isPlayground && onPremiumFeature) {
       onPremiumFeature(feature);
@@ -134,7 +148,16 @@ const CraftMode = ({
   };
 
   const handleTemplateToggle = () => {
-    setShowTemplates(!showTemplates);
+    setShowTemplatePanel((prev) => !prev);
+  };
+
+  const handleTemplateSelect = (templateId) => {
+    if (isPlayground) {
+      onPremiumFeature?.("template");
+      return;
+    }
+    activateTemplate(templateId);
+    setShowTemplatePanel(false);
   };
 
   const handleSignatureSelect = (signature) => {
@@ -155,31 +178,8 @@ const CraftMode = ({
     if (!canvasRef.current) return;
 
     try {
-      // Get the container dimensions
-      const container = canvasRef.current;
-      const { width, height } = container.getBoundingClientRect();
-
-      // Create a temporary wrapper with specific styling for capture
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "absolute";
-      wrapper.style.left = "-9999px";
-      wrapper.style.top = "-9999px";
-      wrapper.style.width = `${width}px`;
-      wrapper.style.height = `${height}px`;
-      wrapper.style.transform = "none";
-      wrapper.style.transformOrigin = "top left";
-
-      // Clone the content for capture
-      const clone = container.cloneNode(true);
-      clone.style.transform = "none";
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
-      // Capture the content
-      const dataUrl = await toPng(clone, {
+      const dataUrl = await toPng(canvasRef.current, {
         quality: 1,
-        width: width,
-        height: height,
         style: {
           transform: "none",
           transformOrigin: "top left",
@@ -189,15 +189,9 @@ const CraftMode = ({
           padding: "40px",
           background: "white",
         },
-        filter: (node) => {
-          return !node.classList?.contains("ui-control");
-        },
+        filter: (node) => !node.classList?.contains("ui-control"),
       });
 
-      // Clean up
-      document.body.removeChild(wrapper);
-
-      // Trigger download
       const link = document.createElement("a");
       link.download = `poit-poem-${Date.now()}.png`;
       link.href = dataUrl;
@@ -212,8 +206,6 @@ const CraftMode = ({
       handlePremiumFeature("share");
       return;
     }
-
-    if (!canvasRef.current) return;
 
     try {
       const dataUrl = await toPng(canvasRef.current, {
@@ -279,11 +271,23 @@ const CraftMode = ({
         <div className="flex-1 flex flex-col">
           <div className="flex-1 relative m-6">
             <div
+              ref={canvasRef}
               className="absolute inset-0 rounded-2xl 
-              bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
-              border border-[#2C8C7C]/10 overflow-hidden
-              shadow-[inset_0_0_100px_rgba(44,140,124,0.03)]"
+                bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
+                border border-[#2C8C7C]/10 overflow-hidden
+                shadow-[inset_0_0_100px_rgba(44,140,124,0.03)]"
             >
+              {/* Template guide layer */}
+              {activeTemplate && (
+                <TemplateGuide
+                  template={activeTemplate}
+                  isActive={true}
+                  onHover={handlePositionHover}
+                  className="absolute inset-0 z-0"
+                />
+              )}
+
+              {/* Word canvas */}
               <WordCanvas
                 words={canvasWords}
                 selectedWordId={selectedWordId}
@@ -292,6 +296,7 @@ const CraftMode = ({
                 onReturn={handleWordReturn}
                 template={activeTemplate}
                 preview={preview}
+                className="relative z-10"
               />
             </div>
           </div>
@@ -310,12 +315,13 @@ const CraftMode = ({
               }
               onPunctuationSelect={handlePunctuationSelect}
               onTemplateToggle={handleTemplateToggle}
+              onTemplateSelect={handleTemplateSelect}
               onSignatureAdd={handleSignatureAdd}
               onSignatureSelect={handleSignatureSelect}
               onPreviewToggle={() => setIsPreviewOpen(true)}
               onReset={() => setShowResetConfirm(true)}
               activeTools={[
-                ...(showTemplates ? ["template"] : []),
+                ...(showTemplatePanel ? ["template"] : []),
                 ...(preview ? ["preview"] : []),
                 ...(selectedWordId ? ["caps"] : []),
               ]}
@@ -355,7 +361,10 @@ const CraftMode = ({
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setShowResetConfirm(false)}
           />
-          <div className="relative bg-white dark:bg-gray-950 rounded-xl border border-[#2C8C7C]/20 p-6 w-80 shadow-xl">
+          <div
+            className="relative bg-white dark:bg-gray-950 rounded-xl 
+            border border-[#2C8C7C]/20 p-6 w-80 shadow-xl"
+          >
             <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
               Reset Canvas?
             </h3>
@@ -366,7 +375,8 @@ const CraftMode = ({
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 text-[#2C8C7C] transition-colors"
+                className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 
+                  text-[#2C8C7C] transition-colors"
               >
                 Cancel
               </button>
@@ -382,9 +392,11 @@ const CraftMode = ({
                   setPoolWords((prev) => [...prev, ...wordsToReturn]);
                   setCanvasWords([]);
                   setSelectedWordId(null);
+                  deactivateTemplate();
                   setShowResetConfirm(false);
                 }}
-                className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
+                  hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
               >
                 Reset
               </button>

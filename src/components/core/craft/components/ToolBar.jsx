@@ -37,6 +37,7 @@ const ToolBar = ({
   onCapitalizationChange,
   onPunctuationSelect,
   onTemplateToggle,
+  onTemplateSelect,
   onSignatureSelect,
   onPreviewToggle,
   onReset,
@@ -51,11 +52,12 @@ const ToolBar = ({
     setOpenPanel(openPanel === panel ? null : panel);
   };
 
-  const handleTemplateSelect = () => {
+  const handleTemplateSelect = (templateId) => {
     if (isPlayground) {
       onPremiumFeature?.("template");
     } else {
-      onTemplateToggle();
+      onTemplateSelect(templateId);
+      setOpenPanel(null);
     }
   };
 
@@ -164,10 +166,7 @@ const ToolBar = ({
           <ToolBarPanels.Template
             isOpen={openPanel === "template"}
             onClose={() => setOpenPanel(null)}
-            onSelect={(template) => {
-              onTemplateToggle(template);
-              setOpenPanel(null);
-            }}
+            onSelect={handleTemplateSelect}
           />
 
           <ToolBarPanels.Signatures
