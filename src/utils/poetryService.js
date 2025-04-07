@@ -1,134 +1,9 @@
 const BASE_POETRYDB_URL = "https://poetrydb.org";
 
-class Stands4Service {
-  constructor() {
-    this.baseUrl = `${import.meta.env.VITE_API_URL}/poetry/stands4`;
-  }
-
-  async getDailyPoem() {
-    const query = this.getDailyQuery();
-
-    try {
-      const apiParams = {
-        term: query,
-        p: "poetry",
-        format: "json",
-      };
-
-      console.log("Requesting daily STANDS4 poem with params:", apiParams);
-
-      const queryParams = new URLSearchParams(apiParams);
-      const response = await fetch(`${this.baseUrl}?${queryParams}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("STANDS4 raw response:", data); // Debug log
-
-      if (!data?.result) {
-        throw new Error("No poem found in STANDS4 response");
-      }
-
-      const poem = Array.isArray(data.result) ? data.result[0] : data.result;
-      console.log("Raw poem data:", poem); // Debug log
-
-      return this.formatPoem(poem);
-    } catch (error) {
-      console.error("Error fetching from STANDS4:", error);
-      return null;
-    }
-  }
-
-  formatPoem(poem) {
-    if (!poem) return null;
-
-    // Process author - now using poet field
-    const author = poem.poet || poem.author || "Unknown";
-    const cleanedAuthor = author === "null" ? "Unknown" : author.trim();
-
-    // Process title
-    const title = poem.title || "";
-    const cleanedTitle = title === "null" ? "Untitled" : title.trim();
-
-    // Full poem text processing
-    let poemText = poem.poem || "";
-
-    // Try to extract full text from different possible fields
-    if (poem.full_text) {
-      poemText = poem.full_text;
-    } else if (poem.content) {
-      poemText = poem.content;
-    }
-
-    poemText = poemText
-      .replace(/\\n/g, "\n")
-      .replace(/\r\n/g, "\n")
-      .replace(/\\r\\n/g, "\n")
-      .replace(/\n\s*\n/g, "\n")
-      .trim();
-
-    const lines = poemText
-      .split("\n")
-      .map((line) => {
-        return line
-          .trim()
-          .replace(/^['"]|['"]$/g, "")
-          .replace(/\\['\"]/g, "$1");
-      })
-      .filter((line) => line.length > 0);
-
-    console.log("Formatted poem:", {
-      title: cleanedTitle,
-      author: cleanedAuthor,
-      lineCount: lines.length,
-      lines,
-    });
-
-    return {
-      title: cleanedTitle,
-      author: cleanedAuthor,
-      lines,
-      year: poem.year || "Unknown",
-      source: "stands4",
-    };
-  }
-
-  getDailyQuery() {
-    // Mock list of keywords
-    const queries = [
-      "love",
-      "light",
-      "time",
-      "dream",
-      "hope",
-      "life",
-      "nature",
-      "soul",
-      "heart",
-      "mind",
-      "peace",
-      "truth",
-      "beauty",
-      "freedom",
-      "journey",
-    ];
-
-    const today = new Date();
-    const seed =
-      today.getFullYear() * 10000 +
-      (today.getMonth() + 1) * 100 +
-      today.getDate();
-
-    return queries[seed % queries.length];
-  }
-}
-
 class PoetryDBService {
   async getRandomPoems(count = 1) {
     try {
-      const response = await fetch(`https://poetrydb.org/random/${count}`);
+      const response = await fetch(`${BASE_POETRYDB_URL}/random/${count}`);
       const poems = await response.json();
 
       return poems.map((poem) => ({
@@ -143,9 +18,71 @@ class PoetryDBService {
   }
 }
 
+class PoetsOrgService {
+  constructor() {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const baseApiUrl = isLocalhost ? "http://localhost:5001" : "";
+    this.baseUrl = `${baseApiUrl}/api/poetry/poetsorg`;
+  }
+
+  async getDailyPoem() {
+    try {
+      console.log("Requesting daily poem from poets.org");
+
+      // Use a timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(this.baseUrl, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("poets.org response:", data);
+
+        if (!data?.lines || data.lines.length === 0) {
+          throw new Error("No poem found in poets.org response");
+        }
+
+        return {
+          title: data.title || "Untitled",
+          author: data.author || "Unknown",
+          lines: data.lines,
+          source: "poetsorg",
+          year: new Date().getFullYear().toString(),
+          refreshedAt: data.refreshedAt,
+        };
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.error("Request to poets.org timed out");
+      } else {
+        console.error("Error fetching from poets.org:", error);
+      }
+      return null;
+    }
+  }
+}
+
 class CombinedPoetryService {
   constructor() {
-    this.stands4 = new Stands4Service();
+    this.poetsorg = new PoetsOrgService();
     this.poetrydb = new PoetryDBService();
     this.cache = {
       dailyPoem: null,
@@ -156,12 +93,12 @@ class CombinedPoetryService {
   async getDailyPoem() {
     try {
       if (this.shouldRefreshDailyPoem()) {
-        // First try STANDS4
-        const stands4Poem = await this.stands4.getDailyPoem();
+        // First try poets.org
+        const poetsorgPoem = await this.poetsorg.getDailyPoem();
 
-        if (stands4Poem) {
+        if (poetsorgPoem) {
           this.cache.dailyPoem = {
-            ...stands4Poem,
+            ...poetsorgPoem,
             refreshedAt: new Date().toISOString(),
           };
         } else {
