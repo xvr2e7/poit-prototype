@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Award, ArrowRight, BookOpen, Settings } from "lucide-react";
 import { calculateTimeUntilTomorrow } from "../../utils/timeUtils";
+import { useTheme } from "../shared/AdaptiveBackground";
+import SettingsMenu from "../shared/SettingsMenu";
 
 const HomePage = ({ onStartDaily, onViewHistory }) => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0 });
   const [streak, setStreak] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const { isDark } = useTheme();
+  const [iconSrc, setIconSrc] = useState("/favicon_light.svg");
+  const settingsBtnRef = useRef(null);
+  const [settingsPosition, setSettingsPosition] = useState(null);
+
+  useEffect(() => {
+    setIconSrc(isDark ? "/favicon_dark.svg" : "/favicon_light.svg");
+  }, [isDark]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -23,6 +33,14 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
     setStreak(parseInt(savedStreak));
   }, []);
 
+  const handleOpenSettings = () => {
+    if (settingsBtnRef.current) {
+      const rect = settingsBtnRef.current.getBoundingClientRect();
+      setSettingsPosition(rect);
+    }
+    setShowSettings(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 relative">
       {/* Logo and title */}
@@ -32,9 +50,7 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
         transition={{ duration: 1 }}
         className="mb-12 text-center"
       >
-        <img src="/favicon.svg" alt="POiT" className="w-24 h-24 mx-auto mb-4" />
-        <h1 className="text-4xl font-light text-gray-200 mb-2">POiT</h1>
-        <p className="text-lg text-gray-400">FROM WORDS TO WORLDS</p>
+        <img src={iconSrc} alt="POiT" className="w-24 h-24 mx-auto mb-4" />
       </motion.div>
 
       {/* Main content */}
@@ -121,44 +137,20 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
 
       {/* Settings button */}
       <button
-        onClick={() => setShowSettings(true)}
+        ref={settingsBtnRef}
+        onClick={handleOpenSettings}
         className="absolute top-4 right-4 p-2 rounded-full
           hover:bg-[#2C8C7C]/10 text-[#2C8C7C]/70"
       >
         <Settings className="w-5 h-5" />
       </button>
 
-      {/* Settings modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-md dark:bg-gray-900/70 rounded-xl p-6 max-w-sm w-full border border-[#2C8C7C]/20">
-            <h3 className="text-xl font-medium text-gray-200 mb-4">Settings</h3>
-            <div className="space-y-4">
-              <button
-                onClick={() => {
-                  if (
-                    window.confirm("Reset all data? This cannot be undone.")
-                  ) {
-                    localStorage.clear();
-                    window.location.reload();
-                  }
-                }}
-                className="w-full p-3 bg-red-500/10 text-red-400 rounded-lg 
-                  hover:bg-red-500/20 transition-colors"
-              >
-                Reset All Data
-              </button>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="w-full p-3 bg-white/10 text-gray-300 rounded-lg 
-                  hover:bg-white/20 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Settings Menu Component */}
+      <SettingsMenu
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        anchorPosition={settingsPosition}
+      />
     </div>
   );
 };
