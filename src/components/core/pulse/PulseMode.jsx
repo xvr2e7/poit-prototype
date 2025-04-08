@@ -149,7 +149,6 @@ const PulseMode = ({ onComplete }) => {
         onSave={handleSaveProgress}
         onExit={() => {
           handleSaveProgress();
-          window.history.back();
         }}
       />
 

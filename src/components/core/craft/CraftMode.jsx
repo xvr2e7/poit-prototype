@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle } from "lucide-react";
 import { toPng } from "html-to-image";
+import Navigation from "../../shared/Navigation";
 import WordCanvas from "./components/WordCanvas";
 import ToolBar from "./components/ToolBar";
 import PreviewModal from "./components/PreviewModal";
-import UIBackground from "../../shared/UIBackground";
+import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import { useCraftState } from "./hooks/useCraftState";
 import { useTemplate } from "./hooks/useTemplate";
 import TemplateGuide from "./components/TemplateGuide";
@@ -254,9 +255,12 @@ const CraftMode = ({
 
   return (
     <div className="relative h-screen bg-gray-50 dark:bg-gray-950">
-      <UIBackground mode="craft" className="opacity-30" />
+      <AdaptiveBackground mode="craft" className="opacity-30" />
 
       <div className="absolute inset-0 flex">
+        {/* Navigation */}
+        <Navigation currentMode="craft" />
+
         {/* Left Sidebar */}
         <div className="relative">
           <div

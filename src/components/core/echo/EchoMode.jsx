@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Calendar } from "lucide-react";
-import UIBackground from "../../shared/UIBackground";
+import AdaptiveBackground from "../../shared/AdaptiveBackground";
+import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
 import { usePoemNavigation } from "./hooks/usePoemNavigation";
 import { NavigationTrail } from "./components/NavigationTrail";
@@ -53,7 +54,9 @@ const EchoMode = ({
 
   return (
     <div className="w-full h-screen relative overflow-hidden">
-      <UIBackground mode="echo" className="opacity-50" />
+      <AdaptiveBackground mode="echo" className="opacity-50" />
+      {/* Navigation */}
+      <Navigation currentMode="echo" />
 
       {/* Navigation Trail */}
       <NavigationTrail

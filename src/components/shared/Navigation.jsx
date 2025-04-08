@@ -117,7 +117,7 @@ const Navigation = ({ currentMode, onExit, onSave }) => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <HelpCircle size={16} />
-                    How to Use
+                    Help
                   </motion.button>
 
                   {/* Save Button */}
