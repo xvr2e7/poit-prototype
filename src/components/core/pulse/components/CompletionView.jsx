@@ -1,23 +1,48 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import SelectedWordsModal from "./SelectedWordsModal";
 
 export const CompletionView = ({ onSave, saved, selectedWords = [] }) => {
+  // Disable word selection when completion view is active
+  useEffect(() => {
+    // Store the original cursor style
+    const originalStyle = window.getComputedStyle(document.body).cursor;
+    // Prevent interactions with words underneath
+    document.body.style.cursor = "default";
+
+    return () => {
+      document.body.style.cursor = originalStyle;
+    };
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center"
     >
+      {/* Re-use the SelectedWordsModal component with continue button */}
+      <SelectedWordsModal
+        isOpen={true}
+        onClose={() => {}} // No close action in completion view
+        selectedWords={selectedWords}
+        onRemoveWord={() => {}} // No word removal in completion view
+        minWords={5}
+        maxWords={10}
+        showContinueButton={!saved}
+        onContinue={onSave}
+      />
+
+      {/* Ambient background effect */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="relative max-w-lg w-full mx-4"
+        className="fixed inset-0 -z-10 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.8 }}
       >
-        {/* Ambient particle effects */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
+        {/* Animated particles */}
+        {!saved &&
+          [...Array(20)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute w-1 h-1 rounded-full bg-[#2C8C7C]/30"
@@ -37,59 +62,39 @@ export const CompletionView = ({ onSave, saved, selectedWords = [] }) => {
               }}
             />
           ))}
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-8 border border-[#2C8C7C]/20">
-          <motion.div
-            className="flex items-center justify-center mb-6"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Sparkles className="w-8 h-8 text-[#2C8C7C]" />
-          </motion.div>
-
-          <h2 className="text-2xl font-bold text-[#2C8C7C] text-center mb-4">
-            Words Gathered
-          </h2>
-
-          {/* Selected words display */}
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            {selectedWords.map((word, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-[#2C8C7C]/10 rounded-lg p-2 text-center"
-              >
-                <span className="text-[#2C8C7C] text-sm">{word}</span>
-              </motion.div>
-            ))}
-          </div>
-
-          {!saved ? (
-            <motion.button
-              onClick={onSave}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 
-                bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white rounded-lg 
-                transition-colors group"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>Continue to Craft Mode</span>
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </motion.button>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[#2C8C7C] font-medium text-center"
-            >
-              <p>✨ Transitioning to Craft Mode ✨</p>
-            </motion.div>
-          )}
-        </div>
       </motion.div>
+
+      {/* Success state message */}
+      {saved && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none"
+        >
+          <motion.div
+            className="flex flex-col items-center"
+            animate={{ y: [0, -10, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+          >
+            <Sparkles className="w-12 h-12 text-[#2C8C7C]" />
+            <motion.p
+              className="text-xl text-[#2C8C7C] mt-4 font-light"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+            >
+              Moving to Craft Mode...
+            </motion.p>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
