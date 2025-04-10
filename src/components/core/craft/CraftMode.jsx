@@ -1,83 +1,73 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlusCircle } from "lucide-react";
+import {
+  PlusCircle,
+  Type,
+  PenTool,
+  Hash,
+  Layout,
+  Star,
+  RotateCcw,
+  BookMarked,
+  X,
+  Grid,
+} from "lucide-react";
 import { toPng } from "html-to-image";
 import Navigation from "../../shared/Navigation";
-import WordCanvas from "./components/WordCanvas";
-import ToolBar from "./components/ToolBar";
-import PreviewModal from "./components/PreviewModal";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
-import { useCraftState } from "./hooks/useCraftState";
-import { useTemplate } from "./hooks/useTemplate";
-import TemplateGuide from "./components/TemplateGuide";
 
-const WordPool = ({ words, onWordSelect }) => {
-  return (
-    <div className="w-72 h-full flex flex-col">
-      <div className="h-20" />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-2 space-y-1">
-          {words.map((word) => (
-            <motion.button
-              key={word.id || `word-${word.text}`}
-              onClick={() => onWordSelect(word)}
-              className="w-full group flex items-center px-4 py-3 rounded-xl
-                text-[#2C8C7C] dark:text-[#2C8C7C]/90
-                hover:bg-[#2C8C7C]/5 dark:hover:bg-[#2C8C7C]/10
-                transition-all duration-200"
-              whileHover={{ x: 4 }}
-            >
-              <span className="flex-1 font-medium">{word.text}</span>
-              <PlusCircle
-                className="w-4 h-4 text-[#2C8C7C] opacity-0 
-                group-hover:opacity-100 transition-opacity"
-              />
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CraftMode = ({
-  selectedWords = [],
-  onComplete,
-  enabled = true,
-  isPlayground = false,
-  onPremiumFeature,
-}) => {
-  const {
-    words,
-    canvasWords,
-    setCanvasWords,
-    fontSize,
-    alignment,
-    preview,
-    handleCapitalizationChange,
-    handlePunctuationSelect,
-    handleSignatureAdd,
-    handlePreviewToggle,
-  } = useCraftState(selectedWords, onComplete);
-
-  const {
-    activeTemplate,
-    guideIntensity,
-    hoveredPosition,
-    activateTemplate,
-    deactivateTemplate,
-    handlePositionHover,
-    adjustWordPosition,
-  } = useTemplate();
-
-  const [selectedWordId, setSelectedWordId] = useState(null);
+const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
+  // State management
+  const [canvasWords, setCanvasWords] = useState([]);
   const [poolWords, setPoolWords] = useState([]);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [selectedWordId, setSelectedWordId] = useState(null);
+  const [activePanel, setActivePanel] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
-  const canvasRef = useRef(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Initialize pool words from selected words
+  // DOM refs
+  const canvasRef = useRef(null);
+  const wordsRef = useRef({});
+
+  // Common words with categories
+  const commonWords = [
+    { word: "I", category: "Pronouns" },
+    { word: "you", category: "Pronouns" },
+    { word: "he", category: "Pronouns" },
+    { word: "she", category: "Pronouns" },
+    { word: "it", category: "Pronouns" },
+    { word: "we", category: "Pronouns" },
+    { word: "they", category: "Pronouns" },
+    { word: "me", category: "Pronouns" },
+    { word: "him", category: "Pronouns" },
+    { word: "her", category: "Pronouns" },
+    { word: "us", category: "Pronouns" },
+    { word: "them", category: "Pronouns" },
+    { word: "my", category: "Pronouns" },
+    { word: "your", category: "Pronouns" },
+    { word: "our", category: "Pronouns" },
+    { word: "their", category: "Pronouns" },
+    { word: "and", category: "Connectors" },
+    { word: "but", category: "Connectors" },
+    { word: "or", category: "Connectors" },
+    { word: "yet", category: "Connectors" },
+    { word: "so", category: "Connectors" },
+    { word: "for", category: "Prepositions" },
+    { word: "in", category: "Prepositions" },
+    { word: "by", category: "Prepositions" },
+    { word: "with", category: "Prepositions" },
+    { word: "of", category: "Prepositions" },
+    { word: "to", category: "Prepositions" },
+    { word: "from", category: "Prepositions" },
+    { word: "through", category: "Prepositions" },
+    { word: "the", category: "Articles" },
+    { word: "a", category: "Articles" },
+    { word: "an", category: "Articles" },
+  ];
+
+  const categories = [...new Set(commonWords.map((w) => w.category))];
+
+  // Initialize pool words from selectedWords
   useEffect(() => {
     const initialWords = selectedWords.map((word) => {
       const text = typeof word === "string" ? word : word.text;
@@ -90,12 +80,15 @@ const CraftMode = ({
     setPoolWords(initialWords);
   }, [selectedWords]);
 
-  const handleAddToCanvas = (word) => {
+  // ===== Word Manipulation Handlers =====
+
+  const addWordToCanvas = (word) => {
+    // Position words more on the left side initially
     const canvasWord = {
       ...word,
       position: {
-        x: Math.random() * 100,
-        y: Math.random() * 100,
+        x: Math.random() * 200 + 50,
+        y: Math.random() * 200 + 50,
       },
     };
 
@@ -103,29 +96,18 @@ const CraftMode = ({
     setCanvasWords((prev) => [...prev, canvasWord]);
   };
 
-  const handleWordMove = (wordId, position) => {
-    // Get adjusted position if template is active
-    const adjustedPosition = activeTemplate
-      ? adjustWordPosition(wordId, position)
-      : position;
-
-    setCanvasWords((prev) =>
-      prev.map((word) =>
-        word.id === wordId ? { ...word, position: adjustedPosition } : word
-      )
-    );
-  };
-
   const handleWordSelect = (wordId) => {
     setSelectedWordId((prev) => (prev === wordId ? null : wordId));
   };
 
-  const handleWordReturn = (wordId) => {
+  const returnWordToPool = (wordId) => {
     const word = canvasWords.find((w) => w.id === wordId);
     if (!word) return;
 
+    // Remove from canvas
     setCanvasWords((prev) => prev.filter((w) => w.id !== wordId));
 
+    // Only add back to pool if it's a word (not punctuation)
     if (word.type === "word") {
       setPoolWords((prev) => [
         ...prev,
@@ -142,40 +124,139 @@ const CraftMode = ({
     }
   };
 
-  const handlePremiumFeature = (feature) => {
-    if (isPlayground && onPremiumFeature) {
-      onPremiumFeature(feature);
-    }
+  // ===== Direct Drag Handling =====
+
+  const startDrag = (e, wordId) => {
+    // Skip if already dragging or in preview mode
+    if (e.currentTarget.dataset.dragging === "true" || isPreviewOpen) return;
+
+    const wordElement = e.currentTarget;
+    const word = canvasWords.find((w) => w.id === wordId);
+    if (!word) return;
+
+    // Select the word
+    handleWordSelect(wordId);
+
+    // Mark as dragging
+    wordElement.dataset.dragging = "true";
+
+    // Record initial position
+    const canvasBounds = canvasRef.current.getBoundingClientRect();
+    const wordBounds = wordElement.getBoundingClientRect();
+
+    const offsetX = e.clientX - wordBounds.left;
+    const offsetY = e.clientY - wordBounds.top;
+
+    // Add temporary handlers to document for drag/drop
+    const handleMove = (moveEvent) => {
+      if (wordElement.dataset.dragging !== "true") return;
+
+      const x = moveEvent.clientX - canvasBounds.left - offsetX;
+      const y = moveEvent.clientY - canvasBounds.top - offsetY;
+
+      // Apply constraints to keep word inside canvas
+      const maxX = canvasBounds.width - wordBounds.width;
+      const maxY = canvasBounds.height - wordBounds.height;
+
+      const boundedX = Math.max(0, Math.min(maxX, x));
+      const boundedY = Math.max(0, Math.min(maxY, y));
+
+      // Update word position in state
+      setCanvasWords((prev) =>
+        prev.map((w) =>
+          w.id === wordId ? { ...w, position: { x: boundedX, y: boundedY } } : w
+        )
+      );
+    };
+
+    const handleUp = () => {
+      if (wordElement.dataset.dragging !== "true") return;
+
+      // End drag
+      wordElement.dataset.dragging = "false";
+
+      // Remove temporary handlers
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+      document.removeEventListener("touchmove", handleMove);
+      document.removeEventListener("touchend", handleUp);
+    };
+
+    // Add temporary handlers
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleUp);
+    document.addEventListener("touchmove", handleMove);
+    document.addEventListener("touchend", handleUp);
   };
 
-  const handleTemplateToggle = () => {
-    setShowTemplatePanel((prev) => !prev);
+  // Handle double-click to return word to pool
+  const handleDoubleClick = (e, wordId) => {
+    e.preventDefault();
+    returnWordToPool(wordId);
   };
 
-  const handleTemplateSelect = (templateId) => {
-    if (isPlayground) {
-      onPremiumFeature?.("template");
-      return;
-    }
-    activateTemplate(templateId);
-    setShowTemplatePanel(false);
+  // ===== Toolbar Actions =====
+
+  const togglePanel = (panelName) => {
+    setActivePanel((prev) => (prev === panelName ? null : panelName));
   };
 
-  const handleSignatureSelect = (signature) => {
-    if (isPlayground) {
-      handlePremiumFeature("signature");
-    } else {
-      handleSignatureAdd(signature);
-      setOpenPanel(null);
-    }
+  const handleCapitalizationChange = () => {
+    if (!selectedWordId) return;
+
+    setCanvasWords((prev) =>
+      prev.map((word) => {
+        if (word.id === selectedWordId && word.type === "word") {
+          const nextState = {
+            none: "first",
+            first: "all",
+            all: "none",
+          }[word.capitalization || "none"];
+
+          return {
+            ...word,
+            capitalization: nextState,
+          };
+        }
+        return word;
+      })
+    );
   };
 
+  const handlePunctuationSelect = (item) => {
+    // Add punctuation to canvas
+    const newItem = {
+      ...item,
+      id: `${item.type}-${Date.now()}`,
+      position: {
+        x: Math.random() * 200 + 50,
+        y: Math.random() * 200 + 50,
+      },
+    };
+
+    setCanvasWords((prev) => [...prev, newItem]);
+    setActivePanel(null);
+  };
+
+  // Reset canvas
+  const resetCanvas = () => {
+    // Return words to pool
+    const wordsToReturn = canvasWords
+      .filter((w) => w.type === "word")
+      .map((word) => ({
+        id: word.id,
+        text: word.text || word.content,
+        type: "word",
+      }));
+
+    setPoolWords((prev) => [...prev, ...wordsToReturn]);
+    setCanvasWords([]);
+    setSelectedWordId(null);
+    setShowResetConfirm(false);
+  };
+
+  // Handle export and completion
   const handleDownload = async () => {
-    if (isPlayground) {
-      handlePremiumFeature("download");
-      return;
-    }
-
     if (!canvasRef.current) return;
 
     try {
@@ -184,13 +265,9 @@ const CraftMode = ({
         style: {
           transform: "none",
           transformOrigin: "top left",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           padding: "40px",
           background: "white",
         },
-        filter: (node) => !node.classList?.contains("ui-control"),
       });
 
       const link = document.createElement("a");
@@ -202,42 +279,13 @@ const CraftMode = ({
     }
   };
 
-  const handleShare = async () => {
-    if (isPlayground) {
-      handlePremiumFeature("share");
-      return;
-    }
-
-    try {
-      const dataUrl = await toPng(canvasRef.current, {
-        quality: 0.95,
-        backgroundColor: "white",
-      });
-
-      window.open(
-        `https://x.com/intent/post?text=Check%20out%20my%20poem%20on%20POiT!`
-      );
-    } catch (err) {
-      console.error("Error sharing:", err);
-    }
-  };
-
-  const handleContinue = () => {
-    if (isPlayground) {
-      handlePremiumFeature("continue");
-      return;
-    }
-
+  const handleComplete = () => {
     setIsPreviewOpen(false);
+
     const poemData = {
       words: canvasWords,
       metadata: {
         createdAt: new Date().toISOString(),
-        layout: {
-          fontSize,
-          alignment,
-          template: activeTemplate,
-        },
       },
       components: canvasWords.map((word) => ({
         ...word,
@@ -248,10 +296,28 @@ const CraftMode = ({
         },
       })),
     };
+
     onComplete(poemData);
   };
 
   if (!enabled) return null;
+
+  // ===== Rendering =====
+
+  // Get display text based on capitalization
+  const getDisplayText = (word) => {
+    const text = word.text || word.content;
+    if (word.type === "punctuation") return text;
+
+    switch (word.capitalization) {
+      case "first":
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+      case "all":
+        return text.toUpperCase();
+      default:
+        return text;
+    }
+  };
 
   return (
     <div className="relative h-screen bg-gray-50 dark:bg-gray-950">
@@ -261,13 +327,35 @@ const CraftMode = ({
         {/* Navigation */}
         <Navigation currentMode="craft" />
 
-        {/* Left Sidebar */}
+        {/* Left Sidebar - Word Pool */}
         <div className="relative">
           <div
-            className="h-full backdrop-blur-md bg-white/80 dark:bg-gray-950/80
+            className="h-full w-72 backdrop-blur-md bg-white/80 dark:bg-gray-950/80
             border-r border-[#2C8C7C]/10"
           >
-            <WordPool words={poolWords} onWordSelect={handleAddToCanvas} />
+            <div className="h-20" /> {/* Spacing for logo */}
+            <div
+              className="p-2 space-y-1 overflow-y-auto"
+              style={{ height: "calc(100% - 5rem)" }}
+            >
+              {poolWords.map((word) => (
+                <motion.button
+                  key={word.id}
+                  onClick={() => addWordToCanvas(word)}
+                  className="w-full group flex items-center px-4 py-3 rounded-xl
+                    text-[#2C8C7C] dark:text-[#2C8C7C]/90
+                    hover:bg-[#2C8C7C]/5 dark:hover:bg-[#2C8C7C]/10
+                    transition-all duration-200"
+                  whileHover={{ x: 4 }}
+                >
+                  <span className="flex-1 font-medium">{word.text}</span>
+                  <PlusCircle
+                    className="w-4 h-4 text-[#2C8C7C] opacity-0 
+                    group-hover:opacity-100 transition-opacity"
+                  />
+                </motion.button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -278,30 +366,43 @@ const CraftMode = ({
               ref={canvasRef}
               className="absolute inset-0 rounded-2xl 
                 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
-                border border-[#2C8C7C]/10 overflow-hidden
-                shadow-[inset_0_0_100px_rgba(44,140,124,0.03)]"
+                border border-[#2C8C7C]/10 overflow-hidden"
             >
-              {/* Template guide layer */}
-              {activeTemplate && (
-                <TemplateGuide
-                  template={activeTemplate}
-                  isActive={true}
-                  onHover={handlePositionHover}
-                  className="absolute inset-0 z-0"
-                />
-              )}
-
-              {/* Word canvas */}
-              <WordCanvas
-                words={canvasWords}
-                selectedWordId={selectedWordId}
-                onSelect={handleWordSelect}
-                onMove={handleWordMove}
-                onReturn={handleWordReturn}
-                template={activeTemplate}
-                preview={preview}
-                className="relative z-10"
-              />
+              {/* Words on Canvas */}
+              {canvasWords.map((word) => (
+                <div
+                  key={word.id}
+                  ref={(el) => (wordsRef.current[word.id] = el)}
+                  data-dragging="false"
+                  className="absolute select-none cursor-move"
+                  style={{
+                    left: word.position?.x || 0,
+                    top: word.position?.y || 0,
+                    zIndex: 10,
+                    touchAction: "none",
+                  }}
+                  onMouseDown={(e) => startDrag(e, word.id)}
+                  onTouchStart={(e) => startDrag(e, word.id)}
+                  onDoubleClick={(e) => handleDoubleClick(e, word.id)}
+                >
+                  {/* Word Container */}
+                  <div
+                    className={`
+                      relative px-4 py-2 rounded-lg
+                      backdrop-blur-sm transition-all
+                      ${
+                        selectedWordId === word.id
+                          ? "bg-[#2C8C7C]/15 outline outline-2 outline-[#2C8C7C]"
+                          : "bg-white/10"
+                      }
+                    `}
+                  >
+                    <span className="text-[#2C8C7C] font-medium">
+                      {getDisplayText(word)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -313,101 +414,413 @@ const CraftMode = ({
             bg-white/80 dark:bg-gray-950/80
             border-l border-[#2C8C7C]/10"
           >
-            <ToolBar
-              onCapitalizationChange={() =>
-                handleCapitalizationChange(selectedWordId)
-              }
-              onPunctuationSelect={handlePunctuationSelect}
-              onTemplateToggle={handleTemplateToggle}
-              onTemplateSelect={handleTemplateSelect}
-              onSignatureAdd={handleSignatureAdd}
-              onSignatureSelect={handleSignatureSelect}
-              onPreviewToggle={() => setIsPreviewOpen(true)}
-              onReset={() => setShowResetConfirm(true)}
-              activeTools={[
-                ...(showTemplatePanel ? ["template"] : []),
-                ...(preview ? ["preview"] : []),
-                ...(selectedWordId ? ["caps"] : []),
-              ]}
-              isPlayground={isPlayground}
-              onPremiumFeature={handlePremiumFeature}
-            />
+            <div className="h-full p-4 flex flex-col">
+              {/* Main tools */}
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="flex flex-col gap-5">
+                  <button
+                    onClick={handleCapitalizationChange}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                    disabled={!selectedWordId}
+                  >
+                    <Type className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Capitalization
+                      </span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => togglePanel("punctuation")}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                  >
+                    <PenTool className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Punctuation
+                      </span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => togglePanel("common")}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                  >
+                    <Hash className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Filler
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Template Tool */}
+                  <button
+                    onClick={() => {}}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                  >
+                    <Layout className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Templates
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Signature Tool */}
+                  <button
+                    onClick={() => {}}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                  >
+                    <Star className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Signatures
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Canvas Pattern Tool */}
+                  <button
+                    onClick={() => {}}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                      border border-[#2C8C7C]/30 transition-all duration-300
+                      group relative"
+                  >
+                    <Grid className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                        Canvas
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Tools */}
+              <div>
+                <div className="w-full h-px bg-[#2C8C7C]/10 mb-3" />
+
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                    border border-[#2C8C7C]/30 transition-all duration-300
+                    group relative mb-3"
+                >
+                  <RotateCcw className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <div
+                    className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                    pointer-events-none px-3 py-2 shadow-lg"
+                  >
+                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      Reset Canvas
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
+                    border border-[#2C8C7C]/30 transition-all duration-300
+                    group relative"
+                >
+                  <BookMarked className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <div
+                    className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
+                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                    pointer-events-none px-3 py-2 shadow-lg"
+                  >
+                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      Preview Poem
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Preview Modal */}
-      <PreviewModal
-        isOpen={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
-        onDownload={handleDownload}
-        onShare={handleShare}
-        onContinue={handleContinue}
-        isPlayground={isPlayground}
-      >
-        <div ref={canvasRef} className="w-full h-full">
-          <WordCanvas
-            words={canvasWords}
-            preview={true}
-            selectedWordId={null}
-            onSelect={() => {}}
-            onMove={() => {}}
-            onReturn={() => {}}
-            template={activeTemplate}
-          />
-        </div>
-      </PreviewModal>
-
-      {/* Reset Confirmation Modal */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-            onClick={() => setShowResetConfirm(false)}
-          />
-          <div
-            className="relative bg-white dark:bg-gray-950 rounded-xl 
-            border border-[#2C8C7C]/20 p-6 w-80 shadow-xl"
+      {/* Common Words Panel with Categories */}
+      <AnimatePresence>
+        {activePanel === "common" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
+              rounded-lg border border-[#2C8C7C]/20 shadow-lg
+              z-50"
           >
-            <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
-              Reset Canvas?
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-              This will return all words to the word pool. This action cannot be
-              undone.
-            </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
+              <h3 className="text-[#2C8C7C] font-medium">Common Words</h3>
               <button
-                onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 
-                  text-[#2C8C7C] transition-colors"
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
               >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  const wordsToReturn = canvasWords
-                    .filter((w) => w.type === "word")
-                    .map((word) => ({
-                      id: word.id,
-                      text: word.text || word.content,
-                      type: "word",
-                    }));
-                  setPoolWords((prev) => [...prev, ...wordsToReturn]);
-                  setCanvasWords([]);
-                  setSelectedWordId(null);
-                  deactivateTemplate();
-                  setShowResetConfirm(false);
-                }}
-                className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
-                  hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
-              >
-                Reset
+                <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            <div className="p-3">
+              <div className="w-96 space-y-4">
+                {categories.map((category) => (
+                  <div key={category}>
+                    <h4 className="text-[#2C8C7C]/70 text-sm mb-2">
+                      {category}
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {commonWords
+                        .filter((w) => w.category === category)
+                        .map(({ word }) => (
+                          <button
+                            key={word}
+                            onClick={() =>
+                              handlePunctuationSelect({
+                                text: word,
+                                type: "word",
+                              })
+                            }
+                            className="px-2 py-1.5 rounded-lg text-sm hover:bg-[#2C8C7C]/10 
+                              text-[#2C8C7C] text-center transition-colors"
+                          >
+                            {word}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activePanel === "punctuation" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
+              rounded-lg border border-[#2C8C7C]/20 shadow-lg
+              z-50"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
+              <h3 className="text-[#2C8C7C] font-medium">Add Punctuation</h3>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="grid grid-cols-2 gap-2 w-48">
+                {[
+                  { symbol: ".", label: "Period" },
+                  { symbol: ",", label: "Comma" },
+                  { symbol: ";", label: "Semicolon" },
+                  { symbol: ":", label: "Colon" },
+                  { symbol: "—", label: "Em dash" },
+                  { symbol: "?", label: "Question mark" },
+                  { symbol: "!", label: "Exclamation" },
+                ].map(({ symbol, label }) => (
+                  <button
+                    key={symbol}
+                    onClick={() =>
+                      handlePunctuationSelect({
+                        text: symbol,
+                        type: "punctuation",
+                      })
+                    }
+                    className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 
+                      text-[#2C8C7C] text-center transition-colors"
+                  >
+                    <div className="text-lg font-medium">{symbol}</div>
+                    <div className="text-xs opacity-70">{label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Preview Modal */}
+      <AnimatePresence>
+        {isPreviewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 
+              bg-black/20 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-4xl bg-white dark:bg-gray-950 
+                rounded-xl border border-[#2C8C7C]/20 shadow-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Preview Header */}
+              <div className="absolute top-0 right-0 left-0 h-16 flex justify-end items-center px-6 z-10">
+                <button
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Preview Content */}
+              <div className="p-8 pt-16">
+                <div
+                  className="aspect-[1.4142] w-full bg-white dark:bg-gray-900 
+                  rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
+                >
+                  <div className="w-full h-full flex items-center justify-center p-10 relative">
+                    {/* Static preview of words */}
+                    <div className="w-full h-full relative">
+                      {canvasWords.map((word) => (
+                        <div
+                          key={word.id}
+                          className="absolute select-none"
+                          style={{
+                            left: word.position?.x || 0,
+                            top: word.position?.y || 0,
+                          }}
+                        >
+                          <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                            <span className="text-[#2C8C7C] font-medium">
+                              {getDisplayText(word)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="p-4 border-t border-[#2C8C7C]/10 flex justify-between items-center">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg
+                      bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
+                      text-[#2C8C7C] transition-colors"
+                  >
+                    <span>Download</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleComplete}
+                  className="group relative flex items-center gap-2 px-6 py-2 rounded-lg
+                    bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
+                    text-white transition-colors"
+                >
+                  <span>Continue to Echo</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+          >
+            <div
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              onClick={() => setShowResetConfirm(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-white dark:bg-gray-950 rounded-xl 
+                border border-[#2C8C7C]/20 p-6 w-80 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
+                Reset Canvas?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                This will return all words to the word pool. This action cannot
+                be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 
+                    text-[#2C8C7C] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={resetCanvas}
+                  className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
+                    hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
