@@ -3,11 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import WordPool from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
-import UIBackground from "../../shared/UIBackground";
-import { TimeDisplay } from "./components/TimeDisplay";
 import Navigation from "../../shared/Navigation";
 import { CompletionView } from "./components/CompletionView";
-import StatusMessage from "./components/StatusMessage";
+import SelectedWordsModal from "./components/SelectedWordsModal";
 
 const PulseMode = ({ onComplete }) => {
   const [selectedWords, setSelectedWords] = useState([]);
@@ -17,7 +15,21 @@ const PulseMode = ({ onComplete }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [availableWords, setAvailableWords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSelectedWords, setShowSelectedWords] = useState(false);
   const wordPositionsRef = useRef(new Map());
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key.toLowerCase() === "w" && !showCompletion) {
+        setShowSelectedWords(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [showCompletion]);
 
   useEffect(() => {
     const fetchWords = async () => {
@@ -28,13 +40,10 @@ const PulseMode = ({ onComplete }) => {
           const timeZoneDetector = Intl.DateTimeFormat();
           const resolvedOptions = timeZoneDetector.resolvedOptions();
           timezone = resolvedOptions.timeZone;
-          console.log("Detected timezone:", timezone); // Debug log
         } catch (error) {
           console.error("Timezone detection error:", error);
           timezone = "UTC";
         }
-
-        console.log("Making request with timezone:", timezone); // Debug log
 
         const response = await fetch("http://localhost:5001/api/words", {
           headers: {
@@ -49,12 +58,6 @@ const PulseMode = ({ onComplete }) => {
         }
 
         const data = await response.json();
-        console.log("Response data:", {
-          wordsCount: data.words?.length,
-          refreshedAt: data.refreshedAt,
-          nextRefresh: data.nextRefresh,
-        }); // Debug log
-
         setAvailableWords(data.words);
       } catch (error) {
         console.error("Error in fetchWords:", error);
@@ -71,8 +74,7 @@ const PulseMode = ({ onComplete }) => {
   };
 
   const handleWordSelect = (wordId) => {
-    console.log("Word selected:", wordId);
-    if (!selectedWords.includes(wordId)) {
+    if (!selectedWords.includes(wordId) && selectedWords.length < 10) {
       const newSelectedWords = [...selectedWords, wordId];
       setSelectedWords(newSelectedWords);
 
@@ -81,11 +83,25 @@ const PulseMode = ({ onComplete }) => {
       }
     }
   };
+
   const getSelectedWordTexts = () => {
     return selectedWords.map((id) => {
-      const word = availableWords.find((w) => w._id === id);
-      return word ? word.text : "";
+      const word = availableWords.find((w) => w.text === id || w._id === id);
+      return word ? word.text : id;
     });
+  };
+
+  const handleRemoveWord = (wordToRemove) => {
+    setSelectedWords((prev) =>
+      prev.filter((word) => {
+        // Compare either directly or by finding the word object
+        const wordText =
+          typeof word === "string"
+            ? word
+            : availableWords.find((w) => w._id === word)?.text;
+        return wordText !== wordToRemove;
+      })
+    );
   };
 
   const handleSelectorMove = (position) => {
@@ -105,35 +121,36 @@ const PulseMode = ({ onComplete }) => {
     setSelectorPosition(null);
   };
 
-  const handleCompletionSave = () => {
-    setIsSaved(true);
-    setTimeout(() => {
-      onComplete(getSelectedWordTexts());
-    }, 1000);
+  const handleSaveProgress = () => {
+    // Save current state to localStorage
+    if (selectedWords.length > 0) {
+      localStorage.setItem(
+        "poit_daily_words",
+        JSON.stringify(getSelectedWordTexts())
+      );
+      // Show visual feedback that could be implemented later
+      console.log("Progress saved", selectedWords);
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen relative overflow-hidden">
-        <UIBackground mode="pulse" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-cyan-300">Loading words...</div>
-        </div>
+      <div className="w-full min-h-screen relative overflow-hidden flex items-center justify-center">
+        <div className="text-[#2C8C7C]">Loading words...</div>
       </div>
     );
   }
 
   return (
     <div className="w-full min-h-screen relative overflow-hidden">
-      <UIBackground mode="pulse" />
-
+      {/* Navigation */}
       <Navigation
         currentMode="pulse"
-        setCurrentMode={() => {}}
-        lockedModes={{}}
-        inPlayground={false}
+        onSave={handleSaveProgress}
+        onExit={() => {
+          handleSaveProgress();
+        }}
       />
-      <TimeDisplay />
 
       {/* Main content */}
       <div className="absolute inset-0 z-10">
@@ -154,7 +171,7 @@ const PulseMode = ({ onComplete }) => {
             selectedWords={selectedWords}
             minWords={5}
             maxWords={10}
-            onMove={setSelectorPosition}
+            onMove={handleSelectorMove}
             onComplete={() => setShowCompletion(true)}
             onStart={() => setIsActive(true)}
             active={isActive}
@@ -166,20 +183,22 @@ const PulseMode = ({ onComplete }) => {
             <CompletionView
               onSave={() => {
                 setIsSaved(true);
-                setTimeout(() => onComplete(selectedWords), 1000);
+                setTimeout(() => onComplete(getSelectedWordTexts()), 1000);
               }}
               saved={isSaved}
-              selectedWords={selectedWords}
+              selectedWords={getSelectedWordTexts()}
             />
           )}
         </AnimatePresence>
       </div>
 
-      {/* Status message */}
+      {/* Selected Words Modal (W key) */}
       {!showCompletion && (
-        <StatusMessage
-          isActive={isActive}
-          selectedWords={selectedWords}
+        <SelectedWordsModal
+          isOpen={showSelectedWords}
+          onClose={() => setShowSelectedWords(false)}
+          selectedWords={getSelectedWordTexts()}
+          onRemoveWord={handleRemoveWord}
           minWords={5}
           maxWords={10}
         />

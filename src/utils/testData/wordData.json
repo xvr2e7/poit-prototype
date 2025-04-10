@@ -1,0 +1,307 @@
+{
+  "words": [
+    {
+      "text": "forbidding",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "fema",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "pascal",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "crews",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "kernel",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "feckless",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "bind",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "yet",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "ovid",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "unheeded",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "crusted",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "optimizing",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "clinched",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "sparks",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "asterisk",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "gearing",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "rotten",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "toyed",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "collins",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "kingly",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "trash",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "hooking",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "markers",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "cluttered",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "relates",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "blustering",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "bubbles",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "smokes",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "dot-com",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "gentile",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "laced",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "blinders",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "solves",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "legit",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "minor",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "perpetuate",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "peep",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "bog",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "impair",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "dumped",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "drastic",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "palpebra",
+      "type": "noun",
+      "definition": "The eyelid.",
+      "score": 1000,
+      "source": "wordnik_wotd"
+    },
+    {
+      "text": "tacky",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "parting",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "storybook",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "cries",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "crab",
+      "type": "verb",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "cardinals",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "vitro",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "hi-tech",
+      "type": "adj",
+      "score": 800,
+      "source": "wordnik_random"
+    }
+  ],
+  "refreshedAt": "2025-04-10T01:51:02.386Z",
+  "nextRefresh": "2025-04-10T07:00:00.000Z"
+}
