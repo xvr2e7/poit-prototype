@@ -24,6 +24,9 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [activePanel, setActivePanel] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
+  const [isDraggingPreview, setIsDraggingPreview] = useState(false);
+  const previewStartPosition = useRef({ x: 0, y: 0 });
 
   // DOM refs
   const canvasRef = useRef(null);
@@ -255,6 +258,56 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     setShowResetConfirm(false);
   };
 
+  const handlePreviewMouseDown = (e) => {
+    // Only primary mouse button (left click)
+    if (e.button !== 0) return;
+
+    setIsDraggingPreview(true);
+    previewStartPosition.current = {
+      x: e.clientX - previewOffset.x,
+      y: e.clientY - previewOffset.y,
+    };
+
+    // Prevent text selection during drag
+    e.preventDefault();
+  };
+
+  const handlePreviewMouseMove = (e) => {
+    if (!isDraggingPreview) return;
+
+    const newOffset = {
+      x: e.clientX - previewStartPosition.current.x,
+      y: e.clientY - previewStartPosition.current.y,
+    };
+
+    setPreviewOffset(newOffset);
+  };
+
+  const handlePreviewMouseUp = () => {
+    setIsDraggingPreview(false);
+  };
+
+  useEffect(() => {
+    if (isDraggingPreview) {
+      // Add global event listeners when dragging starts
+      document.addEventListener("mousemove", handlePreviewMouseMove);
+      document.addEventListener("mouseup", handlePreviewMouseUp);
+
+      // Cleanup function
+      return () => {
+        document.removeEventListener("mousemove", handlePreviewMouseMove);
+        document.removeEventListener("mouseup", handlePreviewMouseUp);
+      };
+    }
+  }, [isDraggingPreview]); // Only re-add listeners when dragging state changes
+
+  // Reset preview offset when opening the preview
+  useEffect(() => {
+    if (isPreviewOpen) {
+      setPreviewOffset({ x: 0, y: 0 });
+    }
+  }, [isPreviewOpen]);
+
   // Handle export and completion
   const handleDownload = async () => {
     if (!canvasRef.current) return;
@@ -317,6 +370,47 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
       default:
         return text;
     }
+
+    const getCanvasBoundaries = () => {
+      // Get min/max coordinates to determine actual content boundaries
+      if (canvasWords.length === 0)
+        return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
+
+      // Initialize with first word position
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      // Find boundaries by examining all word positions
+      canvasWords.forEach((word) => {
+        const x = word.position?.x || 0;
+        const y = word.position?.y || 0;
+        // Approximate width and height of the word container
+        const width = 100; // Estimate for word width with padding
+        const height = 50; // Estimate for word height with padding
+
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + width);
+        maxY = Math.max(maxY, y + height);
+      });
+
+      // Add some padding
+      minX = Math.max(0, minX - 20);
+      minY = Math.max(0, minY - 20);
+      maxX = maxX + 20;
+      maxY = maxY + 20;
+
+      return {
+        minX,
+        minY,
+        maxX,
+        maxY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+    };
   };
 
   return (
@@ -696,14 +790,14 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 
-              bg-black/20 backdrop-blur-sm"
+        bg-black/20 backdrop-blur-sm"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative w-full max-w-4xl bg-white dark:bg-gray-950 
-                rounded-xl border border-[#2C8C7C]/20 shadow-xl overflow-hidden"
+          rounded-xl border border-[#2C8C7C]/20 shadow-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Preview Header */}
@@ -720,28 +814,45 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
               <div className="p-8 pt-16">
                 <div
                   className="aspect-[1.4142] w-full bg-white dark:bg-gray-900 
-                  rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
+    rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
+                  style={{
+                    position: "relative",
+                    cursor: isDraggingPreview ? "grabbing" : "grab",
+                  }}
+                  onMouseDown={handlePreviewMouseDown}
                 >
-                  <div className="w-full h-full flex items-center justify-center p-10 relative">
-                    {/* Static preview of words */}
-                    <div className="w-full h-full relative">
-                      {canvasWords.map((word) => (
-                        <div
-                          key={word.id}
-                          className="absolute select-none"
-                          style={{
-                            left: word.position?.x || 0,
-                            top: word.position?.y || 0,
-                          }}
-                        >
-                          <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                            <span className="text-[#2C8C7C] font-medium">
-                              {getDisplayText(word)}
-                            </span>
-                          </div>
+                  <div className="absolute bottom-2 left-0 right-0 text-center z-10 pointer-events-none">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
+                      Click and drag to pan
+                    </span>
+                  </div>
+
+                  <div
+                    className="absolute inset-0 transform"
+                    style={{
+                      transform: `translate(${previewOffset.x}px, ${previewOffset.y}px)`,
+                      transition: isDraggingPreview
+                        ? "none"
+                        : "transform 0.2s ease-out",
+                    }}
+                  >
+                    {canvasWords.map((word) => (
+                      <div
+                        key={word.id}
+                        className="absolute select-none"
+                        style={{
+                          left: word.position?.x || 0,
+                          top: word.position?.y || 0,
+                          pointerEvents: "none",
+                        }}
+                      >
+                        <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm whitespace-nowrap">
+                          <span className="text-[#2C8C7C] font-medium">
+                            {getDisplayText(word)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -752,8 +863,8 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                   <button
                     onClick={handleDownload}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg
-                      bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
-                      text-[#2C8C7C] transition-colors"
+                bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
+                text-[#2C8C7C] transition-colors"
                   >
                     <span>Download</span>
                   </button>
@@ -762,8 +873,8 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 <button
                   onClick={handleComplete}
                   className="group relative flex items-center gap-2 px-6 py-2 rounded-lg
-                    bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
-                    text-white transition-colors"
+              bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
+              text-white transition-colors"
                 >
                   <span>Continue to Echo</span>
                 </button>
