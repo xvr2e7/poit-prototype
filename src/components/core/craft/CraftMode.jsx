@@ -23,6 +23,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [activePanel, setActivePanel] = useState(null);
   const [signatureWords, setSignatureWords] = useState(Array(5).fill(""));
+  const [canvasPattern, setCanvasPattern] = useState("blank");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
@@ -253,6 +254,18 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     newWords[index] = "";
     setSignatureWords(newWords);
   };
+
+  useEffect(() => {
+    const savedPattern = localStorage.getItem("poit_canvas_pattern");
+    if (savedPattern) {
+      setCanvasPattern(savedPattern);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("poit_canvas_pattern", canvasPattern);
+  }, [canvasPattern]);
+
   // Reset canvas
   const resetCanvas = () => {
     // Return words to pool
@@ -412,47 +425,6 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
       default:
         return text;
     }
-
-    const getCanvasBoundaries = () => {
-      // Get min/max coordinates to determine actual content boundaries
-      if (canvasWords.length === 0)
-        return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
-
-      // Initialize with first word position
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-
-      // Find boundaries by examining all word positions
-      canvasWords.forEach((word) => {
-        const x = word.position?.x || 0;
-        const y = word.position?.y || 0;
-        // Approximate width and height of the word container
-        const width = 100; // Estimate for word width with padding
-        const height = 50; // Estimate for word height with padding
-
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + width);
-        maxY = Math.max(maxY, y + height);
-      });
-
-      // Add some padding
-      minX = Math.max(0, minX - 20);
-      minY = Math.max(0, minY - 20);
-      maxX = maxX + 20;
-      maxY = maxY + 20;
-
-      return {
-        minX,
-        minY,
-        maxX,
-        maxY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
-    };
   };
 
   return (
@@ -500,10 +472,69 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
           <div className="flex-1 relative m-6">
             <div
               ref={canvasRef}
-              className="absolute inset-0 rounded-2xl 
-                bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
-                border border-[#2C8C7C]/10 overflow-hidden"
+              className={`absolute inset-0 rounded-2xl 
+    bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
+    border border-[#2C8C7C]/10 overflow-hidden`}
+              style={{
+                backgroundImage:
+                  canvasPattern === "grid"
+                    ? "linear-gradient(to right, rgba(44, 140, 124, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.05) 1px, transparent 1px)"
+                    : canvasPattern === "dots"
+                    ? "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)"
+                    : "none",
+                backgroundSize:
+                  canvasPattern === "grid"
+                    ? "40px 40px"
+                    : canvasPattern === "dots"
+                    ? "20px 20px"
+                    : "auto",
+              }}
             >
+              {/* Waves pattern */}
+              {canvasPattern === "waves" && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <svg className="w-full h-full" preserveAspectRatio="none">
+                    <defs>
+                      <pattern
+                        id="wave-pattern"
+                        x="0"
+                        y="0"
+                        width="200"
+                        height="200"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <path
+                          d="M0,50 C20,40 30,60 50,50 C70,40 80,60 100,50 C120,40 130,60 150,50 C170,40 180,60 200,50"
+                          fill="none"
+                          stroke="rgba(44, 140, 124, 0.05)"
+                          strokeWidth="1"
+                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                        />
+                        <path
+                          d="M0,100 C20,90 30,110 50,100 C70,90 80,110 100,100 C120,90 130,110 150,100 C170,90 180,110 200,100"
+                          fill="none"
+                          stroke="rgba(44, 140, 124, 0.05)"
+                          strokeWidth="1"
+                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                        />
+                        <path
+                          d="M0,150 C20,140 30,160 50,150 C70,140 80,160 100,150 C120,140 130,160 150,150 C170,140 180,160 200,150"
+                          fill="none"
+                          stroke="rgba(44, 140, 124, 0.05)"
+                          strokeWidth="1"
+                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                        />
+                      </pattern>
+                    </defs>
+                    <rect
+                      width="100%"
+                      height="100%"
+                      fill="url(#wave-pattern)"
+                    />
+                  </svg>
+                </div>
+              )}
+
               {/* Words on Canvas */}
               {canvasWords.map((word) => (
                 <div
@@ -654,17 +685,17 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
 
                   {/* Canvas Pattern Tool */}
                   <button
-                    onClick={() => {}}
+                    onClick={() => togglePanel("canvas")}
                     className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
-                      group relative"
+    border border-[#2C8C7C]/30 transition-all duration-300
+    group relative"
                   >
                     <Grid className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                      pointer-events-none px-3 py-2 shadow-lg"
+    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+    pointer-events-none px-3 py-2 shadow-lg"
                     >
                       <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
                         Canvas
@@ -884,6 +915,134 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
             </div>
           </motion.div>
         )}
+
+        {activePanel === "canvas" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
+      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+      z-50"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
+              <h3 className="text-[#2C8C7C] font-medium">Canvas Background</h3>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="grid grid-cols-2 gap-3 w-64">
+                <button
+                  onClick={() => {
+                    setCanvasPattern("blank");
+                    setActivePanel(null);
+                  }}
+                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
+            text-[#2C8C7C] text-center transition-colors border
+            ${
+              canvasPattern === "blank"
+                ? "border-[#2C8C7C]"
+                : "border-[#2C8C7C]/20"
+            }`}
+                >
+                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2"></div>
+                  <div className="text-sm">Blank</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCanvasPattern("grid");
+                    setActivePanel(null);
+                  }}
+                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
+            text-[#2C8C7C] text-center transition-colors border
+            ${
+              canvasPattern === "grid"
+                ? "border-[#2C8C7C]"
+                : "border-[#2C8C7C]/20"
+            }`}
+                >
+                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, rgba(44, 140, 124, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                        backgroundSize: "8px 8px",
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-sm">Grid</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCanvasPattern("dots");
+                    setActivePanel(null);
+                  }}
+                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
+            text-[#2C8C7C] text-center transition-colors border
+            ${
+              canvasPattern === "dots"
+                ? "border-[#2C8C7C]"
+                : "border-[#2C8C7C]/20"
+            }`}
+                >
+                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                        backgroundSize: "8px 8px",
+                      }}
+                    ></div>
+                  </div>
+                  <div className="text-sm">Dots</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCanvasPattern("waves");
+                    setActivePanel(null);
+                  }}
+                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
+            text-[#2C8C7C] text-center transition-colors border
+            ${
+              canvasPattern === "waves"
+                ? "border-[#2C8C7C]"
+                : "border-[#2C8C7C]/20"
+            }`}
+                >
+                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <svg
+                      className="absolute inset-0 w-full h-full"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M0,20 C10,15 15,25 25,20 C35,15 40,25 50,20 C60,15 65,25 75,20 C85,15 90,25 100,20"
+                        fill="none"
+                        stroke="rgba(44, 140, 124, 0.1)"
+                        strokeWidth="1"
+                      />
+                      <path
+                        d="M0,40 C10,35 15,45 25,40 C35,35 40,45 50,40 C60,35 65,45 75,40 C85,35 90,45 100,40"
+                        fill="none"
+                        stroke="rgba(44, 140, 124, 0.1)"
+                        strokeWidth="1"
+                      />
+                    </svg>
+                  </div>
+                  <div className="text-sm">Waves</div>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Preview Modal */}
@@ -918,13 +1077,69 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
               <div className="p-8 pt-16">
                 <div
                   className="aspect-[1.4142] w-full bg-white dark:bg-gray-900 
-    rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
+  rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
                   style={{
                     position: "relative",
                     cursor: isDraggingPreview ? "grabbing" : "grab",
+                    backgroundImage:
+                      canvasPattern === "grid"
+                        ? "linear-gradient(to right, rgba(44, 140, 124, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.05) 1px, transparent 1px)"
+                        : canvasPattern === "dots"
+                        ? "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)"
+                        : "none",
+                    backgroundSize:
+                      canvasPattern === "grid"
+                        ? "40px 40px"
+                        : canvasPattern === "dots"
+                        ? "20px 20px"
+                        : "auto",
                   }}
                   onMouseDown={handlePreviewMouseDown}
                 >
+                  {/* Waves pattern in preview */}
+                  {canvasPattern === "waves" && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                      <svg className="w-full h-full" preserveAspectRatio="none">
+                        <defs>
+                          <pattern
+                            id="wave-pattern-preview"
+                            x="0"
+                            y="0"
+                            width="200"
+                            height="200"
+                            patternUnits="userSpaceOnUse"
+                          >
+                            <path
+                              d="M0,50 C20,40 30,60 50,50 C70,40 80,60 100,50 C120,40 130,60 150,50 C170,40 180,60 200,50"
+                              fill="none"
+                              stroke="rgba(44, 140, 124, 0.05)"
+                              strokeWidth="1"
+                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                            />
+                            <path
+                              d="M0,100 C20,90 30,110 50,100 C70,90 80,110 100,100 C120,90 130,110 150,100 C170,90 180,110 200,100"
+                              fill="none"
+                              stroke="rgba(44, 140, 124, 0.05)"
+                              strokeWidth="1"
+                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                            />
+                            <path
+                              d="M0,150 C20,140 30,160 50,150 C70,140 80,160 100,150 C120,140 130,160 150,150 C170,140 180,160 200,150"
+                              fill="none"
+                              stroke="rgba(44, 140, 124, 0.05)"
+                              strokeWidth="1"
+                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                            />
+                          </pattern>
+                        </defs>
+                        <rect
+                          width="100%"
+                          height="100%"
+                          fill="url(#wave-pattern-preview)"
+                        />
+                      </svg>
+                    </div>
+                  )}
                   <div className="absolute bottom-2 left-0 right-0 text-center z-10 pointer-events-none">
                     <span className="text-sm text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
                       Click and drag to pan
