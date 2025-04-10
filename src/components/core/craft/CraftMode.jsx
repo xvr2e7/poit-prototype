@@ -13,6 +13,7 @@ import {
   Grid,
 } from "lucide-react";
 import { toPng } from "html-to-image";
+import TemplateGuide from "./components/TemplateGuide";
 import Navigation from "../../shared/Navigation";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 
@@ -22,6 +23,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [poolWords, setPoolWords] = useState([]);
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [activePanel, setActivePanel] = useState(null);
+  const [activeTemplate, setActiveTemplate] = useState(null);
   const [signatureWords, setSignatureWords] = useState(Array(5).fill(""));
   const [canvasPattern, setCanvasPattern] = useState("blank");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -473,8 +475,8 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
             <div
               ref={canvasRef}
               className={`absolute inset-0 rounded-2xl 
-    bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
-    border border-[#2C8C7C]/10 overflow-hidden`}
+bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
+border border-[#2C8C7C]/10 overflow-hidden`}
               style={{
                 backgroundImage:
                   canvasPattern === "grid"
@@ -535,6 +537,12 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                 </div>
               )}
 
+              {/* Template Guide */}
+              <TemplateGuide
+                template={activeTemplate}
+                isActive={!!activeTemplate}
+              />
+
               {/* Words on Canvas */}
               {canvasWords.map((word) => (
                 <div
@@ -555,14 +563,14 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                   {/* Word Container */}
                   <div
                     className={`
-                      relative px-4 py-2 rounded-lg
-                      backdrop-blur-sm transition-all
-                      ${
-                        selectedWordId === word.id
-                          ? "bg-[#2C8C7C]/15 outline outline-2 outline-[#2C8C7C]"
-                          : "bg-white/10"
-                      }
-                    `}
+          relative px-4 py-2 rounded-lg
+          backdrop-blur-sm transition-all
+          ${
+            selectedWordId === word.id
+              ? "bg-[#2C8C7C]/15 outline outline-2 outline-[#2C8C7C]"
+              : "bg-white/10"
+          }
+        `}
                   >
                     <span className="text-[#2C8C7C] font-medium">
                       {getDisplayText(word)}
@@ -645,17 +653,17 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
 
                   {/* Template Tool */}
                   <button
-                    onClick={() => {}}
+                    onClick={() => togglePanel("templates")}
                     className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
-                      group relative"
+    border border-[#2C8C7C]/30 transition-all duration-300
+    group relative"
                   >
                     <Layout className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                      pointer-events-none px-3 py-2 shadow-lg"
+    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+    pointer-events-none px-3 py-2 shadow-lg"
                     >
                       <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
                         Templates
@@ -849,6 +857,146 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                     <div className="text-xs opacity-70">{label}</div>
                   </button>
                 ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activePanel === "templates" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
+      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+      z-50"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
+              <h3 className="text-[#2C8C7C] font-medium">Poetic Forms</h3>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="w-72">
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "sonnet" ? null : "sonnet"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "sonnet" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Sonnet</div>
+                    <div className="text-xs opacity-70">
+                      14 lines (8+6) with theme progression
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "limerick" ? null : "limerick"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "limerick" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Limerick</div>
+                    <div className="text-xs opacity-70">
+                      5 lines with AABBA rhyme pattern
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "haiku" ? null : "haiku"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "haiku" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Haiku</div>
+                    <div className="text-xs opacity-70">
+                      3 lines with 5-7-5 syllable arrangement
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "tanka" ? null : "tanka"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "tanka" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Tanka</div>
+                    <div className="text-xs opacity-70">
+                      5 lines extending the haiku form (5-7-5-7-7)
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "lushi" ? null : "lushi"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "lushi" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Lüshi</div>
+                    <div className="text-xs opacity-70">
+                      8-line Chinese form with parallel couplets
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(
+                        activeTemplate === "ghazal" ? null : "ghazal"
+                      );
+                      setActivePanel(null);
+                    }}
+                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
+                      activeTemplate === "ghazal" ? "bg-[#2C8C7C]/10" : ""
+                    }`}
+                  >
+                    <div className="font-medium">Ghazal</div>
+                    <div className="text-xs opacity-70">
+                      5 couplets with repeating refrains
+                    </div>
+                  </button>
+                </div>
+
+                {activeTemplate && (
+                  <button
+                    onClick={() => {
+                      setActiveTemplate(null);
+                      setActivePanel(null);
+                    }}
+                    className="w-full p-2 mt-4 rounded-lg bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 text-[#2C8C7C] text-center transition-colors"
+                  >
+                    Clear Template
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
