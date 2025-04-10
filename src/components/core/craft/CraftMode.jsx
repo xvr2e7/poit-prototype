@@ -22,6 +22,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [poolWords, setPoolWords] = useState([]);
   const [selectedWordId, setSelectedWordId] = useState(null);
   const [activePanel, setActivePanel] = useState(null);
+  const [signatureWords, setSignatureWords] = useState(Array(5).fill(""));
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
@@ -241,11 +242,31 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     setActivePanel(null);
   };
 
+  const handleSignatureWordChange = (index, value) => {
+    const newWords = [...signatureWords];
+    newWords[index] = value;
+    setSignatureWords(newWords);
+  };
+
+  const handleRemoveSignatureWord = (index) => {
+    const newWords = [...signatureWords];
+    newWords[index] = "";
+    setSignatureWords(newWords);
+  };
   // Reset canvas
   const resetCanvas = () => {
     // Return words to pool
     const wordsToReturn = canvasWords
       .filter((w) => w.type === "word")
+      .filter((word) => {
+        // Check if this word was one of the originally selected words
+        const wordText = word.text || word.content;
+        return selectedWords.some((selectedWord) => {
+          const selectedText =
+            typeof selectedWord === "string" ? selectedWord : selectedWord.text;
+          return selectedText.toLowerCase() === wordText.toLowerCase();
+        });
+      })
       .map((word) => ({
         id: word.id,
         text: word.text || word.content,
@@ -307,6 +328,27 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
       setPreviewOffset({ x: 0, y: 0 });
     }
   }, [isPreviewOpen]);
+
+  useEffect(() => {
+    const savedSignatureWords = localStorage.getItem("poit_signature_words");
+    if (savedSignatureWords) {
+      try {
+        const parsed = JSON.parse(savedSignatureWords);
+        if (Array.isArray(parsed) && parsed.length === 5) {
+          setSignatureWords(parsed);
+        }
+      } catch (error) {
+        console.error("Error loading signature words:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "poit_signature_words",
+      JSON.stringify(signatureWords)
+    );
+  }, [signatureWords]);
 
   // Handle export and completion
   const handleDownload = async () => {
@@ -592,17 +634,17 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
 
                   {/* Signature Tool */}
                   <button
-                    onClick={() => {}}
+                    onClick={() => togglePanel("signatures")}
                     className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
-                      group relative"
+    border border-[#2C8C7C]/30 transition-all duration-300
+    group relative"
                   >
                     <Star className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                      pointer-events-none px-3 py-2 shadow-lg"
+    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+    pointer-events-none px-3 py-2 shadow-lg"
                     >
                       <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
                         Signatures
@@ -775,6 +817,68 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
                     <div className="text-lg font-medium">{symbol}</div>
                     <div className="text-xs opacity-70">{label}</div>
                   </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activePanel === "signatures" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
+      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+      z-50"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
+              <h3 className="text-[#2C8C7C] font-medium">Your Signatures</h3>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="w-64 space-y-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Add your personal flair:
+                </p>
+                {signatureWords.map((word, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={word}
+                      onChange={(e) =>
+                        handleSignatureWordChange(index, e.target.value)
+                      }
+                      placeholder="Enter word..."
+                      className="flex-1 p-2 rounded-lg bg-white/5 dark:bg-black/5 
+                border border-[#2C8C7C]/20 text-sm text-[#2C8C7C] 
+                focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]"
+                    />
+                    <button
+                      onClick={() => handleRemoveSignatureWord(index)}
+                      className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    {word.trim() && (
+                      <button
+                        onClick={() =>
+                          handlePunctuationSelect({
+                            text: word,
+                            type: "word",
+                          })
+                        }
+                        className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
