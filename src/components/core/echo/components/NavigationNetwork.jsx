@@ -7,8 +7,9 @@ import {
   RefreshCw,
   Book,
   Network,
-  ChevronUp,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 
 // Represents a single word in the 3D poem layer
@@ -56,18 +57,33 @@ const PoemCanvas = ({
   poem,
   layer,
   currentLayer,
+  totalLayers,
   highlightedWords,
   connectingWord,
   opacity = 1,
   onClick,
+  onDoubleClick,
+  isStacked = true,
 }) => {
   if (!poem || !poem.components) return null;
 
   // Get words from the poem's components
   const words = poem.components.filter((comp) => comp.type === "word");
 
-  // Calculate layer z-position (bottom layer first)
-  const Z_POSITION = -220 * (layer - currentLayer);
+  // Calculate position in stack
+  const reversedLayer = isStacked ? totalLayers - 1 - layer : layer;
+  const reversedCurrentLayer = isStacked
+    ? totalLayers - 1 - currentLayer
+    : currentLayer;
+  const offsetFromCurrent = reversedLayer - reversedCurrentLayer;
+
+  // Calculate stack offset for tilted view
+  const horizontalOffset = isStacked ? offsetFromCurrent * 40 : 0;
+  const verticalOffset = isStacked ? offsetFromCurrent * 20 : 0;
+
+  // Calculate z-index and z-position for stacked view
+  const zOffset = isStacked ? -120 * offsetFromCurrent : 0;
+  const zIndex = isStacked ? 100 - Math.abs(offsetFromCurrent) : 100;
 
   // Standard canvas size for all poems
   const canvasWidth = 1000;
@@ -113,21 +129,33 @@ const PoemCanvas = ({
   // Calculate if this is the active layer
   const isActiveLayer = layer === currentLayer;
 
+  // Transform style for layers in the stack
+  const layerTransform = isStacked
+    ? `translateX(${horizontalOffset}px) translateY(${verticalOffset}px) translateZ(${zOffset}px) rotateY(-15deg)`
+    : "translateZ(0px)";
+
+  // Scale and size for 2D view (when not stacked)
+  const layerScale = isStacked ? 1 : 1.5;
+  const layerSize = isStacked
+    ? { width: canvasWidth, height: canvasHeight }
+    : { width: "100%", height: "100%" };
+
   return (
     <div
-      className={`absolute ${isActiveLayer ? "z-10" : ""} ${
-        onClick ? "cursor-pointer" : ""
+      className={`absolute transition-all duration-300 ease-out ${
+        isActiveLayer ? "z-10" : ""
       }`}
       style={{
-        width: canvasWidth,
-        height: canvasHeight,
-        left: -canvasWidth / 2,
-        top: -canvasHeight / 2,
-        transform: `translateZ(${Z_POSITION}px)`,
+        ...layerSize,
+        left: isStacked ? -canvasWidth / 2 : 0,
+        top: isStacked ? -canvasHeight / 2 : 0,
+        transform: layerTransform,
         transformStyle: "preserve-3d",
         opacity: isActiveLayer ? 1 : opacity,
+        zIndex: zIndex,
       }}
       onClick={onClick ? () => onClick(layer) : undefined}
+      onDoubleClick={onDoubleClick ? () => onDoubleClick(layer) : undefined}
     >
       {/* Layer background */}
       <div
@@ -158,9 +186,9 @@ const PoemCanvas = ({
       {/* Words */}
       {words.map((word, index) => (
         <WordNode
-          key={`${poem.id}-word-${index}`}
+          key={`${poem.id}-word-${index}-${word.text}`}
           word={word}
-          scaleFactor={scaleFactor}
+          scaleFactor={scaleFactor * layerScale}
           isHighlighted={highlightedWords.includes(word.text.toLowerCase())}
           isConnecting={connectingWord === word.text.toLowerCase()}
         />
@@ -169,18 +197,39 @@ const PoemCanvas = ({
   );
 };
 
-// Connection between words on different layers
-const WordConnection = ({
+// Connection between words on different layers - laser beam style
+const LaserBeamConnection = ({
   startPosition,
   startLayer,
   endPosition,
   endLayer,
   currentLayer,
+  totalLayers,
   isActive,
 }) => {
-  // Calculate 3D positions adjusting for current layer
-  const startZ = -220 * (startLayer - currentLayer);
-  const endZ = -220 * (endLayer - currentLayer);
+  // Calculate 3D positions with offsets for the stacked view
+  const reversedStartLayer = totalLayers - 1 - startLayer;
+  const reversedEndLayer = totalLayers - 1 - endLayer;
+  const reversedCurrentLayer = totalLayers - 1 - currentLayer;
+
+  const startHOffset = (reversedStartLayer - reversedCurrentLayer) * 40;
+  const startVOffset = (reversedStartLayer - reversedCurrentLayer) * 20;
+  const startZ = -120 * (reversedStartLayer - reversedCurrentLayer);
+
+  const endHOffset = (reversedEndLayer - reversedCurrentLayer) * 40;
+  const endVOffset = (reversedEndLayer - reversedCurrentLayer) * 20;
+  const endZ = -120 * (reversedEndLayer - reversedCurrentLayer);
+
+  // Adjusted positions for stack view
+  const adjustedStartPos = {
+    x: startPosition.x + startHOffset,
+    y: startPosition.y + startVOffset,
+  };
+
+  const adjustedEndPos = {
+    x: endPosition.x + endHOffset,
+    y: endPosition.y + endVOffset,
+  };
 
   return (
     <div
@@ -197,8 +246,8 @@ const WordConnection = ({
       <div
         className="absolute rounded-full"
         style={{
-          left: startPosition.x,
-          top: startPosition.y,
+          left: adjustedStartPos.x,
+          top: adjustedStartPos.y,
           width: 6,
           height: 6,
           transform: `translateZ(${startZ}px)`,
@@ -212,8 +261,8 @@ const WordConnection = ({
       <div
         className="absolute rounded-full"
         style={{
-          left: endPosition.x,
-          top: endPosition.y,
+          left: adjustedEndPos.x,
+          top: adjustedEndPos.y,
           width: 6,
           height: 6,
           transform: `translateZ(${endZ}px)`,
@@ -223,7 +272,7 @@ const WordConnection = ({
         }}
       />
 
-      {/* Line - using SVG for better 3D connections */}
+      {/* Laser beam connection - using SVG for better rendering */}
       <svg
         width="100%"
         height="100%"
@@ -231,32 +280,42 @@ const WordConnection = ({
       >
         <defs>
           <linearGradient
-            id={`gradient-${startLayer}-${endLayer}`}
+            id={`laser-gradient-${startLayer}-${endLayer}`}
             x1="0%"
             y1="0%"
             x2="100%"
             y2="0%"
           >
-            <stop
-              offset="0%"
-              stopColor="#2C8C7C"
-              stopOpacity={isActive ? "0.8" : "0.4"}
-            />
-            <stop offset="100%" stopColor="#2C8C7C" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#2C8C7C" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#2C8C7C" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#2C8C7C" stopOpacity="0.9" />
           </linearGradient>
+          <filter
+            id={`laser-glow-${startLayer}-${endLayer}`}
+            x="-20%"
+            y="-20%"
+            width="140%"
+            height="140%"
+          >
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite
+              in="SourceGraphic"
+              in2="blur"
+              operator="over"
+              result="glow"
+            />
+          </filter>
         </defs>
         <line
-          x1={startPosition.x}
-          y1={startPosition.y}
-          x2={endPosition.x}
-          y2={endPosition.y}
-          stroke={`url(#gradient-${startLayer}-${endLayer})`}
-          strokeWidth={isActive ? 1.5 : 1}
-          strokeDasharray="5,5"
+          x1={adjustedStartPos.x}
+          y1={adjustedStartPos.y}
+          x2={adjustedEndPos.x}
+          y2={adjustedEndPos.y}
+          stroke={`url(#laser-gradient-${startLayer}-${endLayer})`}
+          strokeWidth={isActive ? 2 : 1.5}
           style={{
-            filter: isActive
-              ? "drop-shadow(0 0 2px rgba(44, 140, 124, 0.5))"
-              : "none",
+            filter: `url(#laser-glow-${startLayer}-${endLayer})`,
+            opacity: isActive ? 1 : 0.7,
           }}
         />
       </svg>
@@ -280,13 +339,17 @@ const NavigationNetwork = ({
 
   // State for 3D controls
   const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState({ x: 15, y: 15 });
+  const [rotation, setRotation] = useState({ x: 25, y: -30 }); // Match the tilted view in reference image
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, rotX: 0, rotY: 0 });
 
-  // New state for layer navigation
+  // Layer navigation state
   const [currentLayer, setCurrentLayer] = useState(0);
+
+  // New state for 2D view mode
+  const [activeLayer, setActiveLayer] = useState(null);
+  const [isIn2DView, setIsIn2DView] = useState(false);
 
   // Enhanced word connections that calculate actual positions
   const wordConnections = useMemo(() => {
@@ -341,9 +404,9 @@ const NavigationNetwork = ({
     return connections;
   }, [visitedPoems, connectingWords]);
 
-  // Improved handling for touchpad-friendly 3D interaction
+  // Mouse/touch interaction for 3D rotation
   const handleMouseDown = (e) => {
-    if (e.button !== 0) return; // Only handle left mouse button
+    if (e.button !== 0 || isIn2DView) return; // Only handle left mouse button and not in 2D view
     setIsDragging(true);
     dragStart.current = {
       x: e.clientX,
@@ -388,6 +451,8 @@ const NavigationNetwork = ({
 
   // Zoom with mouse wheel
   const handleWheel = (e) => {
+    if (isIn2DView) return; // Don't zoom in 2D view
+
     e.preventDefault();
     if (e.deltaY < 0) {
       setScale((prev) => Math.min(prev + 0.1, 2.5));
@@ -399,8 +464,10 @@ const NavigationNetwork = ({
   // Reset position
   const resetView = () => {
     setScale(1);
-    setRotation({ x: 15, y: 15 });
+    setRotation({ x: 25, y: -30 }); // Adjusted to match the reference image
     setPosition({ x: 0, y: 0 });
+    setIsIn2DView(false);
+    setActiveLayer(null);
 
     // Find index of current poem and focus on that layer
     const currentPoemIndex = visitedPoems.findIndex(
@@ -413,7 +480,7 @@ const NavigationNetwork = ({
     }
   };
 
-  // Navigate to previous/next layer
+  // Navigate to previous/next layer - accounting for reversed order
   const goToPreviousLayer = () => {
     if (currentLayer > 0) {
       setCurrentLayer(currentLayer - 1);
@@ -426,9 +493,17 @@ const NavigationNetwork = ({
     }
   };
 
-  // Handle layer click
-  const handleLayerClick = (layerIndex) => {
-    setCurrentLayer(layerIndex);
+  // Handle double-click to enter 2D view
+  const handleDoubleClick = (layerIndex) => {
+    setActiveLayer(layerIndex);
+    setIsIn2DView(true);
+  };
+
+  // Return from 2D view to 3D stack
+  const returnTo3DView = () => {
+    setIsIn2DView(false);
+    setCurrentLayer(activeLayer || 0);
+    setActiveLayer(null);
   };
 
   // Reset on open
@@ -442,6 +517,9 @@ const NavigationNetwork = ({
   const highlightedWords = wordPool.map((w) =>
     typeof w === "string" ? w.toLowerCase() : w.text.toLowerCase()
   );
+
+  // Total number of layers for positioning calculation
+  const totalLayers = visitedPoems.length;
 
   return (
     <AnimatePresence>
@@ -486,75 +564,85 @@ const NavigationNetwork = ({
             </div>
           </div>
 
-          {/* Layer Navigation Controls */}
-          <div
-            className="absolute left-1/2 top-4 transform -translate-x-1/2 
-            flex items-center gap-4 z-20"
-          >
-            <button
-              onClick={goToPreviousLayer}
-              disabled={currentLayer <= 0}
-              className={`p-2 rounded-full border ${
-                currentLayer <= 0
-                  ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
-              } transition-colors`}
-              aria-label="Previous layer"
-            >
-              <ChevronUp className="w-5 h-5" />
-            </button>
+          {/* Layer Navigation Controls - Only show in 3D view */}
+          {!isIn2DView && (
+            <>
+              <button
+                onClick={goToPreviousLayer}
+                disabled={currentLayer <= 0}
+                className={`absolute left-6 top-1/2 transform -translate-y-1/2 
+                  p-3 rounded-full border pointer-events-auto z-20 ${
+                    currentLayer <= 0
+                      ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
+                  } transition-colors shadow-lg`}
+                aria-label="Previous layer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
 
+              <button
+                onClick={goToNextLayer}
+                disabled={currentLayer >= visitedPoems.length - 1}
+                className={`absolute right-6 top-1/2 transform -translate-y-1/2
+                  p-3 rounded-full border pointer-events-auto z-20 ${
+                    currentLayer >= visitedPoems.length - 1
+                      ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
+                  } transition-colors shadow-lg`}
+                aria-label="Next layer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {/* Back button for 2D view */}
+          {isIn2DView && (
+            <button
+              onClick={returnTo3DView}
+              className="absolute top-4 left-1/2 transform -translate-x-1/2
+                px-4 py-2 rounded-lg bg-gray-900/70 backdrop-blur-sm 
+                border border-gray-800 text-white hover:bg-gray-800/70
+                transition-colors shadow-lg z-20 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Stack</span>
+            </button>
+          )}
+
+          {/* Controls - Only shown in 3D view */}
+          {!isIn2DView && (
             <div
-              className="px-4 py-1.5 bg-gray-900/70 backdrop-blur-sm 
-              rounded-lg border border-gray-800 text-white"
+              className="absolute top-4 right-20 
+              flex space-x-2 z-20"
             >
-              Layer {currentLayer + 1} of {visitedPoems.length}
+              <button
+                onClick={() => setScale((prev) => Math.min(prev + 0.1, 2.5))}
+                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
+                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
+                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
+                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                onClick={resetView}
+                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
+                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                aria-label="Reset view"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
             </div>
-
-            <button
-              onClick={goToNextLayer}
-              disabled={currentLayer >= visitedPoems.length - 1}
-              className={`p-2 rounded-full border ${
-                currentLayer >= visitedPoems.length - 1
-                  ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
-              } transition-colors`}
-              aria-label="Next layer"
-            >
-              <ChevronDown className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Controls */}
-          <div
-            className="absolute top-4 right-20 
-            flex space-x-2 z-20"
-          >
-            <button
-              onClick={() => setScale((prev) => Math.min(prev + 0.1, 2.5))}
-              className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
-              aria-label="Zoom in"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
-              className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
-              aria-label="Zoom out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={resetView}
-              className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
-              aria-label="Reset view"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
+          )}
 
           {/* Instructions */}
           <div
@@ -562,7 +650,9 @@ const NavigationNetwork = ({
             bg-gray-900/80 backdrop-blur-sm rounded-lg px-4 py-2 z-20 text-white text-sm
             border border-gray-800"
           >
-            Drag to rotate • Scroll to zoom • Click layer to focus
+            {isIn2DView
+              ? "Click 'Back to Stack' to return to 3D view"
+              : "Double-click a layer to expand • Use arrows to navigate • Drag to rotate"}
           </div>
 
           {/* 3D visualization */}
@@ -572,7 +662,7 @@ const NavigationNetwork = ({
             onMouseDown={handleMouseDown}
             onWheel={handleWheel}
             style={{
-              cursor: isDragging ? "grabbing" : "grab",
+              cursor: isDragging ? "grabbing" : isIn2DView ? "default" : "grab",
               perspective: "1200px",
               perspectiveOrigin: "center",
             }}
@@ -582,53 +672,94 @@ const NavigationNetwork = ({
               className="relative"
               style={{
                 transformStyle: "preserve-3d",
-                transform: `
-                  translate(${position.x}px, ${position.y}px)
-                  scale(${scale})
-                  rotateX(${rotation.x}deg) 
-                  rotateY(${rotation.y}deg)
-                `,
-                transition: isDragging ? "none" : "transform 0.3s ease-out",
+                transform: isIn2DView
+                  ? "none"
+                  : `
+                    translate(${position.x}px, ${position.y}px)
+                    scale(${scale})
+                    rotateX(${rotation.x}deg) 
+                    rotateY(${rotation.y}deg)
+                    translateZ(-100px)
+                  `,
+                transition: isDragging ? "none" : "transform 0.5s ease-out",
+                width: isIn2DView ? "100%" : "auto",
+                height: isIn2DView ? "100%" : "auto",
               }}
             >
-              {/* Poem layers */}
+              {/* 3D Stack or 2D View */}
               <div
-                className="relative w-0 h-0"
+                className="relative"
                 style={{
                   transformStyle: "preserve-3d",
+                  width: isIn2DView ? "100%" : 0,
+                  height: isIn2DView ? "100%" : 0,
                 }}
               >
-                {visitedPoems.map((poem, index) => (
-                  <PoemCanvas
-                    key={`poem-layer-${poem.id}-${index}`}
-                    poem={poem}
-                    layer={index}
-                    currentLayer={currentLayer}
-                    highlightedWords={highlightedWords}
-                    connectingWord={
-                      index < visitedPoems.length - 1
-                        ? connectingWords[
-                            `${poem.id}-${visitedPoems[index + 1]?.id}`
-                          ]
-                        : null
-                    }
-                    opacity={0.7}
-                    onClick={handleLayerClick}
-                  />
-                ))}
+                {isIn2DView ? (
+                  // 2D View - show only active layer
+                  visitedPoems
+                    .filter((_, index) => index === activeLayer)
+                    .map((poem) => (
+                      <PoemCanvas
+                        key={`2d-view-expanded-${poem.id}-${activeLayer}`}
+                        poem={poem}
+                        layer={activeLayer}
+                        currentLayer={activeLayer}
+                        totalLayers={totalLayers}
+                        highlightedWords={highlightedWords}
+                        connectingWord={
+                          activeLayer < visitedPoems.length - 1
+                            ? connectingWords[
+                                `${poem.id}-${
+                                  visitedPoems[activeLayer + 1]?.id
+                                }`
+                              ]
+                            : null
+                        }
+                        opacity={1}
+                        isStacked={false}
+                      />
+                    ))
+                ) : (
+                  // 3D Stack View - show all layers
+                  <>
+                    {visitedPoems.map((poem, index) => (
+                      <PoemCanvas
+                        key={`stack-layer-${poem.id}-${index}-${currentLayer}`}
+                        poem={poem}
+                        layer={index}
+                        currentLayer={currentLayer}
+                        totalLayers={totalLayers}
+                        highlightedWords={highlightedWords}
+                        connectingWord={
+                          index < visitedPoems.length - 1
+                            ? connectingWords[
+                                `${poem.id}-${visitedPoems[index + 1]?.id}`
+                              ]
+                            : null
+                        }
+                        opacity={0.7}
+                        onClick={() => setCurrentLayer(index)}
+                        onDoubleClick={handleDoubleClick}
+                        isStacked={true}
+                      />
+                    ))}
 
-                {/* Connections between words */}
-                {wordConnections.map((connection, idx) => (
-                  <WordConnection
-                    key={`connection-${idx}`}
-                    startPosition={connection.from.position}
-                    startLayer={connection.from.layer}
-                    endPosition={connection.to.position}
-                    endLayer={connection.to.layer}
-                    currentLayer={currentLayer}
-                    isActive={connection.isActive}
-                  />
-                ))}
+                    {/* Laser beam connections between adjacent layers */}
+                    {wordConnections.map((connection, idx) => (
+                      <LaserBeamConnection
+                        key={`connection-${connection.from.poemId}-${connection.to.poemId}-${idx}-${currentLayer}`}
+                        startPosition={connection.from.position}
+                        startLayer={connection.from.layer}
+                        endPosition={connection.to.position}
+                        endLayer={connection.to.layer}
+                        currentLayer={currentLayer}
+                        totalLayers={totalLayers}
+                        isActive={connection.isActive}
+                      />
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
