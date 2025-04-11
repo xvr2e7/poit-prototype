@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar } from "lucide-react";
+import { Calendar, ZoomIn, ZoomOut } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
@@ -25,6 +25,12 @@ const EchoMode = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosition = useRef({ x: 0, y: 0 });
 
+  // Zoom state
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const MIN_ZOOM = 0.5;
+  const MAX_ZOOM = 2.0;
+  const ZOOM_STEP = 0.1;
+
   const {
     currentPoem,
     navigationHistory,
@@ -37,6 +43,12 @@ const EchoMode = ({
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Reset drag and zoom when changing poems
+  useEffect(() => {
+    setDragOffset({ x: 0, y: 0 });
+    setZoomLevel(1);
+  }, [currentPoem?.id]);
 
   const handleWordClick = async (word, e) => {
     if (!e || isDragging) return;
@@ -77,6 +89,53 @@ const EchoMode = ({
   const handleMouseUp = () => {
     setIsDragging(false);
   };
+
+  // Zoom handlers
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => Math.min(MAX_ZOOM, prev + ZOOM_STEP));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => Math.max(MIN_ZOOM, prev - ZOOM_STEP));
+  };
+
+  // Wheel zoom handler
+  const handleWheel = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      // Zoom in/out based on wheel direction
+      if (e.deltaY < 0) {
+        handleZoomIn();
+      } else {
+        handleZoomOut();
+      }
+    }
+  };
+
+  // Keyboard handler for zoom controls
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Zoom in with + or =
+      if ((e.key === "+" || e.key === "=") && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      // Zoom out with -
+      else if (e.key === "-" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      // Reset zoom with 0
+      else if (e.key === "0" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setZoomLevel(1);
+        setDragOffset({ x: 0, y: 0 });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Add/remove event listeners
   useEffect(() => {
@@ -146,7 +205,34 @@ const EchoMode = ({
             className="flex-1 relative overflow-hidden"
             style={{ cursor: isDragging ? "grabbing" : "grab" }}
             onMouseDown={handleMouseDown}
+            onWheel={handleWheel}
           >
+            {/* Zoom Controls */}
+            <div className="absolute top-4 left-4 flex flex-row gap-2 z-10">
+              <button
+                onClick={handleZoomIn}
+                className="p-2 rounded-full bg-white/10 dark:bg-gray-900/30 
+                  backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20 
+                  dark:hover:bg-gray-900/50 transition-colors"
+              >
+                <ZoomIn className="w-4 h-4 text-[#2C8C7C]" />
+              </button>
+              <button
+                onClick={handleZoomOut}
+                className="p-2 rounded-full bg-white/10 dark:bg-gray-900/30 
+                  backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20 
+                  dark:hover:bg-gray-900/50 transition-colors"
+              >
+                <ZoomOut className="w-4 h-4 text-[#2C8C7C]" />
+              </button>
+              <div
+                className="text-center mt-1 text-xs text-[#2C8C7C] bg-white/10 dark:bg-gray-900/30 
+                backdrop-blur-sm rounded-md px-1 py-0.5 border border-[#2C8C7C]/20"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </div>
+            </div>
+
             {/* Connection Counter */}
             <div
               className="absolute top-4 right-4 flex items-center gap-1.5 
@@ -173,7 +259,7 @@ const EchoMode = ({
             {/* Drag hint */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
               <span className="text-xs text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
-                Drag to see more
+                Drag to explore • Ctrl+Wheel to zoom
               </span>
             </div>
 
@@ -181,7 +267,8 @@ const EchoMode = ({
             <div
               className="absolute inset-0"
               style={{
-                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) scale(${zoomLevel})`,
+                transformOrigin: "center",
                 transition: isDragging ? "none" : "transform 0.2s ease-out",
               }}
             >
