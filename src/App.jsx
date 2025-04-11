@@ -232,7 +232,16 @@ function App() {
 
       {currentScreen === "echo" && (
         <EchoMode
-          poems={isDevMode ? poemHistory : [currentPoem].filter(Boolean)}
+          poems={
+            isDevMode
+              ? currentPoem
+                ? [
+                    currentPoem,
+                    ...poemHistory.filter((p) => p.id !== currentPoem.id),
+                  ]
+                : poemHistory
+              : [currentPoem].filter(Boolean)
+          }
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
           onExitToHome={handleExitToHome}
