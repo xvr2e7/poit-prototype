@@ -5,7 +5,8 @@ import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
 import { usePoemNavigation } from "./hooks/usePoemNavigation";
-import { NavigationTrail } from "./components/NavigationTrail";
+import NavigationNetworkButton from "./components/NavigationNetworkButton";
+import NavigationNetwork from "./components/NavigationNetwork";
 
 const EchoMode = ({
   poems = [],
@@ -17,6 +18,7 @@ const EchoMode = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [connectingWord, setConnectingWord] = useState(null);
+  const [isNetworkVisible, setIsNetworkVisible] = useState(false);
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -85,12 +87,24 @@ const EchoMode = ({
     }
   }, [currentPoem, connectingWord, isTransitioning]);
 
+  // Track connecting words between poems
+  const [connectingWords, setConnectingWords] = useState({});
+
   const handleWordClick = async (word, e) => {
     if (!e || isDragging) return;
     const nextPoem = findNextPoemForWord(word.text);
     if (nextPoem) {
       // Set the connecting word (the word that was clicked)
       setConnectingWord(word.text.toLowerCase());
+
+      // Track connecting word in our map
+      if (currentPoem) {
+        setConnectingWords((prev) => ({
+          ...prev,
+          [`${currentPoem.id}-${nextPoem.id}`]: word.text.toLowerCase(),
+        }));
+      }
+
       setIsTransitioning(true);
       await new Promise((resolve) => setTimeout(resolve, 300));
       // Pass the connecting word to navigateToPoem
@@ -188,6 +202,20 @@ const EchoMode = ({
     }
   }, [isDragging]);
 
+  // Calculate statistics for network view
+  const uniquePoemIds = new Set(
+    [...navigationHistory.map((poem) => poem.id), currentPoem?.id].filter(
+      Boolean
+    )
+  );
+
+  const uniquePoemCount = uniquePoemIds.size;
+
+  // Count connections to poems other than the starting one
+  const constellationCount = navigationHistory.filter(
+    (poem) => poem?.id !== poems[0]?.id
+  ).length;
+
   if (!enabled || !currentPoem) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -202,13 +230,6 @@ const EchoMode = ({
       {/* Navigation */}
       <Navigation currentMode="echo" onExitToHome={onExitToHome} />
 
-      {/* Navigation Trail */}
-      <NavigationTrail
-        visitedPoems={[...navigationHistory, currentPoem]}
-        currentPoemId={currentPoem.id}
-        onPoemSelect={navigateToPoem}
-      />
-
       {/* Main Content */}
       <div className="relative w-full h-full p-8">
         <motion.div
@@ -216,7 +237,7 @@ const EchoMode = ({
           animate={{ opacity: 1 }}
           className="max-w-6xl mx-auto h-full flex flex-col"
         >
-          {/* Poem Header */}
+          {/* Poem Header - with Network Button */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -235,6 +256,12 @@ const EchoMode = ({
                 </div>
               </div>
             </div>
+
+            {/* Network Button */}
+            <NavigationNetworkButton
+              onClick={() => setIsNetworkVisible(true)}
+              isActive={isNetworkVisible}
+            />
           </motion.div>
 
           {/* Poem Content Area */}
@@ -290,7 +317,7 @@ const EchoMode = ({
                 </svg>
               </div>
               <span className="text-sm font-medium text-[#2C8C7C]">
-                {currentPoem.metadata.highlightedWordCount}
+                {currentPoem.metadata?.highlightedWordCount || 0}
               </span>
             </div>
 
@@ -338,6 +365,18 @@ const EchoMode = ({
               </motion.div>
             </div>
           </div>
+
+          {/* Navigation Network */}
+          <NavigationNetwork
+            isOpen={isNetworkVisible}
+            onClose={() => setIsNetworkVisible(false)}
+            visitedPoems={[...navigationHistory, currentPoem].filter(Boolean)}
+            currentPoemId={currentPoem.id}
+            onPoemSelect={navigateToPoem}
+            uniquePoemCount={uniquePoemCount}
+            constellationCount={constellationCount}
+            connectingWords={connectingWords}
+          />
         </motion.div>
       </div>
     </div>
