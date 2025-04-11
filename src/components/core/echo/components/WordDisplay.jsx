@@ -8,6 +8,7 @@ const WordComponent = ({
   onWordClick,
   isTransitioning = false,
   isFloating = false,
+  isConnectingWord = false,
 }) => {
   const animationDelay = useMemo(() => Math.random() * 4, []);
   const animationDuration = useMemo(() => 4 + Math.random() * 2, []);
@@ -43,6 +44,7 @@ const WordComponent = ({
               : "text-sm font-normal"
           }
           ${isInteractive ? "cursor-pointer hover:scale-115" : "cursor-default"}
+          ${isConnectingWord ? "rounded-lg overflow-hidden" : ""}
         `}
         onClick={(e) => isInteractive && onWordClick?.(word, e)}
         whileHover={{ scale: isInteractive ? 1.05 : 1 }}
@@ -94,6 +96,39 @@ const WordComponent = ({
           </motion.div>
         )}
 
+        {/* Overlay for connecting word */}
+        {isConnectingWord && (
+          <>
+            <motion.div
+              className="absolute inset-0 -z-10 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              style={{
+                background:
+                  "radial-gradient(circle at center, rgba(44, 140, 124, 0.25) 0%, rgba(44, 140, 124, 0.15) 50%, rgba(44, 140, 124, 0.05) 70%, transparent 100%)",
+              }}
+            />
+            <motion.div
+              className="absolute inset-0 -z-10 rounded-lg bg-transparent"
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: [0.3, 0.6, 0.3],
+                boxShadow: [
+                  "0 0 8px 2px rgba(44, 140, 124, 0.2)",
+                  "0 0 12px 4px rgba(44, 140, 124, 0.3)",
+                  "0 0 8px 2px rgba(44, 140, 124, 0.2)",
+                ],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </>
+        )}
+
         {/* Connection glow for interactive words */}
         {isInteractive && (
           <motion.div
@@ -129,6 +164,11 @@ const WordComponent = ({
             ${
               isInteractive
                 ? "group-hover:text-[#2C8C7C] dark:group-hover:text-[#2C8C7C]"
+                : ""
+            }
+            ${
+              isConnectingWord
+                ? "font-medium text-[#2C8C7C] dark:text-[#2C8C7C]"
                 : ""
             }
             hover:tracking-wide tracking-normal
@@ -183,6 +223,7 @@ const WordDisplay = ({
   isTransitioning = false,
   isFloating = false,
   className = "",
+  connectingWord = null,
 }) => {
   const highlightedWordSet = useMemo(
     () => new Set(highlightedWords.map((w) => w.toLowerCase())),
@@ -203,6 +244,10 @@ const WordDisplay = ({
             onWordClick={onWordClick}
             isTransitioning={isTransitioning}
             isFloating={isFloating}
+            isConnectingWord={
+              connectingWord &&
+              word.text.toLowerCase() === connectingWord.toLowerCase()
+            }
           />
         ))}
       </AnimatePresence>

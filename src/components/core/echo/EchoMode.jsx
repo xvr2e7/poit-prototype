@@ -10,15 +10,13 @@ import { NavigationTrail } from "./components/NavigationTrail";
 const EchoMode = ({
   poems = [],
   wordPool = [],
-  onComplete,
-  playgroundUnlocked,
-  enterPlayground,
   enabled = true,
   onExitToHome,
 }) => {
   const containerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [connectingWord, setConnectingWord] = useState(null);
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -50,10 +48,49 @@ const EchoMode = ({
     setZoomLevel(1);
   }, [currentPoem?.id]);
 
+  // Effect to center/zoom on connecting word when poem changes
+  useEffect(() => {
+    if (
+      connectingWord &&
+      currentPoem &&
+      currentPoem.components &&
+      !isTransitioning
+    ) {
+      // Find the connecting word in the new poem
+      const foundWord = currentPoem.components.find(
+        (comp) =>
+          comp.type === "word" &&
+          comp.text.toLowerCase() === connectingWord.toLowerCase()
+      );
+
+      if (foundWord && foundWord.position) {
+        // Center the view on the connecting word
+        const centerX = foundWord.position.x;
+        const centerY = foundWord.position.y;
+
+        // Apply a slight zoom in effect
+        const newZoomLevel = Math.min(MAX_ZOOM, 1.5);
+        setZoomLevel(newZoomLevel);
+
+        // Calculate offset to center the view on the word
+        setDragOffset({
+          x:
+            -centerX * newZoomLevel +
+            (containerRef.current?.clientWidth || 0) / 2,
+          y:
+            -centerY * newZoomLevel +
+            (containerRef.current?.clientHeight || 0) / 2,
+        });
+      }
+    }
+  }, [currentPoem, connectingWord, isTransitioning]);
+
   const handleWordClick = async (word, e) => {
     if (!e || isDragging) return;
     const nextPoem = findNextPoemForWord(word.text);
     if (nextPoem) {
+      // Set the connecting word (the word that was clicked)
+      setConnectingWord(word.text.toLowerCase());
       setIsTransitioning(true);
       await new Promise((resolve) => setTimeout(resolve, 300));
       navigateToPoem(nextPoem.id);
@@ -293,6 +330,7 @@ const EchoMode = ({
                       onWordClick={handleWordClick}
                       isTransitioning={isTransitioning}
                       isFloating={true}
+                      connectingWord={connectingWord}
                     />
                   )}
                 </AnimatePresence>
