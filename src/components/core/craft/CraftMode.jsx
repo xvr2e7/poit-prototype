@@ -11,6 +11,7 @@ import {
   BookMarked,
   X,
   Grid,
+  Pencil,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import TemplateGuide from "./components/TemplateGuide";
@@ -36,6 +37,7 @@ const CraftMode = ({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
   const [isDraggingPreview, setIsDraggingPreview] = useState(false);
+  const [poemTitle, setPoemTitle] = useState("Today's Poem");
   const previewStartPosition = useRef({ x: 0, y: 0 });
   const [showPoolWordsModal, setShowPoolWordsModal] = useState(false);
 
@@ -343,6 +345,41 @@ const CraftMode = ({
     localStorage.setItem("poit_canvas_pattern", canvasPattern);
   }, [canvasPattern]);
 
+  // Reset preview offset when opening the preview
+  useEffect(() => {
+    if (isPreviewOpen) {
+      setPreviewOffset({ x: 0, y: 0 });
+    }
+  }, [isPreviewOpen]);
+
+  // Reset title when opening preview if no words are on canvas yet
+  useEffect(() => {
+    if (isPreviewOpen && canvasWords.length === 0) {
+      setPoemTitle("Today's Poem");
+    }
+  }, [isPreviewOpen, canvasWords.length]);
+
+  useEffect(() => {
+    const savedSignatureWords = localStorage.getItem("poit_signature_words");
+    if (savedSignatureWords) {
+      try {
+        const parsed = JSON.parse(savedSignatureWords);
+        if (Array.isArray(parsed) && parsed.length === 5) {
+          setSignatureWords(parsed);
+        }
+      } catch (error) {
+        console.error("Error loading signature words:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "poit_signature_words",
+      JSON.stringify(signatureWords)
+    );
+  }, [signatureWords]);
+
   // Reset canvas
   const resetCanvas = () => {
     // Return words to pool
@@ -412,34 +449,6 @@ const CraftMode = ({
     }
   }, [isDraggingPreview]); // Only re-add listeners when dragging state changes
 
-  // Reset preview offset when opening the preview
-  useEffect(() => {
-    if (isPreviewOpen) {
-      setPreviewOffset({ x: 0, y: 0 });
-    }
-  }, [isPreviewOpen]);
-
-  useEffect(() => {
-    const savedSignatureWords = localStorage.getItem("poit_signature_words");
-    if (savedSignatureWords) {
-      try {
-        const parsed = JSON.parse(savedSignatureWords);
-        if (Array.isArray(parsed) && parsed.length === 5) {
-          setSignatureWords(parsed);
-        }
-      } catch (error) {
-        console.error("Error loading signature words:", error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "poit_signature_words",
-      JSON.stringify(signatureWords)
-    );
-  }, [signatureWords]);
-
   // Handle export and completion
   const handleDownload = async () => {
     if (!canvasRef.current) return;
@@ -469,6 +478,7 @@ const CraftMode = ({
 
     const poemData = {
       words: canvasWords,
+      title: poemTitle,
       metadata: {
         createdAt: new Date().toISOString(),
       },
@@ -1287,7 +1297,29 @@ border border-[#2C8C7C]/10 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Preview Header */}
-              <div className="absolute top-0 right-0 left-0 h-16 flex justify-end items-center px-6 z-10">
+              <div className="absolute top-0 right-0 left-0 h-16 flex justify-between items-center px-6 z-10">
+                {/* Title Input */}
+                <div className="flex-1 flex justify-center relative group">
+                  <input
+                    type="text"
+                    value={poemTitle}
+                    onChange={(e) => setPoemTitle(e.target.value)}
+                    placeholder="Enter poem title..."
+                    className="px-4 py-2 text-xl font-medium text-center 
+                      bg-transparent border-b border-[#2C8C7C]/20 
+                      focus:border-[#2C8C7C] focus:outline-none
+                      text-gray-900 dark:text-gray-100
+                      placeholder:text-gray-400 dark:placeholder:text-gray-600
+                      w-64 transition-all duration-300"
+                  />
+                  <Pencil
+                    className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 
+                    text-[#2C8C7C]/40 group-hover:text-[#2C8C7C]/60 opacity-0 group-hover:opacity-100
+                    transition-opacity duration-300"
+                  />
+                </div>
+
+                {/* Close Button */}
                 <button
                   onClick={() => setIsPreviewOpen(false)}
                   className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] transition-colors"

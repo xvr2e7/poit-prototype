@@ -64,7 +64,7 @@ function App() {
     const processedPoem = {
       ...poemData,
       id: `poem-${Date.now()}`,
-      title: "Today's Poem",
+      title: poemData.title || "Today's Poem",
       author: "You",
       date: new Date().toLocaleDateString(),
       createdAt: new Date().toISOString(),
