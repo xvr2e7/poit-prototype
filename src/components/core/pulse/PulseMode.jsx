@@ -34,6 +34,21 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
   useEffect(() => {
     const fetchWords = async () => {
       try {
+        // Check for dev mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const devMode = urlParams.get("dev");
+
+        if (devMode === "true") {
+          // Import and use test words
+          const { getTestWords } = await import(
+            "../../../utils/testData/devTestData"
+          );
+          setAvailableWords(getTestWords());
+          setIsLoading(false);
+          return;
+        }
+
+        // Normal API fetch for production
         // Get user's timezone
         let timezone;
         try {

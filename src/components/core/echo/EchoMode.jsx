@@ -85,12 +85,6 @@ const EchoMode = ({
               </h2>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-[#2C8C7C]" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {currentPoem.author}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-[#2C8C7C]" />
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {currentPoem.date}
@@ -98,19 +92,6 @@ const EchoMode = ({
                 </div>
               </div>
             </div>
-
-            {playgroundUnlocked && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={enterPlayground}
-                className="px-4 py-2 rounded-xl bg-[#2C8C7C]/10 
-                  hover:bg-[#2C8C7C]/20 text-[#2C8C7C]
-                  border border-[#2C8C7C]/20 transition-all duration-300"
-              >
-                Enter Playground
-              </motion.button>
-            )}
           </motion.div>
 
           {/* Poem Content */}

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 import HomePage from "./components/home/HomePage";
 import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
+import { getTestWordStrings, getTestPoems } from "./utils/testData/devTestData";
 
 function App() {
   // Navigation state
@@ -11,9 +12,33 @@ function App() {
   const [selectedWords, setSelectedWords] = useState([]);
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
+  const [isDevMode, setIsDevMode] = useState(false);
 
   // Load saved data on initial render
-  React.useEffect(() => {
+  useEffect(() => {
+    // Check for dev mode activation via URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const devMode = urlParams.get("dev");
+
+    if (devMode === "true") {
+      try {
+        // Load test data
+        const testWords = getTestWordStrings();
+        const testPoems = getTestPoems();
+
+        setSelectedWords(testWords);
+        setPoemHistory(testPoems);
+        setIsDevMode(true);
+        console.log(`- Loaded ${testWords.length} test words`);
+        console.log(`- Loaded ${testPoems.length} test poems`);
+        return;
+      } catch (error) {
+        console.error("Failed to load test data:", error);
+        // Fall back to normal mode if test data fails
+      }
+    }
+
+    // Normal production data loading
     const savedHistory = JSON.parse(
       localStorage.getItem("poit_poems_history") || "[]"
     );
@@ -65,7 +90,6 @@ function App() {
       ...poemData,
       id: `poem-${Date.now()}`,
       title: poemData.title || "Today's Poem",
-      author: "You",
       date: new Date().toLocaleDateString(),
       createdAt: new Date().toISOString(),
       selectedWords,
@@ -120,16 +144,75 @@ function App() {
     setCurrentScreen("home");
   };
 
+  // Function to handle entering dev mode echo
+  const enterDevModeEcho = () => {
+    setCurrentScreen("echo");
+  };
+
+  // Check if we should show dev mode buttons
+  const showDevControls =
+    process.env.NODE_ENV === "development" && currentScreen === "home";
+
+  // Toggle dev mode on/off
+  const toggleDevMode = () => {
+    const url = new URL(window.location);
+
+    if (isDevMode) {
+      // Turn off dev mode
+      url.searchParams.delete("dev");
+      window.history.pushState({}, "", url);
+      window.location.reload();
+    } else {
+      // Turn on dev mode
+      url.searchParams.set("dev", "true");
+      window.history.pushState({}, "", url);
+      window.location.reload();
+    }
+  };
+
   // Render based on current screen
   return (
     <div className="min-h-screen">
       <AdaptiveBackground />
 
       {currentScreen === "home" && (
-        <HomePage
-          onStartDaily={handleStartDaily}
-          onViewHistory={handleViewHistory}
-        />
+        <>
+          <HomePage
+            onStartDaily={handleStartDaily}
+            onViewHistory={handleViewHistory}
+          />
+
+          {/* Dev mode controls */}
+          {showDevControls && (
+            <div className="fixed bottom-4 right-4 flex flex-col gap-2">
+              <button
+                onClick={toggleDevMode}
+                className={`px-2 py-1 ${
+                  isDevMode ? "bg-[#2C8C7C]" : "bg-gray-600"
+                } text-white text-xs rounded-lg shadow-lg`}
+              >
+                Dev Mode: {isDevMode ? "ON" : "OFF"}
+              </button>
+
+              {isDevMode && (
+                <>
+                  <button
+                    onClick={() => setCurrentScreen("pulse")}
+                    className="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg shadow-lg"
+                  >
+                    Dev: Pulse Mode
+                  </button>
+                  <button
+                    onClick={enterDevModeEcho}
+                    className="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg shadow-lg"
+                  >
+                    Dev: Echo Mode
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {currentScreen === "pulse" && (
@@ -149,7 +232,7 @@ function App() {
 
       {currentScreen === "echo" && (
         <EchoMode
-          poems={[currentPoem].filter(Boolean)}
+          poems={isDevMode ? poemHistory : [currentPoem].filter(Boolean)}
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
           onExitToHome={handleExitToHome}

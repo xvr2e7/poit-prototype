@@ -1,12 +1,11 @@
 import { useMemo } from "react";
-import { TEST_WORDS } from "../../../../utils/testData/craftTestData";
 
 export const usePoemConnections = (poems = []) => {
   const poemAnalysis = useMemo(() => {
-    // Extract test words for matching
-    const testWordSet = new Set(TEST_WORDS.map((w) => w.text.toLowerCase()));
+    // Track all unique words from poems
+    const allWordsFromPoems = new Set();
 
-    // Analyze each poem for test words
+    // Analyze each poem for words
     const poemWordMap = new Map();
 
     poems.forEach((poem) => {
@@ -28,10 +27,11 @@ export const usePoemConnections = (poems = []) => {
                   .replace(/[^a-z\s-]/g, "") // Remove punctuation except hyphens
                   .split(/[\s]+/) // Split on whitespace
                   .forEach((word) => {
-                    // Check if word (or parts of hyphenated word) are in test words
+                    // Process the word and its hyphenated parts
                     word.split("-").forEach((part) => {
-                      if (testWordSet.has(part)) {
+                      if (part.trim().length > 0) {
                         words.add(part);
+                        allWordsFromPoems.add(part);
                       }
                     });
                   });
