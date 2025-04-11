@@ -16,6 +16,7 @@ import { toPng } from "html-to-image";
 import TemplateGuide from "./components/TemplateGuide";
 import Navigation from "../../shared/Navigation";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
+import PoolWordsModal from "./components/PoolWordsModal";
 
 const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   // State management
@@ -31,6 +32,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
   const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
   const [isDraggingPreview, setIsDraggingPreview] = useState(false);
   const previewStartPosition = useRef({ x: 0, y: 0 });
+  const [showPoolWordsModal, setShowPoolWordsModal] = useState(false);
 
   // DOM refs
   const canvasRef = useRef(null);
@@ -86,6 +88,74 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
     });
     setPoolWords(initialWords);
   }, [selectedWords]);
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore keypresses when modals are open or if input/textarea elements are focused
+      if (
+        isPreviewOpen ||
+        showResetConfirm ||
+        showPoolWordsModal ||
+        e.target.tagName === "INPUT" ||
+        e.target.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      switch (key) {
+        case "c":
+          // Capitalization
+          if (selectedWordId) {
+            handleCapitalizationChange();
+          }
+          break;
+        case "p":
+          // Punctuation
+          togglePanel(activePanel === "punctuation" ? null : "punctuation");
+          break;
+        case "f":
+          // Filler (Common words)
+          togglePanel(activePanel === "common" ? null : "common");
+          break;
+        case "t":
+          // Templates
+          togglePanel(activePanel === "templates" ? null : "templates");
+          break;
+        case "s":
+          // Signatures
+          togglePanel(activePanel === "signatures" ? null : "signatures");
+          break;
+        case "b":
+          // Canvas (Background)
+          togglePanel(activePanel === "canvas" ? null : "canvas");
+          break;
+        case "w":
+          // Word pool modal
+          setShowPoolWordsModal(true);
+          break;
+        case "r":
+          // Reset canvas
+          setShowResetConfirm(true);
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    selectedWordId,
+    activePanel,
+    isPreviewOpen,
+    showResetConfirm,
+    showPoolWordsModal,
+  ]);
 
   // ===== Word Manipulation Handlers =====
 
@@ -1399,6 +1469,17 @@ border border-[#2C8C7C]/10 overflow-hidden`}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pool Words Modal */}
+      <PoolWordsModal
+        isOpen={showPoolWordsModal}
+        onClose={() => setShowPoolWordsModal(false)}
+        poolWords={poolWords}
+        onWordSelect={(word) => {
+          addWordToCanvas(word);
+          setShowPoolWordsModal(false);
+        }}
+      />
     </div>
   );
 };
