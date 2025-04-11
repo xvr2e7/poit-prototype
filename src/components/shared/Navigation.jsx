@@ -13,13 +13,22 @@ const Navigation = ({ currentMode, onExit, onSave }) => {
 
   // Check if user has seen tutorial before
   useEffect(() => {
-    const hasSeenBefore = localStorage.getItem("hasSeenPulseTutorial");
+    // Different localStorage keys for different modes
+    const tutorialKey = `hasSeen${
+      currentMode.charAt(0).toUpperCase() + currentMode.slice(1)
+    }Tutorial`;
+    const hasSeenBefore = localStorage.getItem(tutorialKey);
     setHasSeenTutorial(!!hasSeenBefore);
 
-    // Show tutorial automatically for first-time visitors
-    if (!hasSeenBefore && currentMode === "pulse") {
+    // Show tutorial automatically for first-time visitors to each mode
+    if (
+      !hasSeenBefore &&
+      (currentMode === "pulse" ||
+        currentMode === "craft" ||
+        currentMode === "echo")
+    ) {
       setTimeout(() => setShowHelp(true), 1000);
-      localStorage.setItem("hasSeenPulseTutorial", "true");
+      localStorage.setItem(tutorialKey, "true");
     }
   }, [currentMode]);
 
@@ -171,39 +180,158 @@ const Navigation = ({ currentMode, onExit, onSave }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-xl font-medium text-[#2C8C7C] mb-4">
-                How to Use Pulse Mode
+                {currentMode === "pulse"
+                  ? "How to Use Pulse Mode"
+                  : currentMode === "craft"
+                  ? "How to Use Craft Mode"
+                  : currentMode === "echo"
+                  ? "How to Use Echo Mode"
+                  : "Help"}
               </h3>
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300 text-sm">
-                <p>
-                  <b>1. Hover and Dwell</b>
-                  <br />
-                  Move your cursor near a word and hover there briefly to select
-                  it.
-                </p>
-                <p>
-                  <b>2. Gather Words</b>
-                  <br />
-                  Select at least 5 words (and up to 10) that speak to you.
-                </p>
-                <p>
-                  <b>3. Curate your Lexicon</b>
-                  <br />
-                  Double-click anywhere once you've collected enough words to
-                  continue.
-                </p>
-                <p>
-                  <b>4. View Selected Words</b>
-                  <br />
-                  Press the{" "}
-                  <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                    W
-                  </kbd>{" "}
-                  key anytime to view and manage your selected words.
-                </p>
-                <p className="text-xs text-gray-500 italic mt-6">
-                  These will be your raw material for creation.
-                </p>
+                {currentMode === "pulse" && (
+                  <>
+                    <p>
+                      <b>1. Hover and Dwell</b>
+                      <br />
+                      Move your cursor near a word and hover there briefly to
+                      select it.
+                    </p>
+                    <p>
+                      <b>2. Gather Words</b>
+                      <br />
+                      Select at least 5 words (and up to 10) that speak to you.
+                    </p>
+                    <p>
+                      <b>3. Curate your Lexicon</b>
+                      <br />
+                      Double-click anywhere once you've collected enough words
+                      to continue.
+                    </p>
+                    <p>
+                      <b>4. View Selected Words</b>
+                      <br />
+                      Press the{" "}
+                      <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                        W
+                      </kbd>{" "}
+                      key anytime to view and manage your selected words.
+                    </p>
+                    <p className="text-xs text-gray-500 italic mt-6">
+                      These will be your raw material for creation.
+                    </p>
+                  </>
+                )}
+
+                {currentMode === "craft" && (
+                  <>
+                    <p>
+                      <b>1. Drag and Position</b>
+                      <br />
+                      Drag words from the left panel onto the canvas. Position
+                      them by dragging.
+                    </p>
+                    <p>
+                      <b>2. Format and Arrange</b>
+                      <br />
+                      Select a word to change its capitalization. Use
+                      punctuation and common words to complete your poem.
+                    </p>
+                    <p>
+                      <b>3. Create Your Poem</b>
+                      <br />
+                      Arrange your words and punctuation to create your poem.
+                      Double-click a word to remove it from the canvas.
+                    </p>
+                    <p>
+                      <b>4. Preview and Continue</b>
+                      <br />
+                      Click the preview button to see your poem, then continue
+                      to Echo mode.
+                    </p>
+                    <div className="mt-4 bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="font-medium mb-2">Keyboard Shortcuts:</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            C
+                          </kbd>
+                          <span className="ml-2">Capitalization</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            P
+                          </kbd>
+                          <span className="ml-2">Punctuation</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            F
+                          </kbd>
+                          <span className="ml-2">Filler Words</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            T
+                          </kbd>
+                          <span className="ml-2">Templates</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            S
+                          </kbd>
+                          <span className="ml-2">Signatures</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            B
+                          </kbd>
+                          <span className="ml-2">Canvas Background</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            W
+                          </kbd>
+                          <span className="ml-2">Word Pool</span>
+                        </div>
+                        <div className="flex items-center">
+                          <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs">
+                            R
+                          </kbd>
+                          <span className="ml-2">Reset Canvas</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {currentMode === "echo" && (
+                  <>
+                    <p>
+                      <b>1. Explore Connections</b>
+                      <br />
+                      Click on highlighted words to discover connections to
+                      other poems.
+                    </p>
+                    <p>
+                      <b>2. Follow Your Path</b>
+                      <br />
+                      Navigate through connected poems by following the words
+                      that resonate with you.
+                    </p>
+                    <p>
+                      <b>3. Trace Your Journey</b>
+                      <br />
+                      Use the navigation trail on the left to return to
+                      previously visited poems.
+                    </p>
+                    <p className="text-xs text-gray-500 italic mt-6">
+                      Discover how your words connect to a wider universe of
+                      expression.
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="mt-6 flex justify-end">
