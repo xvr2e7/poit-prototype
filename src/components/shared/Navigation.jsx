@@ -317,26 +317,32 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                 {currentMode === "echo" && (
                   <>
                     <p>
-                      <b>1. Explore Connections</b>
+                      <b>1. Explore Word Connections</b>
                       <br />
-                      Click on highlighted words to discover connections to
-                      other poems.
+                      Click on glowing highlighted words to navigate to
+                      connected poems.
                     </p>
                     <p>
-                      <b>2. Follow Your Path</b>
+                      <b>2. Navigate the Canvas</b>
                       <br />
-                      Navigate through connected poems by following the words
-                      that resonate with you.
+                      Drag to pan around the poem. Use Ctrl+Wheel or the zoom
+                      buttons to zoom in/out.
                     </p>
                     <p>
-                      <b>3. Trace Your Journey</b>
+                      <b>3. View Your Constellation</b>
                       <br />
-                      Use the navigation trail on the left to return to
-                      previously visited poems.
+                      Click the network icon to see a 3D visualization of your
+                      poetic journey.
+                    </p>
+                    <p>
+                      <b>4. Interact with the Network</b>
+                      <br />
+                      In network view, drag to rotate, double-click layers to
+                      expand, and use arrows to navigate.
                     </p>
                     <p className="text-xs text-gray-500 italic mt-6">
-                      Discover how your words connect to a wider universe of
-                      expression.
+                      Discover how your words connect to form a constellation of
+                      meaning.
                     </p>
                   </>
                 )}
