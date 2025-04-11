@@ -18,7 +18,12 @@ import Navigation from "../../shared/Navigation";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import PoolWordsModal from "./components/PoolWordsModal";
 
-const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
+const CraftMode = ({
+  selectedWords = [],
+  onComplete,
+  enabled = true,
+  onExitToHome,
+}) => {
   // State management
   const [canvasWords, setCanvasWords] = useState([]);
   const [poolWords, setPoolWords] = useState([]);
@@ -505,7 +510,7 @@ const CraftMode = ({ selectedWords = [], onComplete, enabled = true }) => {
 
       <div className="absolute inset-0 flex">
         {/* Navigation */}
-        <Navigation currentMode="craft" />
+        <Navigation currentMode="craft" onExitToHome={onExitToHome} />
 
         {/* Left Sidebar - Word Pool */}
         <div className="relative">

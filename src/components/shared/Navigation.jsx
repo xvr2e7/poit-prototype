@@ -4,7 +4,7 @@ import { Sun, Moon, HelpCircle, Save, Home, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "./AdaptiveBackground";
 
-const Navigation = ({ currentMode, onExit, onSave }) => {
+const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
@@ -53,7 +53,15 @@ const Navigation = ({ currentMode, onExit, onSave }) => {
 
   const handleHome = () => {
     if (onSave) onSave(); // Save before exiting
-    window.location.href = "/"; // Direct navigation to home
+
+    // Use the provided callback instead of directly manipulating window.location
+    if (onExitToHome) {
+      onExitToHome();
+    } else if (onExit) {
+      // Fallback to onExit if onExitToHome is not provided
+      onExit();
+    }
+
     setIsOpen(false);
   };
 

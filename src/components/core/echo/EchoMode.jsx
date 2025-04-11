@@ -14,6 +14,7 @@ const EchoMode = ({
   playgroundUnlocked,
   enterPlayground,
   enabled = true,
+  onExitToHome,
 }) => {
   const containerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +57,7 @@ const EchoMode = ({
     <div className="w-full h-screen relative overflow-hidden">
       <AdaptiveBackground mode="echo" className="opacity-50" />
       {/* Navigation */}
-      <Navigation currentMode="echo" />
+      <Navigation currentMode="echo" onExitToHome={onExitToHome} />
 
       {/* Navigation Trail */}
       <NavigationTrail

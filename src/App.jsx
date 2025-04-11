@@ -115,6 +115,11 @@ function App() {
     setCurrentScreen("home");
   };
 
+  // Callback to return to home screen
+  const handleExitToHome = () => {
+    setCurrentScreen("home");
+  };
+
   // Render based on current screen
   return (
     <div className="min-h-screen">
@@ -128,13 +133,17 @@ function App() {
       )}
 
       {currentScreen === "pulse" && (
-        <PulseMode onComplete={handlePulseComplete} />
+        <PulseMode
+          onComplete={handlePulseComplete}
+          onExitToHome={handleExitToHome}
+        />
       )}
 
       {currentScreen === "craft" && (
         <CraftMode
           selectedWords={selectedWords}
           onComplete={handleCraftComplete}
+          onExitToHome={handleExitToHome}
         />
       )}
 
@@ -143,6 +152,7 @@ function App() {
           poems={[currentPoem].filter(Boolean)}
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
+          onExitToHome={handleExitToHome}
         />
       )}
     </div>
