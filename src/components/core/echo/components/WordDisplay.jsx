@@ -7,7 +7,12 @@ const WordComponent = ({
   glowIntensity = 0,
   onWordClick,
   isTransitioning = false,
+  isFloating = false, // New prop to enable floating animation
 }) => {
+  // Generate a unique animation delay for natural floating motion
+  const animationDelay = useMemo(() => Math.random() * 4, []);
+  const animationDuration = useMemo(() => 4 + Math.random() * 2, []);
+
   return (
     <motion.div
       className="absolute"
@@ -19,7 +24,6 @@ const WordComponent = ({
       animate={{
         opacity: 1,
         scale: 1,
-        transition: { duration: 0.4 },
       }}
       exit={{
         opacity: 0,
@@ -44,7 +48,35 @@ const WordComponent = ({
           }
         `}
         onClick={(e) => glowIntensity > 0 && onWordClick?.(word, e)}
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.05 }}
+        animate={
+          isFloating
+            ? {
+                y: [0, -10, 0],
+                opacity: [0.7, 1, 0.7],
+              }
+            : {}
+        }
+        transition={
+          isFloating
+            ? {
+                y: {
+                  duration: animationDuration,
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  ease: "easeInOut",
+                  delay: animationDelay,
+                },
+                opacity: {
+                  duration: animationDuration * 1.2,
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  ease: "easeInOut",
+                  delay: animationDelay,
+                },
+              }
+            : {}
+        }
       >
         {/* Hover container - only visible on hover */}
         <div
@@ -87,7 +119,7 @@ const WordComponent = ({
           />
         )}
 
-        {/* Word text with dynamic styling */}
+        {/* Word text */}
         <span
           className={`
             relative z-10
@@ -108,7 +140,6 @@ const WordComponent = ({
           {word.text}
         </span>
 
-        {/* Subtle underline - only visible on hover */}
         <div
           className="absolute bottom-0 left-0 right-0 h-px 
           bg-[#2C8C7C]/0 group-hover:bg-[#2C8C7C]/20
@@ -153,6 +184,7 @@ const WordDisplay = ({
   getWordGlowIntensity,
   onWordClick,
   isTransitioning = false,
+  isFloating = false,
   className = "",
 }) => {
   const highlightedWordSet = useMemo(
@@ -173,6 +205,7 @@ const WordDisplay = ({
             glowIntensity={getWordGlowIntensity?.(word.text) || 0}
             onWordClick={onWordClick}
             isTransitioning={isTransitioning}
+            isFloating={isFloating} // Pass floating prop to each word
           />
         ))}
       </AnimatePresence>

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
@@ -20,6 +20,11 @@ const EchoMode = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Dragging state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragStartPosition = useRef({ x: 0, y: 0 });
+
   const {
     currentPoem,
     navigationHistory,
@@ -28,13 +33,13 @@ const EchoMode = ({
     navigateToPoem,
   } = usePoemNavigation(poems, wordPool);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
   const handleWordClick = async (word, e) => {
-    if (!e) return;
+    if (!e || isDragging) return;
     const nextPoem = findNextPoemForWord(word.text);
     if (nextPoem) {
       setIsTransitioning(true);
@@ -44,6 +49,47 @@ const EchoMode = ({
       setIsTransitioning(false);
     }
   };
+
+  // Dragging handlers
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only primary mouse button
+
+    setIsDragging(true);
+    dragStartPosition.current = {
+      x: e.clientX - dragOffset.x,
+      y: e.clientY - dragOffset.y,
+    };
+
+    e.preventDefault(); // Prevent text selection
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+
+    const newOffset = {
+      x: e.clientX - dragStartPosition.current.x,
+      y: e.clientY - dragStartPosition.current.y,
+    };
+
+    setDragOffset(newOffset);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add/remove event listeners
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging]);
 
   if (!enabled || !currentPoem) {
     return (
@@ -94,25 +140,18 @@ const EchoMode = ({
             </div>
           </motion.div>
 
-          {/* Poem Content */}
+          {/* Poem Content Area */}
           <div
             ref={containerRef}
-            className="flex-1 relative rounded-2xl 
-              bg-white/5 dark:bg-gray-950/30
-              backdrop-blur-md border border-[#2C8C7C]/20 
-              overflow-hidden"
+            className="flex-1 relative overflow-hidden"
+            style={{ cursor: isDragging ? "grabbing" : "grab" }}
+            onMouseDown={handleMouseDown}
           >
-            {/* Ambient Background */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#2C8C7C]/5 to-transparent" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(44,140,124,0.1),transparent_50%)]" />
-            </div>
-
             {/* Connection Counter */}
             <div
               className="absolute top-4 right-4 flex items-center gap-1.5 
-              px-3 py-1.5 rounded-full bg-white/5 dark:bg-gray-950/30 
-              backdrop-blur-sm border border-[#2C8C7C]/20"
+                px-3 py-1.5 rounded-full bg-white/5 dark:bg-gray-950/30 
+                backdrop-blur-sm border border-[#2C8C7C]/20 z-10"
             >
               <div className="relative">
                 <svg
@@ -131,31 +170,47 @@ const EchoMode = ({
               </span>
             </div>
 
+            {/* Drag hint */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+              <span className="text-xs text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
+                Drag to see more
+              </span>
+            </div>
+
             {/* Poem Content */}
-            <motion.div
-              className="relative h-full overflow-auto p-8"
-              animate={{
-                opacity: isTransitioning ? 0 : 1,
-              }}
-              transition={{
-                duration: 0.4,
-                ease: "easeInOut",
+            <div
+              className="absolute inset-0"
+              style={{
+                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+                transition: isDragging ? "none" : "transform 0.2s ease-out",
               }}
             >
-              <AnimatePresence mode="wait">
-                {!isLoading && (
-                  <WordDisplay
-                    words={currentPoem.components}
-                    highlightedWords={wordPool.map((w) =>
-                      typeof w === "string" ? w : w.text
-                    )}
-                    getWordGlowIntensity={getWordGlowIntensity}
-                    onWordClick={handleWordClick}
-                    isTransitioning={isTransitioning}
-                  />
-                )}
-              </AnimatePresence>
-            </motion.div>
+              <motion.div
+                animate={{
+                  opacity: isTransitioning ? 0 : 1,
+                }}
+                transition={{
+                  duration: 0.4,
+                  ease: "easeInOut",
+                }}
+                className="w-full h-full"
+              >
+                <AnimatePresence mode="wait">
+                  {!isLoading && (
+                    <WordDisplay
+                      words={currentPoem.components}
+                      highlightedWords={wordPool.map((w) =>
+                        typeof w === "string" ? w : w.text
+                      )}
+                      getWordGlowIntensity={getWordGlowIntensity}
+                      onWordClick={handleWordClick}
+                      isTransitioning={isTransitioning}
+                      isFloating={true}
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>
