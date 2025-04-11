@@ -5,6 +5,12 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
   const [navigationHistory, setNavigationHistory] = useState([]);
   const [currentPoemId, setCurrentPoemId] = useState(null);
 
+  // Add state to track the source of navigation
+  const [sourceNavigation, setSourceNavigation] = useState({
+    poemId: null,
+    word: null,
+  });
+
   // Calculate all the poem data and memoize it
   const { frequencies, connections, initialPoemId } = useMemo(() => {
     const freqMap = new Map();
@@ -99,18 +105,53 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
       const wordLower =
         typeof word === "string" ? word.toLowerCase() : word.toLowerCase();
 
-      const possiblePoems = allPoems
-        .filter((poem) => {
-          if (poem.id === currentPoemId) return false;
+      // Get the most recent poem ID from navigation history
+      const previousPoemId =
+        navigationHistory.length > 0
+          ? navigationHistory[navigationHistory.length - 1]
+          : null;
 
-          return (
-            poem.components &&
-            poem.components.some(
-              (comp) =>
-                comp.type === "word" && comp.text.toLowerCase() === wordLower
-            )
-          );
-        })
+      // Check if we'd be going back to the source poem via the same word
+      const isBackToSource =
+        sourceNavigation.word === wordLower &&
+        previousPoemId === sourceNavigation.poemId;
+
+      // Find all poems that contain this word (except current poem)
+      const candidatePoems = allPoems.filter((poem) => {
+        if (poem.id === currentPoemId) return false;
+
+        return (
+          poem.components &&
+          poem.components.some(
+            (comp) =>
+              comp.type === "word" && comp.text.toLowerCase() === wordLower
+          )
+        );
+      });
+
+      // If the only candidate is the source poem and we'd be creating a circular reference,
+      // return null to disable the connection
+      if (
+        candidatePoems.length === 1 &&
+        isBackToSource &&
+        candidatePoems[0].id === previousPoemId
+      ) {
+        return null;
+      }
+
+      // Filter out the source poem if we'd be creating a circular reference
+      const filteredPoems = candidatePoems.filter((poem) => {
+        if (isBackToSource && poem.id === previousPoemId) return false;
+        return true;
+      });
+
+      // If no poems remain after filtering, return null
+      if (filteredPoems.length === 0) {
+        return null;
+      }
+
+      // Rank the remaining poems by overlap score
+      const rankedPoems = filteredPoems
         .map((poem) => {
           const key = [currentPoemId, poem.id].sort().join("-");
           const connection = connections.get(key);
@@ -121,16 +162,28 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
         })
         .sort((a, b) => b.overlapScore - a.overlapScore);
 
-      return possiblePoems[0]?.poem || null;
+      return rankedPoems[0]?.poem || null;
     },
-    [currentPoemId, allPoems, connections]
+    [currentPoemId, allPoems, connections, navigationHistory, sourceNavigation]
   );
 
   // Navigation handlers
   const navigateToPoem = useCallback(
-    (nextPoemId) => {
+    (nextPoemId, viaWord = null) => {
       if (nextPoemId && nextPoemId !== currentPoemId) {
         setNavigationHistory((prev) => [...prev, currentPoemId]);
+
+        // Track the source navigation when using a word
+        if (viaWord) {
+          setSourceNavigation({
+            poemId: currentPoemId,
+            word:
+              typeof viaWord === "string"
+                ? viaWord.toLowerCase()
+                : viaWord.toLowerCase(),
+          });
+        }
+
         setCurrentPoemId(nextPoemId);
         return true;
       }

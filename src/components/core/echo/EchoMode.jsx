@@ -93,7 +93,8 @@ const EchoMode = ({
       setConnectingWord(word.text.toLowerCase());
       setIsTransitioning(true);
       await new Promise((resolve) => setTimeout(resolve, 300));
-      navigateToPoem(nextPoem.id);
+      // Pass the connecting word to navigateToPoem
+      navigateToPoem(nextPoem.id, word.text);
       await new Promise((resolve) => setTimeout(resolve, 300));
       setIsTransitioning(false);
     }
