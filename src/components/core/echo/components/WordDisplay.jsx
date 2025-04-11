@@ -7,11 +7,12 @@ const WordComponent = ({
   glowIntensity = 0,
   onWordClick,
   isTransitioning = false,
-  isFloating = false, // New prop to enable floating animation
+  isFloating = false,
 }) => {
-  // Generate a unique animation delay for natural floating motion
   const animationDelay = useMemo(() => Math.random() * 4, []);
   const animationDuration = useMemo(() => 4 + Math.random() * 2, []);
+
+  const isInteractive = isHighlighted && glowIntensity > 0;
 
   return (
     <motion.div
@@ -34,21 +35,17 @@ const WordComponent = ({
       <motion.div
         className={`
           relative px-3 py-1.5
-          group cursor-pointer select-none
+          group select-none
           transition-all duration-500 ease-out
           ${
             isHighlighted
               ? "text-base scale-110 font-medium"
               : "text-sm font-normal"
           }
-          ${
-            glowIntensity > 0
-              ? "cursor-pointer hover:scale-115"
-              : "cursor-default"
-          }
+          ${isInteractive ? "cursor-pointer hover:scale-115" : "cursor-default"}
         `}
-        onClick={(e) => glowIntensity > 0 && onWordClick?.(word, e)}
-        whileHover={{ scale: 1.05 }}
+        onClick={(e) => isInteractive && onWordClick?.(word, e)}
+        whileHover={{ scale: isInteractive ? 1.05 : 1 }}
         animate={
           isFloating
             ? {
@@ -78,11 +75,11 @@ const WordComponent = ({
             : {}
         }
       >
-        {/* Hover container - only visible on hover */}
         <div
-          className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100
+          className={`absolute inset-0 rounded-lg opacity-0 
+          ${isInteractive ? "group-hover:opacity-100" : ""}
           bg-[#2C8C7C]/5 dark:bg-[#2C8C7C]/10
-          transition-all duration-300"
+          transition-all duration-300`}
         />
 
         {/* Interactive word styling */}
@@ -98,7 +95,7 @@ const WordComponent = ({
         )}
 
         {/* Connection glow for interactive words */}
-        {glowIntensity > 0 && (
+        {isInteractive && (
           <motion.div
             className="absolute inset-0 -z-10 rounded-lg opacity-0 group-hover:opacity-100"
             animate={{
@@ -130,7 +127,7 @@ const WordComponent = ({
                 : "text-gray-600 dark:text-gray-300"
             }
             ${
-              glowIntensity > 0
+              isInteractive
                 ? "group-hover:text-[#2C8C7C] dark:group-hover:text-[#2C8C7C]"
                 : ""
             }
@@ -141,13 +138,13 @@ const WordComponent = ({
         </span>
 
         <div
-          className="absolute bottom-0 left-0 right-0 h-px 
-          bg-[#2C8C7C]/0 group-hover:bg-[#2C8C7C]/20
-          transition-all duration-300"
+          className={`absolute bottom-0 left-0 right-0 h-px 
+          bg-[#2C8C7C]/0 ${isInteractive ? "group-hover:bg-[#2C8C7C]/20" : ""}
+          transition-all duration-300`}
         />
 
         {/* Interactive particles for connected words */}
-        {glowIntensity > 0.3 && (
+        {isInteractive && glowIntensity > 0.3 && (
           <div
             className="absolute inset-0 pointer-events-none opacity-0 
             group-hover:opacity-100 transition-opacity duration-300"
@@ -205,7 +202,7 @@ const WordDisplay = ({
             glowIntensity={getWordGlowIntensity?.(word.text) || 0}
             onWordClick={onWordClick}
             isTransitioning={isTransitioning}
-            isFloating={isFloating} // Pass floating prop to each word
+            isFloating={isFloating}
           />
         ))}
       </AnimatePresence>
