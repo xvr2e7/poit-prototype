@@ -7,8 +7,8 @@ const SelectedWordsModal = ({
   onClose,
   selectedWords = [],
   onRemoveWord,
-  minWords,
-  maxWords,
+  minWords = 5,
+  maxWords = 20,
   showContinueButton = false,
   onContinue = null,
 }) => {

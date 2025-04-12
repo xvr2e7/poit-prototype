@@ -89,11 +89,11 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
   };
 
   const handleWordSelect = (wordId) => {
-    if (!selectedWords.includes(wordId) && selectedWords.length < 10) {
+    if (!selectedWords.includes(wordId) && selectedWords.length < 20) {
       const newSelectedWords = [...selectedWords, wordId];
       setSelectedWords(newSelectedWords);
 
-      if (newSelectedWords.length >= 10) {
+      if (newSelectedWords.length >= 20) {
         handlePulseComplete();
       }
     }
@@ -186,7 +186,7 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
           <GrowingWordSelector
             selectedWords={selectedWords}
             minWords={5}
-            maxWords={10}
+            maxWords={20}
             onMove={handleSelectorMove}
             onComplete={() => setShowCompletion(true)}
             onStart={() => setIsActive(true)}
@@ -216,7 +216,7 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
           selectedWords={getSelectedWordTexts()}
           onRemoveWord={handleRemoveWord}
           minWords={5}
-          maxWords={10}
+          maxWords={20}
         />
       )}
     </div>

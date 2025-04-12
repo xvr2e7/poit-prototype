@@ -10,7 +10,7 @@ const ACCELERATION = 0.05;
 const GrowingWordSelector = ({
   selectedWords = [],
   minWords = 5,
-  maxWords = 10,
+  maxWords = 20,
   onMove = () => {},
   onComplete = () => {},
   onStart = () => {},

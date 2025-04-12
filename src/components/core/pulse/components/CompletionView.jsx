@@ -29,7 +29,7 @@ export const CompletionView = ({ onSave, saved, selectedWords = [] }) => {
         selectedWords={selectedWords}
         onRemoveWord={() => {}} // No word removal in completion view
         minWords={5}
-        maxWords={10}
+        maxWords={20}
         showContinueButton={!saved}
         onContinue={onSave}
       />
@@ -79,20 +79,7 @@ export const CompletionView = ({ onSave, saved, selectedWords = [] }) => {
               repeat: Infinity,
               repeatType: "reverse",
             }}
-          >
-            <Sparkles className="w-12 h-12 text-[#2C8C7C]" />
-            <motion.p
-              className="text-xl text-[#2C8C7C] mt-4 font-light"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-            >
-              Moving to Craft Mode...
-            </motion.p>
-          </motion.div>
+          ></motion.div>
         </motion.div>
       )}
     </motion.div>
