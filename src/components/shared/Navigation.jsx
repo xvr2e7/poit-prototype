@@ -209,7 +209,7 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                     <p>
                       <b>2. Gather Words</b>
                       <br />
-                      Select at least 5 words (and up to 10) that speak to you.
+                      Select at least 5 words (and up to 20) that speak to you.
                     </p>
                     <p>
                       <b>3. Curate your Lexicon</b>
