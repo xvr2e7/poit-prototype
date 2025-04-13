@@ -13,8 +13,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTheme } from "../shared/AdaptiveBackground";
-import DailyPoemPanel from "../auth/DailyPoemPanel";
+import DailyPoemPanel from "./DailyPoemPanel";
 import Logo from "../shared/Logo";
+import WriteAPoem from "./WriteAPoem";
 
 const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
   const { theme, setTheme, isDark } = useTheme();
@@ -22,6 +23,8 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
   const [longestStreak, setLongestStreak] = useState(0);
   const [totalConstellations, setTotalConstellations] = useState(0);
   const [todayConstellations, setTodayConstellations] = useState(0);
+  const [showWriteAPoem, setShowWriteAPoem] = useState(false);
+  const [poems, setPoems] = useState([]);
 
   useEffect(() => {
     // Load data from localStorage
@@ -31,11 +34,13 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
       localStorage.getItem("poit_total_constellations") || 0;
     const savedTodayConstellations =
       localStorage.getItem("poit_today_constellations") || 0;
+    const savedPoems = JSON.parse(localStorage.getItem("poit_poems") || "[]");
 
     setStreak(parseInt(savedStreak));
     setLongestStreak(parseInt(savedLongestStreak));
     setTotalConstellations(parseInt(savedTotalConstellations));
     setTodayConstellations(parseInt(savedTodayConstellations));
+    setPoems(savedPoems);
   }, []);
 
   // Handle data management functions
@@ -126,6 +131,13 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
     }
   };
 
+  const handleSavePoem = (poem) => {
+    const updatedPoems = [...poems, poem];
+    setPoems(updatedPoems);
+    localStorage.setItem("poit_poems", JSON.stringify(updatedPoems));
+    setShowWriteAPoem(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -183,7 +195,7 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
             </button>
           </div>
 
-          {/* Stats Grid - more compact with proper icons */}
+          {/* Stats Grid */}
           <div className="w-2/3 mx-auto grid grid-cols-2 gap-3 mt-20">
             <div className="bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20 rounded-xl p-3">
               <div className="flex flex-col items-center">
@@ -242,13 +254,13 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
             </button>
 
             <button
-              onClick={onStartDaily}
+              onClick={() => setShowWriteAPoem(true)}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-4 
                 bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 transition-colors
                 text-white rounded-xl"
             >
-              <Puzzle className="w-4 h-4" />
-              <span>Write a poem...</span>
+              <Puzzle className="w-4 h-4 text-gray-200" />
+              <span className="text-gray-200">Write a Poem...</span>
             </button>
           </div>
 
@@ -287,6 +299,14 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
           <DailyPoemPanel />
         </div>
       </div>
+
+      {/* Write a Poem Modal */}
+      <WriteAPoem
+        isOpen={showWriteAPoem}
+        onClose={() => setShowWriteAPoem(false)}
+        onStartPOiT={onStartDaily}
+        onSavePoem={handleSavePoem}
+      />
     </motion.div>
   );
 };

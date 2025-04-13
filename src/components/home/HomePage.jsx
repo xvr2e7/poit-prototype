@@ -54,7 +54,7 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
               <Menu className="w-5 h-5 text-[#2C8C7C]" />
             </motion.button>
 
-            {/* Main Logo - clickable to start */}
+            {/* Main Logo */}
             <motion.div className="mb-16 relative group" onClick={onStartDaily}>
               {/* Pulsing circle behind logo to indicate clickability */}
               <motion.div
@@ -69,19 +69,6 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
                   ease: "easeInOut",
                 }}
               />
-
-              {/* Subtle text hint that appears on hover */}
-              <motion.div
-                className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-[#2C8C7C]/80 text-sm"
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 0 }}
-                whileHover={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                Click to begin
-              </motion.div>
-
-              {/* Only place where DynamicLogo should be used */}
               <DynamicLogo size="large" animate={true} />
             </motion.div>
 
