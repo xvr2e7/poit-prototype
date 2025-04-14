@@ -14,7 +14,8 @@ const OptionCard = ({
     onClick={onClick}
     className={`p-6 rounded-xl border border-[#2C8C7C]/20 backdrop-blur-sm
       hover:bg-[#2C8C7C]/10 transition-all duration-300 h-full
-      bg-white/10 dark:bg-gray-900/30 flex flex-col items-center justify-center
+      bg-white/10 dark:bg-gray-700/30 hover:border-[#2C8C7C]/40
+      flex flex-col items-center justify-center
       ${isCenter ? "scale-110" : ""}`}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.98 }}
@@ -26,10 +27,10 @@ const OptionCard = ({
         <Icon className="w-12 h-12 text-[#2C8C7C]" />
       )}
     </div>
-    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+    <h3 className="text-lg font-medium text-black dark:text-white mb-2">
       {title}
     </h3>
-    <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+    <p className="text-sm text-gray-900 dark:text-gray-200 text-center">
       {description}
     </p>
   </motion.button>
@@ -64,24 +65,27 @@ const WordListView = ({ onBack, onSaveList }) => {
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-medium text-[#2C8C7C]">Create Word List</h3>
+        <h3 className="text-xl font-medium text-white">Create Word List</h3>
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+          className="p-2 rounded-lg hover:bg-white/20 text-white"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm text-gray-100 dark:text-white font-medium mb-1">
           List Name
         </label>
         <input
           type="text"
           value={listName}
           onChange={(e) => setListName(e.target.value)}
-          className="w-full p-2 rounded-lg border border-[#2C8C7C]/20 bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100"
+          className="w-full p-2 rounded-lg border border-[#2C8C7C]/40 
+            bg-white/60 dark:bg-gray-800/70 
+            text-gray-900 dark:text-white
+            focus:border-[#2C8C7C] focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]/60"
           placeholder="Enter list name..."
         />
       </div>
@@ -92,29 +96,40 @@ const WordListView = ({ onBack, onSaveList }) => {
           value={newWord}
           onChange={(e) => setNewWord(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleAddWord()}
-          className="flex-1 p-2 rounded-l-lg border border-[#2C8C7C]/20 bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100"
+          className="flex-1 p-2 rounded-l-lg border border-[#2C8C7C]/40 
+            bg-white/60 dark:bg-gray-800/70 
+            text-gray-900 dark:text-white
+            focus:border-[#2C8C7C] focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]/60"
           placeholder="Enter a word..."
         />
         <button
           onClick={handleAddWord}
-          className="px-4 py-2 rounded-r-lg bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white"
+          className="px-4 py-2 rounded-r-lg bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
+            text-white font-medium shadow-sm transition-colors"
         >
           Add
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto border border-[#2C8C7C]/20 rounded-lg p-4 bg-white/30 dark:bg-gray-900/30 mb-4">
+      <div
+        className="flex-1 overflow-y-auto border border-[#2C8C7C]/40 rounded-lg 
+        p-4 bg-white/30 dark:bg-gray-800/40 mb-4"
+      >
         {wordList.length > 0 ? (
           <div className="grid grid-cols-3 gap-2">
             {wordList.map((word, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-gray-800/50"
+                className="flex items-center justify-between p-2 rounded-lg 
+                  bg-white/60 dark:bg-gray-800/80 
+                  border border-[#2C8C7C]/30 dark:border-[#2C8C7C]/40"
               >
-                <span className="text-gray-900 dark:text-gray-100">{word}</span>
+                <span className="text-gray-800 dark:text-gray-100">{word}</span>
                 <button
                   onClick={() => handleRemoveWord(index)}
-                  className="p-1 rounded-full hover:bg-[#2C8C7C]/10 text-gray-500 dark:text-gray-400"
+                  className="p-1 rounded-full hover:bg-[#2C8C7C]/10 
+                    text-gray-500 dark:text-gray-400 
+                    hover:text-[#2C8C7C] dark:hover:text-[#2C8C7C]"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -131,10 +146,10 @@ const WordListView = ({ onBack, onSaveList }) => {
       <button
         onClick={handleSave}
         disabled={!listName.trim() || wordList.length === 0}
-        className={`w-full py-3 rounded-lg ${
+        className={`w-full py-3 rounded-lg transition-colors ${
           !listName.trim() || wordList.length === 0
-            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white"
+            ? "bg-gray-500 dark:bg-gray-700 text-gray-300 dark:text-gray-400 cursor-not-allowed"
+            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white font-medium shadow-sm"
         }`}
       >
         Save Word List
@@ -193,32 +208,38 @@ const CanvasView = ({ onBack, wordLists, onSavePoem }) => {
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-medium text-[#2C8C7C]">
+        <h3 className="text-xl font-medium text-white">
           Digital Collage Canvas
         </h3>
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+          className="p-2 rounded-lg hover:bg-white/20 text-[#2C7C8C]"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm text-gray-100 dark:text-white font-medium mb-1">
           Poem Title
         </label>
         <input
           type="text"
           value={poemTitle}
           onChange={(e) => setPoemTitle(e.target.value)}
-          className="w-full p-2 rounded-lg border border-[#2C8C7C]/20 bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100"
+          className="w-full p-2 rounded-lg border border-[#2C8C7C]/20 
+            bg-white/50 dark:bg-gray-800/50 
+            text-gray-800 dark:text-gray-100
+            focus:border-[#2C8C7C]/60 focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]/40"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="border border-[#2C8C7C]/20 rounded-lg p-4 bg-white/30 dark:bg-gray-900/30">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div
+          className="border border-[#2C8C7C]/40 rounded-lg p-4 
+          bg-white/30 dark:bg-gray-800/40 shadow-sm"
+        >
+          <h4 className="text-sm font-medium text-gray-100 dark:text-white mb-2">
             Select Word Lists
           </h4>
           {wordLists.length > 0 ? (
@@ -230,11 +251,11 @@ const CanvasView = ({ onBack, wordLists, onSavePoem }) => {
                     id={`list-${list.name}`}
                     checked={selectedLists.includes(list.name)}
                     onChange={() => toggleList(list.name)}
-                    className="mr-2"
+                    className="mr-2 accent-[#2C8C7C]"
                   />
                   <label
                     htmlFor={`list-${list.name}`}
-                    className="text-sm text-gray-700 dark:text-gray-300"
+                    className="text-sm text-gray-100 dark:text-white"
                   >
                     {list.name} ({list.words.length} words)
                   </label>
@@ -249,18 +270,21 @@ const CanvasView = ({ onBack, wordLists, onSavePoem }) => {
           <button
             onClick={loadWordsToCanvas}
             disabled={selectedLists.length === 0}
-            className={`mt-4 w-full py-2 rounded-lg ${
+            className={`mt-4 w-full py-2 rounded-lg transition-colors ${
               selectedLists.length === 0
-                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white"
+                ? "bg-gray-500 dark:bg-gray-700 text-gray-300 dark:text-gray-400 cursor-not-allowed"
+                : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white font-medium shadow-sm"
             }`}
           >
             Load Words
           </button>
         </div>
 
-        <div className="border border-[#2C8C7C]/20 rounded-lg p-4 bg-white/30 dark:bg-gray-900/30">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div
+          className="border border-[#2C8C7C]/40 rounded-lg p-4 
+          bg-white/30 dark:bg-gray-800/40 shadow-sm"
+        >
+          <h4 className="text-sm font-medium text-gray-100 dark:text-white mb-2">
             Canvas Preview
           </h4>
           <div className="h-40 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
@@ -271,12 +295,19 @@ const CanvasView = ({ onBack, wordLists, onSavePoem }) => {
         </div>
       </div>
 
-      <div className="flex-1 border border-[#2C8C7C]/20 rounded-lg bg-white/50 dark:bg-gray-800/50 relative mb-4">
+      <div
+        className="flex-1 border border-[#2C8C7C]/40 rounded-lg 
+        bg-white/50 dark:bg-gray-800/70 relative mb-4 
+        shadow-inner overflow-hidden"
+      >
         {canvasWords.length > 0 ? (
           canvasWords.map((word) => (
             <div
               key={word.id}
-              className="absolute select-none px-4 py-2 rounded-lg bg-white/80 dark:bg-gray-900/80 shadow-sm text-gray-900 dark:text-gray-100"
+              className="absolute select-none px-4 py-2 rounded-lg 
+                bg-white/80 dark:bg-gray-800/90 
+                shadow-sm text-gray-900 dark:text-white
+                border border-[#2C8C7C]/30 dark:border-[#2C8C7C]/40"
               style={{
                 left: word.position.x,
                 top: word.position.y,
@@ -295,10 +326,10 @@ const CanvasView = ({ onBack, wordLists, onSavePoem }) => {
       <button
         onClick={handleSavePoem}
         disabled={canvasWords.length === 0}
-        className={`w-full py-3 rounded-lg ${
+        className={`w-full py-3 rounded-lg transition-colors ${
           canvasWords.length === 0
-            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white"
+            ? "bg-gray-500 dark:bg-gray-700 text-gray-300 dark:text-gray-400 cursor-not-allowed"
+            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white font-medium shadow-sm"
         }`}
       >
         Save Poem
@@ -333,27 +364,33 @@ const DigitalCollage = ({ onBack, onSavePoem }) => {
           <div className="flex-1 grid grid-cols-2 gap-6">
             <button
               onClick={() => setView("words")}
-              className="p-6 rounded-xl border border-[#2C8C7C]/20 bg-white/10 dark:bg-gray-900/30
-                hover:bg-[#2C8C7C]/10 transition-all duration-300 flex flex-col items-center justify-center"
+              className="p-6 rounded-xl border border-[#2C8C7C]/40 
+                bg-white/20 dark:bg-gray-800/40 shadow-sm
+                hover:bg-[#2C8C7C]/20 hover:border-[#2C8C7C]/60 
+                transition-all duration-300 
+                flex flex-col items-center justify-center"
             >
               <Book className="w-12 h-12 text-[#2C8C7C] mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-2">
                 Words
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
                 Create and manage word lists
               </p>
             </button>
             <button
               onClick={() => setView("canvas")}
-              className="p-6 rounded-xl border border-[#2C8C7C]/20 bg-white/10 dark:bg-gray-900/30
-                hover:bg-[#2C8C7C]/10 transition-all duration-300 flex flex-col items-center justify-center"
+              className="p-6 rounded-xl border border-[#2C8C7C]/20 
+                bg-white/10 dark:bg-gray-700/30 shadow-sm
+                hover:bg-[#2C8C7C]/10 hover:border-[#2C8C7C]/40 
+                transition-all duration-300 
+                flex flex-col items-center justify-center"
             >
               <Edit className="w-12 h-12 text-[#2C8C7C] mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-2">
                 Canvas
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
                 Arrange words from your lists
               </p>
             </button>
@@ -399,36 +436,46 @@ const Notebook = ({ onBack, onSavePoem }) => {
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-medium text-[#2C8C7C]">Notebook</h3>
+        <h3 className="text-xl font-medium text-black dark:text-white">
+          Notebook
+        </h3>
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+          className="p-2 rounded-lg hover:bg-white/20 text-[#2C7C8C]"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm text-gray-800 dark:text-white font-medium mb-1">
           Poem Title
         </label>
         <input
           type="text"
           value={poemTitle}
           onChange={(e) => setPoemTitle(e.target.value)}
-          className="w-full p-2 rounded-lg border border-[#2C8C7C]/20 bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100"
+          className="w-full p-2 rounded-lg border border-[#2C8C7C]/20 
+            bg-white/50 dark:bg-gray-800/50 
+            text-gray-800 dark:text-gray-100
+            focus:border-[#2C8C7C]/60 focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]/40"
           placeholder="Enter poem title..."
         />
       </div>
 
       <div className="flex-1 mb-4">
-        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm text-gray-800 dark:text-white font-medium mb-1">
           Poem Content
         </label>
         <textarea
           value={poemText}
           onChange={(e) => setPoemText(e.target.value)}
-          className="w-full h-full p-4 rounded-lg border border-[#2C8C7C]/20 bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 resize-none"
+          className="w-full h-full p-4 rounded-lg 
+            border border-[#2C8C7C]/40 
+            bg-white/60 dark:bg-gray-800/70 
+            text-gray-900 dark:text-white 
+            focus:border-[#2C8C7C] focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]/60
+            resize-none shadow-inner"
           placeholder="Type your poem here..."
         />
       </div>
@@ -436,10 +483,10 @@ const Notebook = ({ onBack, onSavePoem }) => {
       <button
         onClick={handleSavePoem}
         disabled={!poemText.trim() || !poemTitle.trim()}
-        className={`w-full py-3 rounded-lg ${
+        className={`w-full py-3 rounded-lg transition-colors ${
           !poemText.trim() || !poemTitle.trim()
-            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white"
+            ? "bg-gray-500 dark:bg-gray-700 text-gray-300 dark:text-gray-400 cursor-not-allowed"
+            : "bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 text-white font-medium shadow-sm"
         }`}
       >
         Save Poem
@@ -475,23 +522,23 @@ const WriteAPoem = ({ isOpen, onClose, onStartPOiT, onSavePoem }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-4xl bg-white/5 dark:bg-black/20 backdrop-blur-lg 
-                  rounded-xl border border-[#2C8C7C]/10 overflow-hidden p-8"
+                className="w-full max-w-4xl bg-gray-300 dark:bg-gray-600/80 backdrop-blur-lg 
+                  rounded-xl border border-[#2C8C7C]/40 overflow-hidden p-8 shadow-xl"
               >
                 <div className="flex justify-between items-center mb-10">
-                  <h2 className="text-2xl font-medium text-[#2C8C7C]">
+                  <h2 className="text-2xl font-medium text-black dark:text-white">
                     Write a Poem
                   </h2>
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-full bg-white/5 
-                    backdrop-blur-sm text-white hover:bg-white/10 transition-colors"
+                    className="p-2 rounded-full bg-white/10 
+                    backdrop-blur-sm  text-black dark:text-white hover:bg-white/20 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <p className="text-center text-gray-300 mb-10">
+                <p className="text-center text-black dark:text-white mb-10">
                   Choose your creative method
                 </p>
 
@@ -522,8 +569,8 @@ const WriteAPoem = ({ isOpen, onClose, onStartPOiT, onSavePoem }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-4xl bg-white/5 dark:bg-black/20 backdrop-blur-lg 
-                  rounded-xl border border-[#2C8C7C]/10 overflow-hidden h-[80vh]"
+                className="w-full max-w-4xl bg-gray-300 dark:bg-gray-600/80 backdrop-blur-lg 
+                  rounded-xl border border-[#2C8C7C]/40 overflow-hidden h-[80vh] shadow-xl"
               >
                 {selectedOption === "digitalCollage" && (
                   <DigitalCollage
