@@ -196,7 +196,7 @@ const FloatingWord = ({
           )}
         </defs>
 
-        {/* Progress ring with smoother appearance */}
+        {/* Progress ring */}
         {(isInteracting || proximity > 0) && (
           <circle
             r="45"
@@ -314,11 +314,12 @@ const FloatingWord = ({
         <text
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-white pointer-events-none select-none"
+          className="text-gray-700 dark:text-gray-200 pointer-events-none select-none"
           style={{
             fontSize: Math.max(12, 24 - word.text.length * 0.8),
             fontWeight: 500,
           }}
+          fill="currentColor"
         >
           {word.text}
         </text>
@@ -335,14 +336,11 @@ const WordPool = ({
   interactionProgress,
   proximityMap,
 }) => {
-  console.log("WordPool received words:", words); // Debug log
-
   // Add unique positioning for each word
   const processedWords = useMemo(
     () =>
       words.map((word) => ({
         ...word,
-        // No need to add type to id, just use the text
         sizeMultiplier: 1 + Math.random() * 0.4,
         basePosition: {
           x: Math.random() * 100,
@@ -351,8 +349,6 @@ const WordPool = ({
       })),
     [words]
   );
-
-  console.log("Processed words:", processedWords); // Debug log
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
