@@ -107,27 +107,28 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
   };
 
   const handleRemoveWord = (wordToRemove) => {
-    setSelectedWords((prev) =>
-      prev.filter((word) => {
-        // Compare either directly or by finding the word object
-        const wordText =
-          typeof word === "string"
-            ? word
-            : availableWords.find((w) => w._id === word)?.text;
+    setSelectedWords((prev) => {
+      return prev.filter((word) => {
+        // Get the text representation of the word for comparison
+        let wordText;
+
+        if (typeof word === "string") {
+          wordText = word;
+        } else {
+          // If it's not a string, try to find the corresponding word object
+          const foundWord = availableWords.find((w) => w._id === word);
+          wordText = foundWord?.text || word;
+        }
+
+        // Return true to keep the word, false to remove it
         return wordText !== wordToRemove;
-      })
-    );
+      });
+    });
   };
 
   const handleSelectorMove = (position) => {
     if (!showCompletion) {
       setSelectorPosition(position);
-    }
-  };
-
-  const handleSelectorStart = () => {
-    if (!showCompletion) {
-      setIsActive(true);
     }
   };
 
