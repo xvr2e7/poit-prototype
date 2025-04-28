@@ -10,15 +10,55 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  Telescope,
 } from "lucide-react";
 
 // Represents a single word in the 3D poem layer
-const WordNode = ({ word, scaleFactor, isHighlighted, isConnecting }) => {
+const WordNode = ({
+  word,
+  scaleFactor,
+  isHighlighted,
+  isConnecting,
+  isSharedWord = false,
+  constellationMode = false,
+  poemIndex,
+  adjacentPoems = [],
+}) => {
   // Scale position based on scaleFactor to ensure everything fits
   const position = {
     x: (word.position?.x || 0) * scaleFactor,
     y: (word.position?.y || 0) * scaleFactor,
   };
+
+  // If we're in constellation mode, only show shared words as stars
+  if (constellationMode) {
+    // Only render if this is a shared word
+    if (!isSharedWord) return null;
+
+    return (
+      <div
+        className="absolute select-none pointer-events-none"
+        style={{
+          left: position.x,
+          top: position.y,
+          transformStyle: "preserve-3d",
+          transform: "translateZ(1px)",
+        }}
+      >
+        {/* Star point */}
+        <div
+          className={`w-2 h-2 rounded-full bg-[#2C8C7C] shadow-lg`}
+          style={{
+            boxShadow: isConnecting
+              ? "0 0 8px 3px rgba(44, 140, 124, 0.8)"
+              : "0 0 5px 2px rgba(44, 140, 124, 0.6)",
+            transform: "translate(-50%, -50%)",
+            opacity: isConnecting ? 1 : 0.8,
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -35,13 +75,13 @@ const WordNode = ({ word, scaleFactor, isHighlighted, isConnecting }) => {
           ${
             isConnecting
               ? "bg-[#2C8C7C] text-white shadow-lg"
-              : isHighlighted
+              : isSharedWord
               ? "bg-[#2C8C7C]/15 text-[#2C8C7C] dark:text-[#2C8C7C]"
               : "text-gray-400/80 dark:text-gray-400/80"
           }`}
         style={{
           fontSize: isConnecting ? "14px" : "12px",
-          fontWeight: isConnecting || isHighlighted ? 500 : 400,
+          fontWeight: isConnecting || isSharedWord ? 500 : 400,
           transform: `scale(${scaleFactor})`,
           transformOrigin: "top left",
         }}
@@ -64,6 +104,8 @@ const PoemCanvas = ({
   onClick,
   onDoubleClick,
   isStacked = true,
+  sharedWordsMap = new Map(),
+  constellationMode = false,
 }) => {
   if (!poem || !poem.components) return null;
 
@@ -75,7 +117,16 @@ const PoemCanvas = ({
   const reversedCurrentLayer = isStacked
     ? totalLayers - 1 - currentLayer
     : currentLayer;
-  const offsetFromCurrent = reversedLayer - reversedCurrentLayer;
+  let offsetFromCurrent = reversedLayer - reversedCurrentLayer;
+
+  // Adjust the offset so all non-current layers are behind the current one
+  if (offsetFromCurrent !== 0) {
+    // Make positive offsets negative but preserve their relative order
+    offsetFromCurrent =
+      offsetFromCurrent > 0
+        ? -totalLayers + offsetFromCurrent
+        : offsetFromCurrent;
+  }
 
   // Calculate stack offset for tilted view
   const horizontalOffset = isStacked ? offsetFromCurrent * 40 : 0;
@@ -184,141 +235,21 @@ const PoemCanvas = ({
       </div>
 
       {/* Words */}
-      {words.map((word, index) => (
-        <WordNode
-          key={`${poem.id}-word-${index}-${word.text}`}
-          word={word}
-          scaleFactor={scaleFactor * layerScale}
-          isHighlighted={highlightedWords.includes(word.text.toLowerCase())}
-          isConnecting={connectingWord === word.text.toLowerCase()}
-        />
-      ))}
-    </div>
-  );
-};
+      {words.map((word, index) => {
+        const isShared = sharedWordsMap.has(word.text.toLowerCase());
 
-// Connection between words on different layers - laser beam style
-const LaserBeamConnection = ({
-  startPosition,
-  startLayer,
-  endPosition,
-  endLayer,
-  currentLayer,
-  totalLayers,
-  isActive,
-}) => {
-  // Calculate 3D positions with offsets for the stacked view
-  const reversedStartLayer = totalLayers - 1 - startLayer;
-  const reversedEndLayer = totalLayers - 1 - endLayer;
-  const reversedCurrentLayer = totalLayers - 1 - currentLayer;
-
-  const startHOffset = (reversedStartLayer - reversedCurrentLayer) * 40;
-  const startVOffset = (reversedStartLayer - reversedCurrentLayer) * 20;
-  const startZ = -120 * (reversedStartLayer - reversedCurrentLayer);
-
-  const endHOffset = (reversedEndLayer - reversedCurrentLayer) * 40;
-  const endVOffset = (reversedEndLayer - reversedCurrentLayer) * 20;
-  const endZ = -120 * (reversedEndLayer - reversedCurrentLayer);
-
-  // Adjusted positions for stack view
-  const adjustedStartPos = {
-    x: startPosition.x + startHOffset,
-    y: startPosition.y + startVOffset,
-  };
-
-  const adjustedEndPos = {
-    x: endPosition.x + endHOffset,
-    y: endPosition.y + endVOffset,
-  };
-
-  return (
-    <div
-      className="absolute rounded-full pointer-events-none"
-      style={{
-        left: 0,
-        top: 0,
-        width: "100%",
-        height: "100%",
-        transformStyle: "preserve-3d",
-      }}
-    >
-      {/* Start point glow */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          left: adjustedStartPos.x,
-          top: adjustedStartPos.y,
-          width: 6,
-          height: 6,
-          transform: `translateZ(${startZ}px)`,
-          backgroundColor: "#2C8C7C",
-          boxShadow: "0 0 8px 2px rgba(44, 140, 124, 0.8)",
-          opacity: isActive ? 1 : 0.7,
-        }}
-      />
-
-      {/* End point glow */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          left: adjustedEndPos.x,
-          top: adjustedEndPos.y,
-          width: 6,
-          height: 6,
-          transform: `translateZ(${endZ}px)`,
-          backgroundColor: "#2C8C7C",
-          boxShadow: "0 0 8px 2px rgba(44, 140, 124, 0.8)",
-          opacity: isActive ? 1 : 0.7,
-        }}
-      />
-
-      {/* Laser beam connection - using SVG for better rendering */}
-      <svg
-        width="100%"
-        height="100%"
-        style={{ position: "absolute", pointerEvents: "none" }}
-      >
-        <defs>
-          <linearGradient
-            id={`laser-gradient-${startLayer}-${endLayer}`}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
-            <stop offset="0%" stopColor="#2C8C7C" stopOpacity="0.9" />
-            <stop offset="50%" stopColor="#2C8C7C" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#2C8C7C" stopOpacity="0.9" />
-          </linearGradient>
-          <filter
-            id={`laser-glow-${startLayer}-${endLayer}`}
-            x="-20%"
-            y="-20%"
-            width="140%"
-            height="140%"
-          >
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feComposite
-              in="SourceGraphic"
-              in2="blur"
-              operator="over"
-              result="glow"
-            />
-          </filter>
-        </defs>
-        <line
-          x1={adjustedStartPos.x}
-          y1={adjustedStartPos.y}
-          x2={adjustedEndPos.x}
-          y2={adjustedEndPos.y}
-          stroke={`url(#laser-gradient-${startLayer}-${endLayer})`}
-          strokeWidth={isActive ? 2 : 1.5}
-          style={{
-            filter: `url(#laser-glow-${startLayer}-${endLayer})`,
-            opacity: isActive ? 1 : 0.7,
-          }}
-        />
-      </svg>
+        return (
+          <WordNode
+            key={`${poem.id}-word-${index}-${word.text}`}
+            word={word}
+            scaleFactor={scaleFactor * layerScale}
+            isHighlighted={highlightedWords.includes(word.text.toLowerCase())}
+            isConnecting={connectingWord === word.text.toLowerCase()}
+            isSharedWord={isShared}
+            constellationMode={constellationMode}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -333,19 +264,65 @@ const NavigationNetwork = ({
   uniquePoemCount,
   constellationCount,
   wordPool = [],
-  connectingWords = {}, // Map of connections: {`${fromPoemId}-${toPoemId}`: clickedWord}
+  connectingWords = {},
 }) => {
   const containerRef = useRef(null);
 
+  // Helper function to find shared words between adjacent poems
+  const getSharedWordsMap = (poems) => {
+    if (!poems || poems.length < 2) return new Map();
+
+    const sharedWordsMap = new Map();
+
+    // Find shared words between adjacent poems
+    for (let i = 0; i < poems.length - 1; i++) {
+      const poem1 = poems[i];
+      const poem2 = poems[i + 1];
+
+      if (!poem1?.components || !poem2?.components) continue;
+
+      const poem1Words = poem1.components
+        .filter((comp) => comp.type === "word")
+        .map((word) => word.text.toLowerCase());
+
+      const poem2Words = poem2.components
+        .filter((comp) => comp.type === "word")
+        .map((word) => word.text.toLowerCase());
+
+      // Find shared words
+      const sharedWords = poem1Words.filter((word) =>
+        poem2Words.includes(word)
+      );
+
+      // Store in map
+      for (const word of sharedWords) {
+        if (!sharedWordsMap.has(word)) {
+          sharedWordsMap.set(word, new Set());
+        }
+        sharedWordsMap.get(word).add(i);
+        sharedWordsMap.get(word).add(i + 1);
+      }
+    }
+
+    return sharedWordsMap;
+  };
+
   // State for 3D controls
   const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState({ x: 25, y: -30 }); // Match the tilted view in reference image
+  const [rotation, setRotation] = useState({ x: 0, y: -12 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, rotX: 0, rotY: 0 });
+  const [showConstellation, setShowConstellation] = useState(false);
 
   // Layer navigation state
-  const [currentLayer, setCurrentLayer] = useState(0);
+  const [currentLayer, setCurrentLayer] = useState(() => {
+    // Find index of current poem on initial render
+    const currentPoemIndex = visitedPoems.findIndex(
+      (p) => p && p.id === currentPoemId
+    );
+    return currentPoemIndex !== -1 ? currentPoemIndex : visitedPoems.length - 1;
+  });
 
   // New state for 2D view mode
   const [activeLayer, setActiveLayer] = useState(null);
@@ -357,47 +334,50 @@ const NavigationNetwork = ({
 
     const connections = [];
 
-    // Process each poem-to-poem connection
+    // Process each adjacent poem pair
     for (let i = 0; i < visitedPoems.length - 1; i++) {
       const fromPoem = visitedPoems[i];
       const toPoem = visitedPoems[i + 1];
 
-      if (!fromPoem || !toPoem) continue;
+      if (!fromPoem || !toPoem || !fromPoem.components || !toPoem.components)
+        continue;
 
-      // Get the connecting word
-      const connectionKey = `${fromPoem.id}-${toPoem.id}`;
-      const connectingWord = connectingWords[connectionKey];
-
-      if (!connectingWord) continue;
-
-      // Find this word in both poems
-      const fromComponent = fromPoem.components?.find(
-        (comp) =>
-          comp.type === "word" &&
-          comp.text.toLowerCase() === connectingWord.toLowerCase()
+      // Extract all words from both poems
+      const fromWords = fromPoem.components.filter(
+        (comp) => comp.type === "word"
       );
+      const toWords = toPoem.components.filter((comp) => comp.type === "word");
 
-      const toComponent = toPoem.components?.find(
-        (comp) =>
-          comp.type === "word" &&
-          comp.text.toLowerCase() === connectingWord.toLowerCase()
-      );
+      // Find shared words between the two poems
+      for (const fromWord of fromWords) {
+        const matchingToWords = toWords.filter(
+          (toWord) => toWord.text.toLowerCase() === fromWord.text.toLowerCase()
+        );
 
-      if (fromComponent?.position && toComponent?.position) {
-        connections.push({
-          from: {
-            position: fromComponent.position,
-            layer: i,
-            poemId: fromPoem.id,
-          },
-          to: {
-            position: toComponent.position,
-            layer: i + 1,
-            poemId: toPoem.id,
-          },
-          word: connectingWord,
-          isActive: i === visitedPoems.length - 2, // Most recent connection
-        });
+        // Create connections for each shared word
+        for (const toWord of matchingToWords) {
+          if (fromWord.position && toWord.position) {
+            connections.push({
+              from: {
+                position: fromWord.position,
+                layer: i,
+                poemId: fromPoem.id,
+                word: fromWord.text,
+              },
+              to: {
+                position: toWord.position,
+                layer: i + 1,
+                poemId: toPoem.id,
+                word: toWord.text,
+              },
+              word: fromWord.text.toLowerCase(),
+              // Highlight the navigational connections
+              isActive:
+                connectingWords[`${fromPoem.id}-${toPoem.id}`] ===
+                fromWord.text.toLowerCase(),
+            });
+          }
+        }
       }
     }
 
@@ -464,7 +444,7 @@ const NavigationNetwork = ({
   // Reset position
   const resetView = () => {
     setScale(1);
-    setRotation({ x: 25, y: -30 }); // Adjusted to match the reference image
+    setRotation({ x: 0, y: -12 });
     setPosition({ x: 0, y: 0 });
     setIsIn2DView(false);
     setActiveLayer(null);
@@ -518,6 +498,9 @@ const NavigationNetwork = ({
     typeof w === "string" ? w.toLowerCase() : w.text.toLowerCase()
   );
 
+  // Calculate shared words map
+  const sharedWordsMap = getSharedWordsMap(visitedPoems);
+
   // Total number of layers for positioning calculation
   const totalLayers = visitedPoems.length;
 
@@ -562,6 +545,20 @@ const NavigationNetwork = ({
                 Constellation Count: {constellationCount}
               </div>
             </div>
+
+            {/* Constellation View Toggle */}
+            <motion.button
+              onClick={() => setShowConstellation(!showConstellation)}
+              className={`p-2 rounded-full ${
+                showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
+              } backdrop-blur-sm 
+                text-white hover:bg-gray-800/70 transition-colors border border-gray-800`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Toggle constellation view"
+            >
+              <Telescope className="w-4 h-4 text-[#2C7C8C]" />
+            </motion.button>
           </div>
 
           {/* Layer Navigation Controls - Only show in 3D view */}
@@ -718,6 +715,7 @@ const NavigationNetwork = ({
                         }
                         opacity={1}
                         isStacked={false}
+                        sharedWordsMap={sharedWordsMap}
                       />
                     ))
                 ) : (
@@ -742,22 +740,167 @@ const NavigationNetwork = ({
                         onClick={() => setCurrentLayer(index)}
                         onDoubleClick={handleDoubleClick}
                         isStacked={true}
+                        sharedWordsMap={sharedWordsMap}
+                        constellationMode={showConstellation}
                       />
                     ))}
 
-                    {/* Laser beam connections between adjacent layers */}
-                    {wordConnections.map((connection, idx) => (
-                      <LaserBeamConnection
-                        key={`connection-${connection.from.poemId}-${connection.to.poemId}-${idx}-${currentLayer}`}
-                        startPosition={connection.from.position}
-                        startLayer={connection.from.layer}
-                        endPosition={connection.to.position}
-                        endLayer={connection.to.layer}
-                        currentLayer={currentLayer}
-                        totalLayers={totalLayers}
-                        isActive={connection.isActive}
-                      />
-                    ))}
+                    {/* Constellation visualization */}
+                    {showConstellation && (
+                      <>
+                        {/* Star points */}
+                        {visitedPoems.map((poem, index) => {
+                          if (!poem?.components) return null;
+
+                          return poem.components
+                            .filter((comp) => comp.type === "word")
+                            .map((word, wordIdx) => {
+                              const wordText = word.text.toLowerCase();
+                              const isShared = sharedWordsMap.has(wordText);
+                              if (!isShared) return null;
+
+                              const isConnectingWord =
+                                index < visitedPoems.length - 1 &&
+                                connectingWords[
+                                  `${poem.id}-${visitedPoems[index + 1]?.id}`
+                                ] === wordText;
+
+                              return (
+                                <WordNode
+                                  key={`star-${poem.id}-${wordIdx}-${word.text}`}
+                                  word={word}
+                                  layer={index}
+                                  currentLayer={currentLayer}
+                                  totalLayers={totalLayers}
+                                  isHighlighted={false}
+                                  isConnecting={isConnectingWord}
+                                  isSharedWord={true}
+                                  constellationMode={true}
+                                  poemIndex={index}
+                                />
+                              );
+                            });
+                        })}
+
+                        {/* Constellation lines */}
+                        <svg
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ overflow: "visible" }}
+                        >
+                          <defs>
+                            <filter
+                              id="glow-filter"
+                              x="-20%"
+                              y="-20%"
+                              width="140%"
+                              height="140%"
+                            >
+                              <feGaussianBlur stdDeviation="2" result="blur" />
+                              <feComposite
+                                in="SourceGraphic"
+                                in2="blur"
+                                operator="over"
+                              />
+                            </filter>
+                          </defs>
+
+                          {visitedPoems.map((fromPoem, fromIndex) => {
+                            if (fromIndex >= visitedPoems.length - 1)
+                              return null;
+
+                            const toPoem = visitedPoems[fromIndex + 1];
+                            if (!fromPoem?.components || !toPoem?.components)
+                              return null;
+
+                            // Get all shared words between these poems
+                            const fromWords = fromPoem.components.filter(
+                              (comp) => comp.type === "word"
+                            );
+                            const toWords = toPoem.components.filter(
+                              (comp) => comp.type === "word"
+                            );
+
+                            // Create connections for shared words
+                            return fromWords.map((fromWord, wordIdx) => {
+                              const matchingWords = toWords.filter(
+                                (w) =>
+                                  w.text.toLowerCase() ===
+                                  fromWord.text.toLowerCase()
+                              );
+
+                              if (!matchingWords.length || !fromWord.position)
+                                return null;
+
+                              // Calculate 3D positions
+                              const reversedFromLayer =
+                                totalLayers - 1 - fromIndex;
+                              const reversedToLayer = reversedFromLayer - 1;
+                              const reversedCurrentLayer =
+                                totalLayers - 1 - currentLayer;
+
+                              const fromHOffset =
+                                (reversedFromLayer - reversedCurrentLayer) * 40;
+                              const fromVOffset =
+                                (reversedFromLayer - reversedCurrentLayer) * 20;
+                              const fromZ =
+                                -120 *
+                                (reversedFromLayer - reversedCurrentLayer);
+
+                              const toHOffset =
+                                (reversedToLayer - reversedCurrentLayer) * 40;
+                              const toVOffset =
+                                (reversedToLayer - reversedCurrentLayer) * 20;
+                              const toZ =
+                                -120 * (reversedToLayer - reversedCurrentLayer);
+
+                              // Draw a line for each matching word
+                              return matchingWords.map((toWord, lineIdx) => {
+                                if (!toWord.position) return null;
+
+                                const isConnectionWord =
+                                  connectingWords[
+                                    `${fromPoem.id}-${toPoem.id}`
+                                  ] === fromWord.text.toLowerCase();
+
+                                const adjustedFromPos = {
+                                  x: fromWord.position.x + fromHOffset,
+                                  y: fromWord.position.y + fromVOffset,
+                                };
+
+                                const adjustedToPos = {
+                                  x: toWord.position.x + toHOffset,
+                                  y: toWord.position.y + toVOffset,
+                                };
+
+                                return (
+                                  <line
+                                    key={`constellation-${fromPoem.id}-${toPoem.id}-${fromWord.text}-${lineIdx}-${wordIdx}`}
+                                    x1={adjustedFromPos.x}
+                                    y1={adjustedFromPos.y}
+                                    x2={adjustedToPos.x}
+                                    y2={adjustedToPos.y}
+                                    stroke={
+                                      isConnectionWord
+                                        ? "#2C8C7C"
+                                        : "rgba(44, 140, 124, 0.6)"
+                                    }
+                                    strokeWidth={isConnectionWord ? 2 : 1}
+                                    strokeOpacity={isConnectionWord ? 1 : 0.7}
+                                    filter="url(#glow-filter)"
+                                    style={{
+                                      transformStyle: "preserve-3d",
+                                      transform: `translateZ(${
+                                        (fromZ + toZ) / 2
+                                      }px)`,
+                                    }}
+                                  />
+                                );
+                              });
+                            });
+                          })}
+                        </svg>
+                      </>
+                    )}
                   </>
                 )}
               </div>
