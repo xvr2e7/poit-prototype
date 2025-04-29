@@ -211,13 +211,17 @@ const PoemCanvas = ({
       {/* Layer background */}
       <div
         className={`absolute inset-0 bg-gray-800/90 rounded-xl shadow-lg overflow-hidden
-          border-2 transition-all duration-300 ${
-            isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
-          }`}
+    border-2 transition-all duration-300 ${
+      isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
+    } ${
+          constellationMode
+            ? "bg-transparent border-transparent"
+            : "bg-gray-800/90"
+        }`}
         style={{ transform: "translateZ(0px)" }}
       >
         {/* Active layer indicator */}
-        {isActiveLayer && (
+        {isActiveLayer && !constellationMode && (
           <div
             className="absolute inset-0 rounded-xl"
             style={{
@@ -228,10 +232,12 @@ const PoemCanvas = ({
         )}
 
         {/* Poem title */}
-        <div className="absolute top-4 left-4 p-2">
-          <h3 className="text-lg font-medium text-gray-200">{poem.title}</h3>
-          <div className="text-xs text-gray-400">{poem.date}</div>
-        </div>
+        {!constellationMode && (
+          <div className="absolute top-4 left-4 p-2">
+            <h3 className="text-lg font-medium text-gray-200">{poem.title}</h3>
+            <div className="text-xs text-gray-400">{poem.date}</div>
+          </div>
+        )}
       </div>
 
       {/* Words */}
