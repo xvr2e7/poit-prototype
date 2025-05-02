@@ -189,11 +189,11 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
             >
               <h3 className="text-xl font-medium text-[#2C8C7C] mb-4">
                 {currentMode === "pulse"
-                  ? "How to Use Pulse Mode"
+                  ? "Pulse Mode"
                   : currentMode === "craft"
-                  ? "How to Use Craft Mode"
+                  ? "Craft Mode"
                   : currentMode === "echo"
-                  ? "How to Use Echo Mode"
+                  ? "Echo Mode"
                   : "Help"}
               </h3>
 
@@ -237,8 +237,8 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                     <p>
                       <b>1. Drag and Position</b>
                       <br />
-                      Drag words from the left panel onto the canvas. Position
-                      them by dragging.
+                      Click words from the left panel to add the them by
+                      dragging.
                     </p>
                     <p>
                       <b>2. Format and Arrange</b>
@@ -320,7 +320,7 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                       <b>1. Explore Word Connections</b>
                       <br />
                       Click on glowing highlighted words to navigate to
-                      connected poems.
+                      connected poems through shared vocabulary.
                     </p>
                     <p>
                       <b>2. Navigate the Canvas</b>
@@ -332,17 +332,25 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                       <b>3. View Your Constellation</b>
                       <br />
                       Click the network icon to see a 3D visualization of your
-                      poetic journey.
+                      poetic journey and connections.
                     </p>
                     <p>
-                      <b>4. Interact with the Network</b>
+                      <b>4. Explore the Constellation</b>
                       <br />
-                      In network view, drag to rotate, double-click layers to
-                      expand, and use arrows to navigate.
+                      In constellation view, drag to rotate the 3D space. Click
+                      a poem layer's border to focus on it, or double-click to
+                      expand to full view.
+                    </p>
+                    <p>
+                      <b>5. Toggle Stargazing Mode</b>
+                      <br />
+                      Use the telescope button to switch to stargazing view,
+                      watching shared words as stars forming a unique celestial
+                      pattern.
                     </p>
                     <p className="text-xs text-gray-500 italic mt-6">
                       Discover how your words connect to form a constellation of
-                      meaning.
+                      meaning across poems.
                     </p>
                   </>
                 )}
