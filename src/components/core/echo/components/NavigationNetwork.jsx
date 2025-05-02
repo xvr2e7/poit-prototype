@@ -279,7 +279,6 @@ const PoemCanvas = ({
         {!constellationMode && (
           <div className="absolute top-4 left-4 p-2">
             <h3 className="text-lg font-medium text-gray-200">{poem.title}</h3>
-            <div className="text-xs text-gray-400">{poem.date}</div>
           </div>
         )}
       </div>
