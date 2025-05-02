@@ -120,12 +120,12 @@ const WordNode = ({
 const PoemCanvas = ({
   poem,
   layer,
-  currentLayer,
+  activeLayer,
   totalLayers,
   highlightedWords,
   connectingWord,
   opacity = 1,
-  onClick,
+  onClickFrame,
   onDoubleClick,
   isStacked = true,
   sharedWordsMap = new Map(),
@@ -136,29 +136,20 @@ const PoemCanvas = ({
   // Get words from the poem's components
   const words = poem.components.filter((comp) => comp.type === "word");
 
-  // Calculate position in stack
-  const reversedLayer = isStacked ? totalLayers - 1 - layer : layer;
-  const reversedCurrentLayer = isStacked
-    ? totalLayers - 1 - currentLayer
-    : currentLayer;
-  let offsetFromCurrent = reversedLayer - reversedCurrentLayer;
-
-  // Adjust the offset so all non-current layers are behind the current one
-  if (offsetFromCurrent !== 0) {
-    // Make positive offsets negative but preserve their relative order
-    offsetFromCurrent =
-      offsetFromCurrent > 0
-        ? -totalLayers + offsetFromCurrent
-        : offsetFromCurrent;
-  }
+  // Calculate position in stack - reversed to have latest at top/front
+  const layerPosition = totalLayers - 1 - layer;
 
   // Calculate stack offset for tilted view
-  const horizontalOffset = isStacked ? offsetFromCurrent * 40 : 0;
-  const verticalOffset = isStacked ? offsetFromCurrent * 20 : 0;
+  const offsetFromActive =
+    isStacked && activeLayer !== null
+      ? layerPosition - (totalLayers - 1 - activeLayer)
+      : layerPosition;
+  const horizontalOffset = isStacked ? offsetFromActive * 40 : 0;
+  const verticalOffset = isStacked ? offsetFromActive * 20 : 0;
 
   // Calculate z-index and z-position for stacked view
-  const zOffset = isStacked ? -120 * offsetFromCurrent : 0;
-  const zIndex = isStacked ? 100 - Math.abs(offsetFromCurrent) : 100;
+  const zOffset = isStacked ? -120 * offsetFromActive : 0;
+  const zIndex = isStacked ? 100 - Math.abs(offsetFromActive) : 100;
 
   // Standard canvas size for all poems
   const canvasWidth = 1000;
@@ -202,7 +193,7 @@ const PoemCanvas = ({
   }, [words, canvasWidth, canvasHeight]);
 
   // Calculate if this is the active layer
-  const isActiveLayer = layer === currentLayer;
+  const isActiveLayer = layer === activeLayer;
 
   // Transform style for layers in the stack
   const layerTransform = isStacked
@@ -214,6 +205,30 @@ const PoemCanvas = ({
   const layerSize = isStacked
     ? { width: canvasWidth, height: canvasHeight }
     : { width: "100%", height: "100%" };
+
+  // Handler for frame click - only trigger when clicking on the frame border
+  const handleFrameClick = (e) => {
+    // Get the click position relative to the target
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Define border thickness - consider this the frame edge
+    const borderThickness = 30; // Larger value to make it easier to click
+
+    // Check if the click is on the frame border
+    const isOnBorder =
+      x < borderThickness ||
+      x > rect.width - borderThickness ||
+      y < borderThickness ||
+      y > rect.height - borderThickness;
+
+    // Only process click if it's on the border
+    if (isOnBorder && onClickFrame) {
+      onClickFrame(layer);
+      e.stopPropagation();
+    }
+  };
 
   return (
     <div
@@ -229,15 +244,20 @@ const PoemCanvas = ({
         opacity: isActiveLayer ? 1 : opacity,
         zIndex: zIndex,
       }}
-      onClick={onClick ? () => onClick(layer) : undefined}
-      onDoubleClick={onDoubleClick ? () => onDoubleClick(layer) : undefined}
+      onClick={handleFrameClick}
+      onDoubleClick={(e) => {
+        if (onDoubleClick) {
+          onDoubleClick(layer);
+          e.stopPropagation();
+        }
+      }}
     >
       {/* Layer background */}
       <div
         className={`absolute inset-0 rounded-xl overflow-hidden
-    border-2 transition-all duration-300 ${
-      isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
-    } ${
+          border-2 transition-all duration-300 ${
+            isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
+          } ${
           constellationMode
             ? "bg-transparent border-transparent shadow-none"
             : "bg-gray-800/90 shadow-lg"
@@ -345,17 +365,10 @@ const NavigationNetwork = ({
   const dragStart = useRef({ x: 0, y: 0, rotX: 0, rotY: 0 });
   const [showConstellation, setShowConstellation] = useState(false);
 
-  // Layer navigation state
-  const [currentLayer, setCurrentLayer] = useState(() => {
-    // Find index of current poem on initial render
-    const currentPoemIndex = visitedPoems.findIndex(
-      (p) => p && p.id === currentPoemId
-    );
-    return currentPoemIndex !== -1 ? currentPoemIndex : visitedPoems.length - 1;
-  });
-
-  // New state for 2D view mode
+  // Layer navigation state - start with no active layer
   const [activeLayer, setActiveLayer] = useState(null);
+
+  // 2D view state
   const [isIn2DView, setIsIn2DView] = useState(false);
 
   // Enhanced word connections that calculate actual positions
@@ -477,33 +490,36 @@ const NavigationNetwork = ({
     setRotation({ x: 0, y: -12 });
     setPosition({ x: 0, y: 0 });
     setIsIn2DView(false);
-    setActiveLayer(null);
 
-    // Find index of current poem and focus on that layer
-    const currentPoemIndex = visitedPoems.findIndex(
-      (p) => p.id === currentPoemId
-    );
-    if (currentPoemIndex !== -1) {
-      setCurrentLayer(currentPoemIndex);
-    } else {
-      setCurrentLayer(0);
-    }
+    // Reset active layer
+    setActiveLayer(null);
   };
 
   // Navigate to previous/next layer - accounting for reversed order
   const goToPreviousLayer = () => {
-    if (currentLayer > 0) {
-      setCurrentLayer(currentLayer - 1);
+    if (activeLayer !== null && activeLayer > 0) {
+      setActiveLayer(activeLayer - 1);
     }
   };
 
   const goToNextLayer = () => {
-    if (currentLayer < visitedPoems.length - 1) {
-      setCurrentLayer(currentLayer + 1);
+    if (activeLayer !== null && activeLayer < visitedPoems.length - 1) {
+      setActiveLayer(activeLayer + 1);
     }
   };
 
-  // Handle double-click to enter 2D view
+  // Handle frame click to activate a layer
+  const handleFrameClick = (layerIndex) => {
+    if (layerIndex === activeLayer) {
+      // If already active, switch to 2D view
+      setIsIn2DView(true);
+    } else {
+      // Otherwise just make it active
+      setActiveLayer(layerIndex);
+    }
+  };
+
+  // Handle double-click to immediately go to 2D view
   const handleDoubleClick = (layerIndex) => {
     setActiveLayer(layerIndex);
     setIsIn2DView(true);
@@ -512,8 +528,6 @@ const NavigationNetwork = ({
   // Return from 2D view to 3D stack
   const returnTo3DView = () => {
     setIsIn2DView(false);
-    setCurrentLayer(activeLayer || 0);
-    setActiveLayer(null);
   };
 
   // Reset on open
@@ -552,54 +566,56 @@ const NavigationNetwork = ({
             <X className="w-6 h-6" />
           </button>
 
-          {/* Stats display */}
-          <div className="absolute top-4 left-4 flex space-x-3 z-20">
-            {/* Unique Poems Counter */}
-            <div
-              className="p-3 bg-gray-900/90 backdrop-blur-sm 
-              rounded-lg border border-gray-800 flex items-center gap-2"
-            >
-              <Book className="w-5 h-5 text-[#2C8C7C]" />
-              <div className="text-sm font-medium text-white">
-                Unique Poems Visited: {uniquePoemCount}
-              </div>
-            </div>
-
-            {/* Constellation Counter */}
-            <div
-              className="p-3 bg-gray-900/90 backdrop-blur-sm 
-              rounded-lg border border-gray-800 flex items-center gap-2"
-            >
-              <Network className="w-5 h-5 text-[#2C8C7C]" />
-              <div className="text-sm font-medium text-white">
-                Constellation Count: {constellationCount}
-              </div>
-            </div>
-
-            {/* Constellation View Toggle */}
-            <motion.button
-              onClick={() => setShowConstellation(!showConstellation)}
-              className={`p-2 rounded-full ${
-                showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
-              } backdrop-blur-sm 
-                text-white hover:bg-gray-800/70 transition-colors border border-gray-800`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label="Toggle constellation view"
-            >
-              <Telescope className="w-4 h-4 text-[#2C7C8C]" />
-            </motion.button>
-          </div>
-
-          {/* Layer Navigation Controls - Only show in 3D view */}
+          {/* Stats display - only show in 3D view */}
           {!isIn2DView && (
+            <div className="absolute top-4 left-4 flex space-x-3 z-20">
+              {/* Unique Poems Counter */}
+              <div
+                className="p-3 bg-gray-900/90 backdrop-blur-sm 
+                rounded-lg border border-gray-800 flex items-center gap-2"
+              >
+                <Book className="w-5 h-5 text-[#2C8C7C]" />
+                <div className="text-sm font-medium text-white">
+                  Unique Poems Visited: {uniquePoemCount}
+                </div>
+              </div>
+
+              {/* Constellation Counter */}
+              <div
+                className="p-3 bg-gray-900/90 backdrop-blur-sm 
+                rounded-lg border border-gray-800 flex items-center gap-2"
+              >
+                <Network className="w-5 h-5 text-[#2C8C7C]" />
+                <div className="text-sm font-medium text-white">
+                  Constellation Count: {constellationCount}
+                </div>
+              </div>
+
+              {/* Constellation View Toggle */}
+              <motion.button
+                onClick={() => setShowConstellation(!showConstellation)}
+                className={`p-2 rounded-full ${
+                  showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
+                } backdrop-blur-sm 
+                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="Toggle constellation view"
+              >
+                <Telescope className="w-4 h-4 text-[#2C7C8C]" />
+              </motion.button>
+            </div>
+          )}
+
+          {/* Layer Navigation Controls - Only show in 3D view when a layer is active */}
+          {!isIn2DView && activeLayer !== null && (
             <>
               <button
                 onClick={goToPreviousLayer}
-                disabled={currentLayer <= 0}
+                disabled={activeLayer <= 0}
                 className={`absolute left-6 top-1/2 transform -translate-y-1/2 
                   p-3 rounded-full border pointer-events-auto z-20 ${
-                    currentLayer <= 0
+                    activeLayer <= 0
                       ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
                   } transition-colors shadow-lg`}
@@ -610,10 +626,10 @@ const NavigationNetwork = ({
 
               <button
                 onClick={goToNextLayer}
-                disabled={currentLayer >= visitedPoems.length - 1}
+                disabled={activeLayer >= visitedPoems.length - 1}
                 className={`absolute right-6 top-1/2 transform -translate-y-1/2
                   p-3 rounded-full border pointer-events-auto z-20 ${
-                    currentLayer >= visitedPoems.length - 1
+                    activeLayer >= visitedPoems.length - 1
                       ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
                       : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
                   } transition-colors shadow-lg`}
@@ -679,7 +695,7 @@ const NavigationNetwork = ({
           >
             {isIn2DView
               ? "Click 'Back to Stack' to return to 3D view"
-              : "Double-click a layer to expand • Use arrows to navigate • Drag to rotate"}
+              : "Click on a frame border to activate • Click active layer to expand • Double-click for 2D view • Drag to rotate"}
           </div>
 
           {/* 3D visualization */}
@@ -731,7 +747,7 @@ const NavigationNetwork = ({
                         key={`2d-view-expanded-${poem.id}-${activeLayer}`}
                         poem={poem}
                         layer={activeLayer}
-                        currentLayer={activeLayer}
+                        activeLayer={activeLayer}
                         totalLayers={totalLayers}
                         highlightedWords={highlightedWords}
                         connectingWord={
@@ -753,10 +769,10 @@ const NavigationNetwork = ({
                   <>
                     {visitedPoems.map((poem, index) => (
                       <PoemCanvas
-                        key={`stack-layer-${poem.id}-${index}-${currentLayer}`}
+                        key={`stack-layer-${poem.id}-${index}-${activeLayer}`}
                         poem={poem}
                         layer={index}
-                        currentLayer={currentLayer}
+                        activeLayer={activeLayer}
                         totalLayers={totalLayers}
                         highlightedWords={highlightedWords}
                         connectingWord={
@@ -767,7 +783,7 @@ const NavigationNetwork = ({
                             : null
                         }
                         opacity={0.7}
-                        onClick={() => setCurrentLayer(index)}
+                        onClickFrame={handleFrameClick}
                         onDoubleClick={handleDoubleClick}
                         isStacked={true}
                         sharedWordsMap={sharedWordsMap}
@@ -800,7 +816,7 @@ const NavigationNetwork = ({
                                   key={`star-${poem.id}-${wordIdx}-${word.text}`}
                                   word={word}
                                   layer={index}
-                                  currentLayer={currentLayer}
+                                  currentLayer={activeLayer}
                                   totalLayers={totalLayers}
                                   isHighlighted={false}
                                   isConnecting={isConnectingWord}
