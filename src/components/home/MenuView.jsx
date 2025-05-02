@@ -143,7 +143,7 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen w-full flex"
+      className="fixed inset-0 z-20 flex"
       style={{
         background: isDark
           ? "linear-gradient(to bottom right, #0f172a, #1e293b)"
