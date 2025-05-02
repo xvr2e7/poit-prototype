@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 import HomePage from "./components/home/HomePage";
 import MenuView from "./components/home/MenuView";
@@ -14,6 +14,10 @@ function App() {
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
   const [isDevMode, setIsDevMode] = useState(false);
+
+  // Save state
+  const [lastSaved, setLastSaved] = useState(null);
+  const [saveInterval, setSaveInterval] = useState(null);
 
   // Load saved data on initial render
   useEffect(() => {
@@ -67,6 +71,66 @@ function App() {
     }
   }, []);
 
+  // Save data handler
+  const saveData = useCallback(() => {
+    let success = false;
+
+    try {
+      // Save based on current mode
+      if (currentScreen === "pulse" && selectedWords.length > 0) {
+        localStorage.setItem("poit_daily_words", JSON.stringify(selectedWords));
+        success = true;
+      } else if (currentScreen === "craft" && selectedWords.length > 0) {
+        localStorage.setItem("poit_daily_words", JSON.stringify(selectedWords));
+        if (currentPoem) {
+          localStorage.setItem(
+            "poit_current_poem",
+            JSON.stringify(currentPoem)
+          );
+        }
+        success = true;
+      } else if (currentScreen === "echo" && currentPoem) {
+        localStorage.setItem("poit_current_poem", JSON.stringify(currentPoem));
+        success = true;
+      }
+
+      if (success) {
+        const now = new Date();
+        setLastSaved(now.toISOString());
+        console.log(`Progress saved at ${now.toLocaleTimeString()}`);
+      }
+
+      return success;
+    } catch (error) {
+      console.error("Error saving data:", error);
+      return false;
+    }
+  }, [currentScreen, selectedWords, currentPoem]);
+
+  // Set up auto-save interval when in creative modes
+  useEffect(() => {
+    // Clear any existing interval
+    if (saveInterval) {
+      clearInterval(saveInterval);
+      setSaveInterval(null);
+    }
+
+    // Only set up auto-save for creative modes
+    if (["pulse", "craft", "echo"].includes(currentScreen)) {
+      const interval = setInterval(() => {
+        saveData();
+      }, 60000); // Save every 60 seconds
+
+      setSaveInterval(interval);
+    }
+
+    return () => {
+      if (saveInterval) {
+        clearInterval(saveInterval);
+      }
+    };
+  }, [currentScreen, saveData]);
+
   // Handler functions
   const handleStartDaily = () => {
     setCurrentScreen("pulse");
@@ -82,6 +146,7 @@ function App() {
 
     // Save to localStorage
     localStorage.setItem("poit_daily_words", JSON.stringify(words));
+    setLastSaved(new Date().toISOString());
 
     setCurrentScreen("craft");
   };
@@ -100,6 +165,7 @@ function App() {
 
     // Save to localStorage
     localStorage.setItem("poit_current_poem", JSON.stringify(processedPoem));
+    setLastSaved(new Date().toISOString());
 
     setCurrentScreen("echo");
   };
@@ -142,6 +208,8 @@ function App() {
 
   // Callback to return to home screen
   const handleExitToHome = (target = "home") => {
+    // Save progress before exiting
+    saveData();
     setCurrentScreen(target);
   };
 
@@ -228,6 +296,8 @@ function App() {
         <PulseMode
           onComplete={handlePulseComplete}
           onExitToHome={handleExitToHome}
+          onSave={saveData} // Pass save function
+          lastSaved={lastSaved}
         />
       )}
 
@@ -236,6 +306,8 @@ function App() {
           selectedWords={selectedWords}
           onComplete={handleCraftComplete}
           onExitToHome={handleExitToHome}
+          onSave={saveData} // Pass save function
+          lastSaved={lastSaved}
         />
       )}
 
@@ -254,6 +326,8 @@ function App() {
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
           onExitToHome={handleExitToHome}
+          onSave={saveData} // Pass save function
+          lastSaved={lastSaved}
         />
       )}
     </div>

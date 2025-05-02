@@ -1,13 +1,29 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, HelpCircle, Save, Home, ChevronDown } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  HelpCircle,
+  Save,
+  Home,
+  ChevronDown,
+  Check,
+  AlertCircle,
+} from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "./AdaptiveBackground";
 
-const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
+const Navigation = ({
+  currentMode,
+  onExit,
+  onSave,
+  onExitToHome,
+  lastSaved,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null, "success", or "error"
   const { theme, setTheme } = useTheme();
   const menuRef = useRef(null);
 
@@ -47,7 +63,15 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
   }, []);
 
   const handleSave = () => {
-    if (onSave) onSave();
+    if (onSave) {
+      const saveResult = onSave();
+      setSaveStatus(saveResult ? "success" : "error");
+
+      // Auto-dismiss the save status after 2 seconds
+      setTimeout(() => {
+        setSaveStatus(null);
+      }, 2000);
+    }
     setIsOpen(false);
   };
 
@@ -148,6 +172,14 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
                   >
                     <Save size={16} />
                     Save Progress
+                    {lastSaved && (
+                      <span className="ml-1 text-xs text-[#2C8C7C]/60">
+                        {new Date(lastSaved).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    )}
                   </motion.button>
 
                   {/* Home Button */}
@@ -168,6 +200,37 @@ const Navigation = ({ currentMode, onExit, onSave, onExitToHome }) => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Save Status Notification */}
+      <AnimatePresence>
+        {saveStatus && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className={`fixed bottom-6 inset-x-0 mx-auto w-fit z-50 
+              px-6 py-3 rounded-lg flex items-center gap-2 shadow-xl
+              backdrop-blur-sm
+              ${
+                saveStatus === "success"
+                  ? "bg-green-500/90 text-white"
+                  : "bg-red-500/90 text-white"
+              }`}
+          >
+            {saveStatus === "success" ? (
+              <>
+                <Check className="w-5 h-5" />
+                <span>Progress saved successfully</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-5 h-5" />
+                <span>Failed to save progress</span>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Help Modal */}
       <AnimatePresence>
