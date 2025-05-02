@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
@@ -237,7 +237,7 @@ const EchoMode = ({
           animate={{ opacity: 1 }}
           className="max-w-6xl mx-auto h-full flex flex-col"
         >
-          {/* Poem Header - with Network Button */}
+          {/* Poem Header */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -247,14 +247,6 @@ const EchoMode = ({
               <h2 className="text-2xl font-medium text-gray-900 dark:text-white">
                 {currentPoem.title}
               </h2>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-[#2C8C7C]" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {currentPoem.date}
-                  </span>
-                </div>
-              </div>
             </div>
 
             {/* Network Button */}
@@ -317,7 +309,17 @@ const EchoMode = ({
                 </svg>
               </div>
               <span className="text-sm font-medium text-[#2C8C7C]">
-                {currentPoem.metadata?.highlightedWordCount || 0}
+                {currentPoem?.components?.filter(
+                  (component) =>
+                    component.type === "word" &&
+                    wordPool.some(
+                      (word) =>
+                        (typeof word === "string"
+                          ? word.toLowerCase()
+                          : word.text.toLowerCase()) ===
+                        component.text.toLowerCase()
+                    )
+                ).length || 0}
               </span>
             </div>
 
