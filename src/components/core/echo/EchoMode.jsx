@@ -321,13 +321,6 @@ const EchoMode = ({
               </span>
             </div>
 
-            {/* Drag hint */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-              <span className="text-xs text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
-                Drag to explore • Ctrl+Wheel to zoom
-              </span>
-            </div>
-
             {/* Poem Content */}
             <div
               className="absolute inset-0"

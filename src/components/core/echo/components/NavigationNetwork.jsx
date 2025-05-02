@@ -364,6 +364,7 @@ const NavigationNetwork = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, rotX: 0, rotY: 0 });
   const [showConstellation, setShowConstellation] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Layer navigation state - start with no active layer
   const [activeLayer, setActiveLayer] = useState(null);
@@ -592,18 +593,61 @@ const NavigationNetwork = ({
               </div>
 
               {/* Constellation View Toggle */}
-              <motion.button
-                onClick={() => setShowConstellation(!showConstellation)}
-                className={`p-2 rounded-full ${
-                  showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
-                } backdrop-blur-sm 
-                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label="Toggle constellation view"
-              >
-                <Telescope className="w-4 h-4 text-[#2C7C8C]" />
-              </motion.button>
+              <div className="relative group flex items-center justify-center">
+                <motion.button
+                  onClick={() => setShowConstellation(!showConstellation)}
+                  className={`p-2 rounded-full ${
+                    showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
+                  } backdrop-blur-sm 
+                    text-white hover:bg-gray-800/70 transition-colors border border-gray-800
+                    flex items-center justify-center`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Toggle constellation view"
+                >
+                  <Telescope className="w-5 h-5 text-[#2C8C7C]" />
+                </motion.button>
+
+                {/* Tooltip */}
+                <div
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 
+                  bg-gray-900/90 backdrop-blur-sm rounded text-xs whitespace-nowrap 
+                  text-[#2C8C7C]
+                  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                >
+                  Stargazing
+                </div>
+              </div>
+
+              {/* Help icon */}
+              <div className="relative flex items-center ml-2">
+                <motion.button
+                  onClick={() => setShowHelpModal(true)}
+                  className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
+                    text-white hover:bg-gray-800/70 transition-colors border border-gray-800
+                    flex items-center justify-center"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Constellation mode help"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-5 h-5 text-[#2C8C7C]"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </motion.button>
+              </div>
             </div>
           )}
 
@@ -687,16 +731,91 @@ const NavigationNetwork = ({
             </div>
           )}
 
-          {/* Instructions */}
-          <div
-            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
-            bg-gray-900/80 backdrop-blur-sm rounded-lg px-4 py-2 z-20 text-white text-sm
-            border border-gray-800"
-          >
-            {isIn2DView
-              ? "Click 'Back to Stack' to return to 3D view"
-              : "Click on a frame border to activate • Click active layer to expand • Double-click for 2D view • Drag to rotate"}
-          </div>
+          {/* Constellation Help Modal */}
+          <AnimatePresence>
+            {showHelpModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] flex items-center justify-center 
+                  bg-black/40 backdrop-blur-sm p-6"
+                onClick={() => setShowHelpModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-gray-900 rounded-xl p-6 max-w-md w-full border border-[#2C8C7C]/20"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-xl font-medium text-[#2C8C7C] mb-4">
+                    Constellation Mode
+                  </h3>
+
+                  <div className="space-y-4 text-gray-300 text-sm">
+                    <p>
+                      <b>Controls</b>
+                      <br />• <span className="text-[#2C8C7C]">Drag</span>:
+                      Rotate the 3D space
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]">Scroll/Buttons</span>:
+                      Zoom in and out
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]">Click poem border</span>:
+                      Focus on a poem layer
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]">Double-click</span>:
+                      Expand poem to full view
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]">Reset button</span>:
+                      Return to default view
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]">Telescope icon</span>:
+                      Toggle stargazing view
+                    </p>
+
+                    <p>
+                      <b>Star Types</b>
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C] font-medium">
+                        Bright stars
+                      </span>
+                      : Navigation connections
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]/80 font-medium">
+                        Medium stars
+                      </span>
+                      : Shared words from the pool
+                      <br />•{" "}
+                      <span className="text-[#2C8C7C]/40 font-medium">
+                        Dim stars
+                      </span>
+                      : Other shared words
+                    </p>
+
+                    <p>
+                      <b>Constellation Count</b>
+                      <br />
+                      Represents connections made beyond your own poem. Each
+                      navigation through a shared word adds a new point to your
+                      constellation.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={() => setShowHelpModal(false)}
+                      className="px-4 py-2 bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
+                        text-[#2C8C7C] rounded-lg transition-colors"
+                    >
+                      Got it
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* 3D visualization */}
           <div
