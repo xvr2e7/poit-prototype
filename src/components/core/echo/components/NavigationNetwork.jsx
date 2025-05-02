@@ -20,6 +20,7 @@ const WordNode = ({
   isHighlighted,
   isConnecting,
   isSharedWord = false,
+  isSharedNonPool = false,
   constellationMode = false,
   poemIndex,
   adjacentPoems = [],
@@ -32,8 +33,8 @@ const WordNode = ({
 
   // If we're in constellation mode, only show shared words as stars
   if (constellationMode) {
-    // Only render if this is a shared word
-    if (!isSharedWord) return null;
+    // Only render if this is a shared word (of any type)
+    if (!isSharedWord && !isSharedNonPool && !isConnecting) return null;
 
     return (
       <div
@@ -45,20 +46,50 @@ const WordNode = ({
           transform: "translateZ(1px)",
         }}
       >
-        {/* Star point */}
+        {/* Star point - different styling based on word type */}
         <div
-          className={`w-2 h-2 rounded-full bg-[#2C8C7C] shadow-lg`}
+          className={`w-2 h-2 rounded-full ${
+            isConnecting
+              ? "bg-[#2C8C7C]"
+              : isSharedWord
+              ? "bg-[#2C8C7C]/80"
+              : "bg-[#2C8C7C]/40" // Dimmer for non-pool shared words
+          }`}
           style={{
             boxShadow: isConnecting
               ? "0 0 8px 3px rgba(44, 140, 124, 0.8)"
-              : "0 0 5px 2px rgba(44, 140, 124, 0.6)",
+              : isSharedWord
+              ? "0 0 5px 2px rgba(44, 140, 124, 0.6)"
+              : "0 0 3px 1px rgba(44, 140, 124, 0.3)", // Dimmer glow for non-pool shared words
             transform: "translate(-50%, -50%)",
-            opacity: isConnecting ? 1 : 0.8,
+            opacity: isConnecting ? 1 : isSharedWord ? 0.8 : 0.6,
           }}
         />
       </div>
     );
   }
+
+  // Determine style based on word status for normal view
+  let wordStyle = "";
+
+  if (isConnecting) {
+    // Navigation word - full highlighting
+    wordStyle = "bg-[#2C8C7C] text-white shadow-lg";
+  } else if (isSharedWord) {
+    // Word pool shared word - text color highlighting
+    wordStyle = "bg-[#2C8C7C]/15 text-[#2C8C7C] dark:text-[#2C8C7C]";
+  } else if (isSharedNonPool) {
+    // Non-word pool shared word - subtle highlighting
+    wordStyle =
+      "bg-gray-400/10 dark:bg-gray-400/5 text-gray-500 dark:text-gray-400";
+  } else {
+    // Regular word - default styling
+    wordStyle = "text-gray-400/80 dark:text-gray-400/80";
+  }
+
+  // Font weight styling
+  const fontWeight =
+    isConnecting || isSharedWord ? 500 : isSharedNonPool ? 400 : 400;
 
   return (
     <div
@@ -71,17 +102,10 @@ const WordNode = ({
       }}
     >
       <div
-        className={`px-2 py-1 rounded-md whitespace-nowrap
-          ${
-            isConnecting
-              ? "bg-[#2C8C7C] text-white shadow-lg"
-              : isSharedWord
-              ? "bg-[#2C8C7C]/15 text-[#2C8C7C] dark:text-[#2C8C7C]"
-              : "text-gray-400/80 dark:text-gray-400/80"
-          }`}
+        className={`px-2 py-1 rounded-md whitespace-nowrap ${wordStyle}`}
         style={{
           fontSize: isConnecting ? "14px" : "12px",
-          fontWeight: isConnecting || isSharedWord ? 500 : 400,
+          fontWeight: fontWeight,
           transform: `scale(${scaleFactor})`,
           transformOrigin: "top left",
         }}
@@ -210,13 +234,13 @@ const PoemCanvas = ({
     >
       {/* Layer background */}
       <div
-        className={`absolute inset-0 bg-gray-800/90 rounded-xl shadow-lg overflow-hidden
+        className={`absolute inset-0 rounded-xl overflow-hidden
     border-2 transition-all duration-300 ${
       isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
     } ${
           constellationMode
-            ? "bg-transparent border-transparent"
-            : "bg-gray-800/90"
+            ? "bg-transparent border-transparent shadow-none"
+            : "bg-gray-800/90 shadow-lg"
         }`}
         style={{ transform: "translateZ(0px)" }}
       >
