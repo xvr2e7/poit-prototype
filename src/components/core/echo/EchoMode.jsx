@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut, LogOut } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
@@ -373,6 +373,20 @@ const EchoMode = ({
             connectingWords={connectingWords}
           />
         </motion.div>
+
+        {/* Dashboard Menu Button */}
+        <motion.button
+          onClick={() => onExitToHome("menu")}
+          className="fixed bottom-6 right-6 p-3 rounded-full 
+        bg-white/10 dark:bg-gray-900/30 backdrop-blur-sm 
+        border border-[#2C8C7C]/20 hover:bg-white/20 
+        dark:hover:bg-gray-900/50 transition-colors z-10"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Open Dashboard Menu"
+        >
+          <LogOut className="w-5 h-5 text-[#2C8C7C]" />
+        </motion.button>
       </div>
     </div>
   );

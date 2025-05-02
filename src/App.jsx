@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 import HomePage from "./components/home/HomePage";
+import MenuView from "./components/home/MenuView";
 import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
@@ -140,8 +141,8 @@ function App() {
   };
 
   // Callback to return to home screen
-  const handleExitToHome = () => {
-    setCurrentScreen("home");
+  const handleExitToHome = (target = "home") => {
+    setCurrentScreen(target);
   };
 
   // Function to handle entering dev mode echo
@@ -213,6 +214,14 @@ function App() {
             </div>
           )}
         </>
+      )}
+
+      {currentScreen === "menu" && (
+        <MenuView
+          onClose={() => setCurrentScreen("home")}
+          onStartDaily={handleStartDaily}
+          onViewHistory={handleViewHistory}
+        />
       )}
 
       {currentScreen === "pulse" && (
