@@ -9,7 +9,6 @@ const SelectedWordsModal = ({
   onRemoveWord,
   minWords = 5,
   maxWords = 20,
-  showContinueButton = false,
   onContinue = null,
 }) => {
   // Get the message based on word count
@@ -130,12 +129,15 @@ const SelectedWordsModal = ({
             >
               <p className="text-sm text-[#2C8C7C]">{getMessage()}</p>
 
-              {/* Only show continue button if enabled */}
-              {showContinueButton && selectedWords.length >= minWords && (
+              {/* Show continue button if enough words are selected and onContinue is provided */}
+              {selectedWords.length >= minWords && onContinue && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={onContinue}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onContinue();
+                  }}
                   className="px-6 py-2 bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
                     text-white rounded-lg shadow-sm transition-colors"
                 >

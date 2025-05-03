@@ -1,21 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
 import WordPool from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
 import Navigation from "../../shared/Navigation";
-import { CompletionView } from "./components/CompletionView";
 import SelectedWordsModal from "./components/SelectedWordsModal";
 
 const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [selectorPosition, setSelectorPosition] = useState(null);
   const [isActive, setIsActive] = useState(false);
-  const [showCompletion, setShowCompletion] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [showSelectedWords, setShowSelectedWords] = useState(false);
   const [availableWords, setAvailableWords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSelectedWords, setShowSelectedWords] = useState(false);
   const wordPositionsRef = useRef(new Map());
 
   // Load saved words from localStorage on component mount
@@ -56,7 +52,7 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
 
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (e.key.toLowerCase() === "w" && !showCompletion) {
+      if (e.key.toLowerCase() === "w") {
         setShowSelectedWords(true);
       }
     };
@@ -65,7 +61,7 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [showCompletion]);
+  }, []);
 
   useEffect(() => {
     const fetchWords = async () => {
@@ -84,7 +80,6 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
           return;
         }
 
-        // Normal API fetch for production
         // Get user's timezone
         let timezone;
         try {
@@ -170,35 +165,20 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   };
 
   const handleSelectorMove = (position) => {
-    if (!showCompletion) {
-      setSelectorPosition(position);
-    }
+    setSelectorPosition(position);
   };
 
   const handlePulseComplete = () => {
-    setShowCompletion(true);
-    setSelectorPosition(null);
+    // Show the words modal with Continue button
+    setShowSelectedWords(true);
   };
 
-  const handleSaveProgress = () => {
-    // Save current state to localStorage
-    if (selectedWords.length > 0) {
-      localStorage.setItem(
-        "poit_daily_words_in_progress",
-        JSON.stringify(selectedWords)
-      );
-      // Show visual feedback that could be implemented later
-      console.log("Progress saved", selectedWords);
-    }
-  };
-
-  // Function to clear saved progress when completing
-  const handleComplete = (words) => {
+  const handleComplete = () => {
     // Remove in-progress data once we're done with selection
     localStorage.removeItem("poit_daily_words_in_progress");
-    setIsSaved(true);
+
     // Pass the selected words to the parent component
-    setTimeout(() => onComplete(words), 1000);
+    onComplete(getSelectedWordTexts());
   };
 
   if (isLoading) {
@@ -233,33 +213,17 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
           />
         </WordInteraction>
 
-        {!showCompletion && (
-          <GrowingWordSelector
-            selectedWords={selectedWords}
-            minWords={5}
-            maxWords={20}
-            onMove={handleSelectorMove}
-            onComplete={() => setShowCompletion(true)}
-            onStart={() => setIsActive(true)}
-            active={isActive}
-          />
-        )}
+        <GrowingWordSelector
+          selectedWords={selectedWords}
+          minWords={5}
+          maxWords={20}
+          onMove={handleSelectorMove}
+          onComplete={handlePulseComplete}
+          onStart={() => setIsActive(true)}
+          active={isActive}
+        />
 
-        <AnimatePresence>
-          {showCompletion && (
-            <CompletionView
-              onSave={() => {
-                handleComplete(getSelectedWordTexts());
-              }}
-              saved={isSaved}
-              selectedWords={getSelectedWordTexts()}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Selected Words Modal (W key) */}
-      {!showCompletion && (
+        {/* Selected Words Modal */}
         <SelectedWordsModal
           isOpen={showSelectedWords}
           onClose={() => setShowSelectedWords(false)}
@@ -267,8 +231,9 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
           onRemoveWord={handleRemoveWord}
           minWords={5}
           maxWords={20}
+          onContinue={selectedWords.length >= 5 ? handleComplete : null}
         />
-      )}
+      </div>
     </div>
   );
 };
