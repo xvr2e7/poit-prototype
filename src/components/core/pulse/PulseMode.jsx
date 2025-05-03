@@ -177,6 +177,9 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
     // Remove in-progress data once we're done with selection
     localStorage.removeItem("poit_daily_words_in_progress");
 
+    // Set flag to indicate pulse was explicitly completed
+    localStorage.setItem("poit_pulse_completed", "true");
+
     // Pass the selected words to the parent component
     onComplete(getSelectedWordTexts());
   };

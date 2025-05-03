@@ -57,6 +57,10 @@ function App() {
       localStorage.getItem("poit_daily_words") || "null"
     );
 
+    // Check if pulse has been explicitly completed
+    const pulseCompleted =
+      localStorage.getItem("poit_pulse_completed") === "true";
+
     const hasCraftData = localStorage.getItem("poit_craft_has_data") === "true";
 
     const pulseInProgress = JSON.parse(
@@ -68,8 +72,8 @@ function App() {
       setCurrentPoem(currentPoemData);
       if (dailyWords) setSelectedWords(dailyWords);
       setCurrentScreen("echo");
-    } else if (dailyWords) {
-      // User has completed Pulse and should be in Craft
+    } else if (dailyWords && pulseCompleted) {
+      // User has completed Pulse and explicitly continued to Craft
       setSelectedWords(dailyWords);
       setCurrentScreen("craft");
     } else if (pulseInProgress && pulseInProgress.length > 0) {
@@ -195,6 +199,10 @@ function App() {
       localStorage.getItem("poit_daily_words") || "null"
     );
 
+    // Check if pulse has been explicitly completed
+    const pulseCompleted =
+      localStorage.getItem("poit_pulse_completed") === "true";
+
     const pulseInProgress = JSON.parse(
       localStorage.getItem("poit_daily_words_in_progress") || "null"
     );
@@ -204,8 +212,8 @@ function App() {
       setCurrentPoem(currentPoemData);
       if (dailyWords) setSelectedWords(dailyWords);
       setCurrentScreen("echo");
-    } else if (dailyWords) {
-      // User has completed Pulse and should be in Craft
+    } else if (dailyWords && pulseCompleted) {
+      // User has explicitly completed Pulse and should be in Craft
       setSelectedWords(dailyWords);
       setCurrentScreen("craft");
     } else if (pulseInProgress && pulseInProgress.length > 0) {
@@ -227,6 +235,10 @@ function App() {
 
     // Save to localStorage
     localStorage.setItem("poit_daily_words", JSON.stringify(words));
+
+    // Set flag to indicate pulse was explicitly completed
+    localStorage.setItem("poit_pulse_completed", "true");
+
     setLastSaved(new Date().toISOString());
 
     setCurrentScreen("craft");
@@ -280,6 +292,7 @@ function App() {
     // Clear current session
     localStorage.removeItem("poit_daily_words");
     localStorage.removeItem("poit_current_poem");
+    localStorage.removeItem("poit_pulse_completed");
     setSelectedWords([]);
     setCurrentPoem(null);
 
