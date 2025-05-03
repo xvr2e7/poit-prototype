@@ -13,6 +13,8 @@ const EchoMode = ({
   wordPool = [],
   enabled = true,
   onExitToHome,
+  onSave,
+  lastSaved,
 }) => {
   const containerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -228,8 +230,13 @@ const EchoMode = ({
     <div className="w-full h-screen relative overflow-hidden">
       <AdaptiveBackground mode="echo" className="opacity-50" />
       {/* Navigation */}
-      <Navigation currentMode="echo" onExitToHome={onExitToHome} />
-
+      <Navigation
+        currentMode="echo"
+        onExitToHome={onExitToHome}
+        onSave={onSave}
+        lastSaved={lastSaved}
+      />
+      Let's update
       {/* Main Content */}
       <div className="relative w-full h-full p-8">
         <motion.div
