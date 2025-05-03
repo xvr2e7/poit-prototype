@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import WordPool from "./components/WordPool";
 import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
@@ -17,6 +17,42 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSelectedWords, setShowSelectedWords] = useState(false);
   const wordPositionsRef = useRef(new Map());
+
+  // Load saved words from localStorage on component mount
+  useEffect(() => {
+    const loadSavedWords = () => {
+      const savedWords = localStorage.getItem("poit_daily_words_in_progress");
+      if (savedWords) {
+        try {
+          const parsedWords = JSON.parse(savedWords);
+          if (Array.isArray(parsedWords) && parsedWords.length > 0) {
+            console.log("Loaded saved words:", parsedWords);
+            setSelectedWords(parsedWords);
+          }
+        } catch (error) {
+          console.error("Error parsing saved words:", error);
+          // If parsing fails, clear the corrupted data
+          localStorage.removeItem("poit_daily_words_in_progress");
+        }
+      }
+    };
+
+    // Load saved words after availableWords are loaded
+    if (!isLoading) {
+      loadSavedWords();
+    }
+  }, [isLoading]);
+
+  // Save selected words to localStorage whenever they change
+  useEffect(() => {
+    if (selectedWords.length > 0) {
+      localStorage.setItem(
+        "poit_daily_words_in_progress",
+        JSON.stringify(selectedWords)
+      );
+      console.log("Saved words to localStorage:", selectedWords);
+    }
+  }, [selectedWords]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -108,7 +144,7 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
 
   const handleRemoveWord = (wordToRemove) => {
     setSelectedWords((prev) => {
-      return prev.filter((word) => {
+      const newSelection = prev.filter((word) => {
         // Get the text representation of the word for comparison
         let wordText;
 
@@ -123,6 +159,13 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
         // Return true to keep the word, false to remove it
         return wordText !== wordToRemove;
       });
+
+      // If all words are removed, clean up localStorage
+      if (newSelection.length === 0) {
+        localStorage.removeItem("poit_daily_words_in_progress");
+      }
+
+      return newSelection;
     });
   };
 
@@ -141,12 +184,21 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
     // Save current state to localStorage
     if (selectedWords.length > 0) {
       localStorage.setItem(
-        "poit_daily_words",
-        JSON.stringify(getSelectedWordTexts())
+        "poit_daily_words_in_progress",
+        JSON.stringify(selectedWords)
       );
       // Show visual feedback that could be implemented later
       console.log("Progress saved", selectedWords);
     }
+  };
+
+  // Function to clear saved progress when completing
+  const handleComplete = (words) => {
+    // Remove in-progress data once we're done with selection
+    localStorage.removeItem("poit_daily_words_in_progress");
+    setIsSaved(true);
+    // Pass the selected words to the parent component
+    setTimeout(() => onComplete(words), 1000);
   };
 
   if (isLoading) {
@@ -199,8 +251,7 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
           {showCompletion && (
             <CompletionView
               onSave={() => {
-                setIsSaved(true);
-                setTimeout(() => onComplete(getSelectedWordTexts()), 1000);
+                handleComplete(getSelectedWordTexts());
               }}
               saved={isSaved}
               selectedWords={getSelectedWordTexts()}
