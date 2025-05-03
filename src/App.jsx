@@ -67,6 +67,17 @@ function App() {
       localStorage.getItem("poit_daily_words_in_progress") || "null"
     );
 
+    const lastConstellationDate = localStorage.getItem(
+      "poit_constellation_date"
+    );
+    const today = new Date().toDateString();
+
+    if (lastConstellationDate !== today) {
+      // Reset daily constellation count if it's a new day
+      localStorage.setItem("poit_today_constellations", "0");
+      localStorage.setItem("poit_constellation_date", today);
+    }
+
     if (currentPoemData) {
       // User has reached Echo mode
       setCurrentPoem(currentPoemData);
@@ -143,9 +154,27 @@ function App() {
         }
       } else if (currentScreen === "echo" && currentPoem) {
         localStorage.setItem("poit_current_poem", JSON.stringify(currentPoem));
+
+        // Also save the network state
+        const connectingWords = JSON.parse(
+          localStorage.getItem("poit_connecting_words") || "{}"
+        );
+        const navigationHistory = JSON.parse(
+          localStorage.getItem("poit_navigation_history") || "[]"
+        );
+
+        // Save a more complete state
+        localStorage.setItem(
+          "poit_echo_state",
+          JSON.stringify({
+            currentPoemId: currentPoem.id,
+            navigationHistory,
+            connectingWords,
+            lastSaved: new Date().toISOString(),
+          })
+        );
+
         success = true;
-      } else {
-        console.log("No save condition met");
       }
 
       if (success) {
@@ -211,6 +240,16 @@ function App() {
       // User has reached Echo mode
       setCurrentPoem(currentPoemData);
       if (dailyWords) setSelectedWords(dailyWords);
+
+      // Also load echo state
+      const echoState = JSON.parse(
+        localStorage.getItem("poit_echo_state") || "null"
+      );
+      if (echoState) {
+        // This data will be available to EchoMode when it loads
+        console.log("Loaded Echo state:", echoState);
+      }
+
       setCurrentScreen("echo");
     } else if (dailyWords && pulseCompleted) {
       // User has explicitly completed Pulse and should be in Craft
@@ -325,6 +364,11 @@ function App() {
     localStorage.removeItem("poit_daily_words");
     localStorage.removeItem("poit_current_poem");
     localStorage.removeItem("poit_pulse_completed");
+    localStorage.removeItem("poit_navigation_history");
+    localStorage.removeItem("poit_echo_state");
+
+    // Don't clear connecting_words as they represent the overall constellation
+
     setSelectedWords([]);
     setCurrentPoem(null);
 

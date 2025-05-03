@@ -21,6 +21,7 @@ const EchoMode = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [connectingWord, setConnectingWord] = useState(null);
   const [isNetworkVisible, setIsNetworkVisible] = useState(false);
+  const [constellationsAdded, setConstellationsAdded] = useState(0);
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -151,22 +152,45 @@ const EchoMode = ({
           [`${currentPoem.id}-${nextPoem.id}`]: word.text.toLowerCase(),
         }));
 
-        // Increment constellation counts
-        // Only count navigations to poems other than the starting one
+        // Only count as a constellation if we're navigating to a poem that's not the starting poem
         if (nextPoem.id !== poems[0]?.id) {
-          setTodayConstellations((prev) => prev + 1);
-          setTotalConstellations((prev) => prev + 1);
+          // Increment constellation count
+          setConstellationsAdded((prev) => prev + 1);
         }
       }
 
       setIsTransitioning(true);
       await new Promise((resolve) => setTimeout(resolve, 300));
-      // Pass the connecting word to navigateToPoem
       navigateToPoem(nextPoem.id, word.text);
       await new Promise((resolve) => setTimeout(resolve, 300));
       setIsTransitioning(false);
     }
   };
+
+  useEffect(() => {
+    if (constellationsAdded > 0) {
+      // Update total constellations
+      const totalConstellations = parseInt(
+        localStorage.getItem("poit_total_constellations") || "0"
+      );
+      localStorage.setItem(
+        "poit_total_constellations",
+        (totalConstellations + constellationsAdded).toString()
+      );
+
+      // Update today's constellations
+      const todayConstellations = parseInt(
+        localStorage.getItem("poit_today_constellations") || "0"
+      );
+      localStorage.setItem(
+        "poit_today_constellations",
+        (todayConstellations + constellationsAdded).toString()
+      );
+
+      // Reset the counter since we've saved the changes
+      setConstellationsAdded(0);
+    }
+  }, [constellationsAdded]);
 
   // Dragging handlers
   const handleMouseDown = (e) => {

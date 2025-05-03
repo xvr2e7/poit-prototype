@@ -314,8 +314,35 @@ const NavigationNetwork = ({
   constellationCount,
   wordPool = [],
   connectingWords = {},
+  savedConnectingWords = {},
 }) => {
   const containerRef = useRef(null);
+
+  // Merge saved connecting words with current session words
+  const allConnectingWords = useMemo(() => {
+    return { ...savedConnectingWords, ...connectingWords };
+  }, [connectingWords, savedConnectingWords]);
+
+  // Update all uses of connectingWords to use allConnectingWords
+
+  // When saving the network state:
+  const saveNetworkState = () => {
+    // Save the current state of the network visualization
+    localStorage.setItem(
+      "poit_network_state",
+      JSON.stringify({
+        activePoems: visitedPoems.map((poem) => poem.id),
+        activeConnections: Object.keys(allConnectingWords),
+        lastVisited: new Date().toISOString(),
+      })
+    );
+  };
+
+  // Call saveNetworkState when the component is closed
+  const handleClose = () => {
+    saveNetworkState();
+    onClose();
+  };
 
   // Helper function to find shared words between adjacent poems
   const getSharedWordsMap = (poems) => {
@@ -559,7 +586,7 @@ const NavigationNetwork = ({
         >
           {/* Close button */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/5 
               backdrop-blur-sm z-20 text-white hover:bg-white/10 transition-colors"
           >

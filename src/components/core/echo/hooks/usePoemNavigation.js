@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 
 export const usePoemNavigation = (allPoems = [], wordPool = []) => {
   // Initialize state first
@@ -171,7 +171,31 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
   const navigateToPoem = useCallback(
     (nextPoemId, viaWord = null) => {
       if (nextPoemId && nextPoemId !== currentPoemId) {
-        setNavigationHistory((prev) => [...prev, currentPoemId]);
+        setNavigationHistory((prev) => {
+          const newHistory = [...prev, currentPoemId];
+
+          // Save navigation history to localStorage
+          const historyToSave = newHistory
+            .filter(Boolean)
+            .map((poemId) => {
+              const poem = allPoems.find((p) => p.id === poemId);
+              return poem
+                ? {
+                    id: poem.id,
+                    title: poem.title,
+                    date: poem.date || new Date().toLocaleDateString(),
+                  }
+                : null;
+            })
+            .filter(Boolean);
+
+          localStorage.setItem(
+            "poit_navigation_history",
+            JSON.stringify(historyToSave)
+          );
+
+          return newHistory;
+        });
 
         // Track the source navigation when using a word
         if (viaWord) {
@@ -182,6 +206,19 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
                 ? viaWord.toLowerCase()
                 : viaWord.toLowerCase(),
           });
+
+          // Save the connecting word
+          const connectingWords = JSON.parse(
+            localStorage.getItem("poit_connecting_words") || "{}"
+          );
+          connectingWords[`${currentPoemId}-${nextPoemId}`] =
+            typeof viaWord === "string"
+              ? viaWord.toLowerCase()
+              : viaWord.toLowerCase();
+          localStorage.setItem(
+            "poit_connecting_words",
+            JSON.stringify(connectingWords)
+          );
         }
 
         setCurrentPoemId(nextPoemId);
@@ -189,8 +226,35 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
       }
       return false;
     },
-    [currentPoemId]
+    [currentPoemId, allPoems]
   );
+
+  useEffect(() => {
+    // Load saved navigation history
+    try {
+      const savedHistory = JSON.parse(
+        localStorage.getItem("poit_navigation_history") || "[]"
+      );
+      if (savedHistory.length > 0) {
+        // Convert saved history to navigationHistory format (poem IDs)
+        const savedHistoryIds = savedHistory.map((item) => item.id);
+        if (savedHistoryIds.length > 0) {
+          setNavigationHistory(savedHistoryIds);
+        }
+      }
+
+      // Load saved connecting words
+      const savedConnectingWords = JSON.parse(
+        localStorage.getItem("poit_connecting_words") || "{}"
+      );
+      if (Object.keys(savedConnectingWords).length > 0) {
+        // This data will be used in the NavigationNetwork visualization
+        // We'll pass it to the component when needed
+      }
+    } catch (error) {
+      console.error("Error loading navigation history:", error);
+    }
+  }, []);
 
   const navigateBack = useCallback(() => {
     if (navigationHistory.length > 0) {
@@ -216,5 +280,8 @@ export const usePoemNavigation = (allPoems = [], wordPool = []) => {
     findNextPoemForWord,
     navigateToPoem,
     navigateBack,
+    savedConnectingWords: JSON.parse(
+      localStorage.getItem("poit_connecting_words") || "{}"
+    ),
   };
 };
