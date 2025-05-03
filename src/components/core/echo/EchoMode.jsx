@@ -41,6 +41,51 @@ const EchoMode = ({
     navigateToPoem,
   } = usePoemNavigation(poems, wordPool);
 
+  // Track constellation counts
+  const [todayConstellations, setTodayConstellations] = useState(0);
+  const [totalConstellations, setTotalConstellations] = useState(0);
+
+  // Initialize constellation counts from localStorage
+  useEffect(() => {
+    // Load today's and total constellation counts
+    const savedTotalConstellations = parseInt(
+      localStorage.getItem("poit_total_constellations") || "0"
+    );
+
+    // For today's constellations, we need to check if it's a new day
+    let savedTodayConstellations = 0;
+    const lastConstellationDate = localStorage.getItem(
+      "poit_constellation_date"
+    );
+    const today = new Date().toDateString();
+
+    if (lastConstellationDate === today) {
+      // Same day, load saved count
+      savedTodayConstellations = parseInt(
+        localStorage.getItem("poit_today_constellations") || "0"
+      );
+    } else {
+      // New day, reset today's count
+      localStorage.setItem("poit_constellation_date", today);
+      localStorage.setItem("poit_today_constellations", "0");
+    }
+
+    setTodayConstellations(savedTodayConstellations);
+    setTotalConstellations(savedTotalConstellations);
+  }, []);
+
+  // Save constellation counts whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "poit_today_constellations",
+      todayConstellations.toString()
+    );
+    localStorage.setItem(
+      "poit_total_constellations",
+      totalConstellations.toString()
+    );
+  }, [todayConstellations, totalConstellations]);
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
@@ -105,6 +150,13 @@ const EchoMode = ({
           ...prev,
           [`${currentPoem.id}-${nextPoem.id}`]: word.text.toLowerCase(),
         }));
+
+        // Increment constellation counts
+        // Only count navigations to poems other than the starting one
+        if (nextPoem.id !== poems[0]?.id) {
+          setTodayConstellations((prev) => prev + 1);
+          setTotalConstellations((prev) => prev + 1);
+        }
       }
 
       setIsTransitioning(true);
@@ -236,7 +288,7 @@ const EchoMode = ({
         onSave={onSave}
         lastSaved={lastSaved}
       />
-      Let's update
+
       {/* Main Content */}
       <div className="relative w-full h-full p-8">
         <motion.div

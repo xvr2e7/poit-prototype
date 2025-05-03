@@ -218,18 +218,7 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
               </div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20 rounded-xl p-3">
-              <div className="flex flex-col items-center">
-                <Waypoints className="w-4 h-4 text-gray-400 mb-1" />
-                <span className="text-xs text-gray-400">
-                  Total Constellation
-                </span>
-                <span className="text-xl text-[#2C8C7C] font-light">
-                  {totalConstellations}
-                </span>
-              </div>
-            </div>
-
+            {/* Today's constellation */}
             <div className="bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20 rounded-xl p-3">
               <div className="flex flex-col items-center">
                 <Waypoints className="w-4 h-4 text-gray-400 mb-1" />
@@ -238,6 +227,19 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
                 </span>
                 <span className="text-xl text-[#2C8C7C] font-light">
                   {todayConstellations}
+                </span>
+              </div>
+            </div>
+
+            {/* Total constellation */}
+            <div className="bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20 rounded-xl p-3">
+              <div className="flex flex-col items-center">
+                <Waypoints className="w-4 h-4 text-gray-400 mb-1" />
+                <span className="text-xs text-gray-400">
+                  Total Constellation
+                </span>
+                <span className="text-xl text-[#2C8C7C] font-light">
+                  {totalConstellations}
                 </span>
               </div>
             </div>
