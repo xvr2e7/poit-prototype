@@ -7,7 +7,7 @@ import Navigation from "../../shared/Navigation";
 import { CompletionView } from "./components/CompletionView";
 import SelectedWordsModal from "./components/SelectedWordsModal";
 
-const PulseMode = ({ onComplete, onExitToHome }) => {
+const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [selectorPosition, setSelectorPosition] = useState(null);
   const [isActive, setIsActive] = useState(false);
@@ -214,11 +214,9 @@ const PulseMode = ({ onComplete, onExitToHome }) => {
       {/* Navigation */}
       <Navigation
         currentMode="pulse"
-        onSave={handleSaveProgress}
-        onExit={() => {
-          handleSaveProgress();
-        }}
+        onSave={onSave}
         onExitToHome={onExitToHome}
+        lastSaved={lastSaved}
       />
 
       {/* Main content */}

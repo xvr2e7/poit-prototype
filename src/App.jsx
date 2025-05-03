@@ -74,12 +74,36 @@ function App() {
   // Save data handler
   const saveData = useCallback(() => {
     let success = false;
+    console.log("saveData called in App.jsx with:", {
+      currentScreen,
+      selectedWordsLength: selectedWords.length,
+      currentPoemExists: !!currentPoem,
+    });
 
     try {
       // Save based on current mode
-      if (currentScreen === "pulse" && selectedWords.length > 0) {
-        localStorage.setItem("poit_daily_words", JSON.stringify(selectedWords));
-        success = true;
+      if (currentScreen === "pulse") {
+        // Get the in-progress words from localStorage if they exist
+        const inProgressWords = JSON.parse(
+          localStorage.getItem("poit_daily_words_in_progress") || "[]"
+        );
+
+        // If we have in-progress words, save them
+        if (inProgressWords.length > 0) {
+          localStorage.setItem(
+            "poit_daily_words",
+            JSON.stringify(inProgressWords)
+          );
+          success = true;
+        }
+        // Otherwise use the words from state if available
+        else if (selectedWords.length > 0) {
+          localStorage.setItem(
+            "poit_daily_words",
+            JSON.stringify(selectedWords)
+          );
+          success = true;
+        }
       } else if (currentScreen === "craft" && selectedWords.length > 0) {
         localStorage.setItem("poit_daily_words", JSON.stringify(selectedWords));
         if (currentPoem) {
@@ -92,14 +116,19 @@ function App() {
       } else if (currentScreen === "echo" && currentPoem) {
         localStorage.setItem("poit_current_poem", JSON.stringify(currentPoem));
         success = true;
+      } else {
+        console.log("No save condition met");
       }
 
       if (success) {
         const now = new Date();
         setLastSaved(now.toISOString());
         console.log(`Progress saved at ${now.toLocaleTimeString()}`);
+      } else {
+        console.log("Save unsuccessful");
       }
 
+      console.log("Returning success:", success);
       return success;
     } catch (error) {
       console.error("Error saving data:", error);

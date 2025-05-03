@@ -165,21 +165,13 @@ const Navigation = ({
                   <motion.button
                     onClick={handleSave}
                     className="w-full flex items-center gap-3 px-4 py-2.5 
-                      text-sm text-[#2C8C7C] rounded-lg
-                      hover:bg-[#2C8C7C]/10 transition-colors text-left"
+    text-sm text-[#2C8C7C] rounded-lg
+    hover:bg-[#2C8C7C]/10 transition-colors text-left"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Save size={16} />
                     Save Progress
-                    {lastSaved && (
-                      <span className="ml-1 text-xs text-[#2C8C7C]/60">
-                        {new Date(lastSaved).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    )}
                   </motion.button>
 
                   {/* Home Button */}
@@ -213,7 +205,7 @@ const Navigation = ({
               backdrop-blur-sm
               ${
                 saveStatus === "success"
-                  ? "bg-green-500/90 text-white"
+                  ? "bg-[#2C7C8C]/90 text-white"
                   : "bg-red-500/90 text-white"
               }`}
           >
