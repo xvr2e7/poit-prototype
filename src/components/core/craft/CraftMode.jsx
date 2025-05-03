@@ -24,6 +24,7 @@ const CraftMode = ({
   onComplete,
   enabled = true,
   onExitToHome,
+  onSave,
 }) => {
   // State management
   const [canvasWords, setCanvasWords] = useState([]);
@@ -44,6 +45,124 @@ const CraftMode = ({
   // DOM refs
   const canvasRef = useRef(null);
   const wordsRef = useRef({});
+
+  // Initialize pool words from selectedWords
+  useEffect(() => {
+    // Check if we have saved craft state first
+    const loadSavedState = () => {
+      try {
+        // Load canvas words
+        const savedCanvasWords = localStorage.getItem(
+          "poit_craft_canvas_words"
+        );
+        if (savedCanvasWords) {
+          setCanvasWords(JSON.parse(savedCanvasWords));
+        }
+
+        // Load pool words
+        const savedPoolWords = localStorage.getItem("poit_craft_pool_words");
+        if (savedPoolWords) {
+          setPoolWords(JSON.parse(savedPoolWords));
+          return true; // Indicate we loaded saved state
+        }
+      } catch (error) {
+        console.error("Error loading craft state:", error);
+      }
+      return false; // No saved state loaded
+    };
+
+    // Only initialize from selectedWords if no saved state exists
+    if (!loadSavedState()) {
+      const initialWords = selectedWords.map((word) => {
+        const text = typeof word === "string" ? word : word.text;
+        return {
+          id: `word-${Math.random().toString(36).substr(2, 9)}`,
+          text,
+          type: "word",
+        };
+      });
+      setPoolWords(initialWords);
+    }
+  }, [selectedWords]);
+
+  // Load signature words
+  useEffect(() => {
+    try {
+      const savedSignatureWords = localStorage.getItem("poit_signature_words");
+      if (savedSignatureWords) {
+        const parsed = JSON.parse(savedSignatureWords);
+        if (Array.isArray(parsed) && parsed.length === 5) {
+          setSignatureWords(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading signature words:", error);
+    }
+  }, []);
+
+  // Load session-specific settings
+  useEffect(() => {
+    // Load canvas pattern
+    const savedPattern = localStorage.getItem("poit_craft_canvas_pattern");
+    if (savedPattern) {
+      setCanvasPattern(savedPattern);
+    }
+
+    // Load active template
+    const savedTemplate = localStorage.getItem("poit_craft_active_template");
+    if (savedTemplate) {
+      setActiveTemplate(savedTemplate);
+    }
+
+    // Load poem title
+    const savedTitle = localStorage.getItem("poit_craft_poem_title");
+    if (savedTitle) {
+      setPoemTitle(savedTitle);
+    }
+  }, []);
+
+  // Save signature words (persist across ALL sessions)
+  useEffect(() => {
+    localStorage.setItem(
+      "poit_signature_words",
+      JSON.stringify(signatureWords)
+    );
+  }, [signatureWords]);
+
+  // Save session-specific settings
+  useEffect(() => {
+    localStorage.setItem("poit_craft_canvas_pattern", canvasPattern);
+  }, [canvasPattern]);
+
+  useEffect(() => {
+    if (activeTemplate) {
+      localStorage.setItem("poit_craft_active_template", activeTemplate);
+    } else {
+      localStorage.removeItem("poit_craft_active_template");
+    }
+  }, [activeTemplate]);
+
+  useEffect(() => {
+    localStorage.setItem("poit_craft_poem_title", poemTitle);
+  }, [poemTitle]);
+
+  // Periodically save the main craft state - this will be used by the onSave function
+  useEffect(() => {
+    if (canvasWords.length > 0) {
+      localStorage.setItem(
+        "poit_craft_canvas_words",
+        JSON.stringify(canvasWords)
+      );
+    }
+    if (poolWords.length > 0) {
+      localStorage.setItem("poit_craft_pool_words", JSON.stringify(poolWords));
+    }
+
+    // This will make sure onSave knows there's data to save
+    if (canvasWords.length > 0 || poolWords.length > 0) {
+      localStorage.setItem("poit_craft_has_data", "true");
+    }
+  }, [canvasWords, poolWords]);
 
   // Common words with categories
   const commonWords = [
@@ -82,19 +201,6 @@ const CraftMode = ({
   ];
 
   const categories = [...new Set(commonWords.map((w) => w.category))];
-
-  // Initialize pool words from selectedWords
-  useEffect(() => {
-    const initialWords = selectedWords.map((word) => {
-      const text = typeof word === "string" ? word : word.text;
-      return {
-        id: `word-${Math.random().toString(36).substr(2, 9)}`,
-        text,
-        type: "word",
-      };
-    });
-    setPoolWords(initialWords);
-  }, [selectedWords]);
 
   // Keyboard shortcut handler
   useEffect(() => {
@@ -404,6 +510,9 @@ const CraftMode = ({
     setCanvasWords([]);
     setSelectedWordId(null);
     setShowResetConfirm(false);
+
+    // Save the changed state immediately
+    if (onSave) onSave();
   };
 
   const handlePreviewMouseDown = (e) => {
@@ -473,6 +582,15 @@ const CraftMode = ({
     }
   };
 
+  // Handle save manually when requested
+  const handleSave = () => {
+    if (onSave) {
+      return onSave();
+    }
+    return false;
+  };
+
+  // Handle complete to clear storage after saving
   const handleComplete = () => {
     setIsPreviewOpen(false);
 
@@ -491,6 +609,14 @@ const CraftMode = ({
         },
       })),
     };
+
+    // Clean up session-specific storage (but NOT signature words)
+    localStorage.removeItem("poit_craft_canvas_words");
+    localStorage.removeItem("poit_craft_pool_words");
+    localStorage.removeItem("poit_craft_has_data");
+    localStorage.removeItem("poit_craft_active_template");
+    localStorage.removeItem("poit_craft_canvas_pattern");
+    localStorage.removeItem("poit_craft_poem_title");
 
     onComplete(poemData);
   };
@@ -520,7 +646,11 @@ const CraftMode = ({
 
       <div className="absolute inset-0 flex">
         {/* Navigation */}
-        <Navigation currentMode="craft" onExitToHome={onExitToHome} />
+        <Navigation
+          currentMode="craft"
+          onExitToHome={onExitToHome}
+          onSave={handleSave}
+        />
 
         {/* Left Sidebar - Word Pool */}
         <div className="relative">

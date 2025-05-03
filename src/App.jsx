@@ -49,26 +49,34 @@ function App() {
     );
     setPoemHistory(savedHistory);
 
-    // Check if there's a daily session in progress
-    const dailyWords = JSON.parse(
-      localStorage.getItem("poit_daily_words") || "null"
-    );
     const currentPoemData = JSON.parse(
       localStorage.getItem("poit_current_poem") || "null"
     );
 
-    if (dailyWords) {
-      setSelectedWords(dailyWords);
+    const dailyWords = JSON.parse(
+      localStorage.getItem("poit_daily_words") || "null"
+    );
 
-      if (currentPoemData) {
-        setCurrentPoem(currentPoemData);
-        // If there's a poem in progress, go straight to the echo mode
-        setCurrentScreen("echo");
-      } else {
-        // If there are selected words but no poem, go to craft mode
-        setCurrentScreen("craft");
-      }
+    const hasCraftData = localStorage.getItem("poit_craft_has_data") === "true";
+
+    const pulseInProgress = JSON.parse(
+      localStorage.getItem("poit_daily_words_in_progress") || "null"
+    );
+
+    if (currentPoemData) {
+      // User has reached Echo mode
+      setCurrentPoem(currentPoemData);
+      if (dailyWords) setSelectedWords(dailyWords);
+      setCurrentScreen("echo");
+    } else if (dailyWords) {
+      // User has completed Pulse and should be in Craft
+      setSelectedWords(dailyWords);
+      setCurrentScreen("craft");
+    } else if (pulseInProgress && pulseInProgress.length > 0) {
+      // User started but didn't complete Pulse
+      setCurrentScreen("pulse");
     }
+    // Otherwise stay on home screen
   }, []);
 
   // Save data handler
@@ -104,15 +112,31 @@ function App() {
           );
           success = true;
         }
-      } else if (currentScreen === "craft" && selectedWords.length > 0) {
-        localStorage.setItem("poit_daily_words", JSON.stringify(selectedWords));
+      } else if (currentScreen === "craft") {
+        // Save selected words
+        if (selectedWords.length > 0) {
+          localStorage.setItem(
+            "poit_daily_words",
+            JSON.stringify(selectedWords)
+          );
+          success = true;
+        }
+
+        // Check if we have craft data to save
+        const hasCraftData =
+          localStorage.getItem("poit_craft_has_data") === "true";
+        if (hasCraftData) {
+          success = true;
+        }
+
+        // If we have a current poem, save it
         if (currentPoem) {
           localStorage.setItem(
             "poit_current_poem",
             JSON.stringify(currentPoem)
           );
+          success = true;
         }
-        success = true;
       } else if (currentScreen === "echo" && currentPoem) {
         localStorage.setItem("poit_current_poem", JSON.stringify(currentPoem));
         success = true;
@@ -162,7 +186,35 @@ function App() {
 
   // Handler functions
   const handleStartDaily = () => {
-    setCurrentScreen("pulse");
+    // Check for active sessions in order of progression
+    const currentPoemData = JSON.parse(
+      localStorage.getItem("poit_current_poem") || "null"
+    );
+
+    const dailyWords = JSON.parse(
+      localStorage.getItem("poit_daily_words") || "null"
+    );
+
+    const pulseInProgress = JSON.parse(
+      localStorage.getItem("poit_daily_words_in_progress") || "null"
+    );
+
+    if (currentPoemData) {
+      // User has reached Echo mode
+      setCurrentPoem(currentPoemData);
+      if (dailyWords) setSelectedWords(dailyWords);
+      setCurrentScreen("echo");
+    } else if (dailyWords) {
+      // User has completed Pulse and should be in Craft
+      setSelectedWords(dailyWords);
+      setCurrentScreen("craft");
+    } else if (pulseInProgress && pulseInProgress.length > 0) {
+      // User started but didn't complete Pulse
+      setCurrentScreen("pulse");
+    } else {
+      // No active session, start fresh at Pulse
+      setCurrentScreen("pulse");
+    }
   };
 
   const handleViewHistory = () => {
