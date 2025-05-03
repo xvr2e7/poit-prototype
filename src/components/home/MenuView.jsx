@@ -28,12 +28,13 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
 
   useEffect(() => {
     // Load data from localStorage
-    const savedStreak = localStorage.getItem("poit_streak") || 0;
-    const savedLongestStreak = localStorage.getItem("poit_longest_streak") || 0;
+    const savedStreak = localStorage.getItem("poit_streak") || "0";
+    const savedLongestStreak =
+      localStorage.getItem("poit_longest_streak") || "0";
     const savedTotalConstellations =
-      localStorage.getItem("poit_total_constellations") || 0;
+      localStorage.getItem("poit_total_constellations") || "0";
     const savedTodayConstellations =
-      localStorage.getItem("poit_today_constellations") || 0;
+      localStorage.getItem("poit_today_constellations") || "0";
     const savedPoems = JSON.parse(localStorage.getItem("poit_poems") || "[]");
 
     setStreak(parseInt(savedStreak));

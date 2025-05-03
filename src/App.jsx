@@ -244,6 +244,48 @@ function App() {
     setCurrentScreen("craft");
   };
 
+  const updateStreak = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastStreakDateStr = localStorage.getItem("poit_last_streak_date");
+    let streak = parseInt(localStorage.getItem("poit_streak") || "0");
+
+    if (lastStreakDateStr) {
+      const lastStreakDate = new Date(lastStreakDateStr);
+      lastStreakDate.setHours(0, 0, 0, 0);
+
+      const diffTime = today - lastStreakDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Consecutive day
+        streak += 1;
+      } else if (diffDays > 1) {
+        // Streak broken
+        streak = 1;
+      } else if (diffDays === 0) {
+        // Already updated today
+        return;
+      }
+    } else {
+      // First time ever
+      streak = 1;
+    }
+
+    // Update streak in localStorage
+    localStorage.setItem("poit_streak", streak.toString());
+    localStorage.setItem("poit_last_streak_date", today.toISOString());
+
+    // Update longest streak if needed
+    const longestStreak = parseInt(
+      localStorage.getItem("poit_longest_streak") || "0"
+    );
+    if (streak > longestStreak) {
+      localStorage.setItem("poit_longest_streak", streak.toString());
+    }
+  };
+
   const handleCraftComplete = (poemData) => {
     const processedPoem = {
       ...poemData,
@@ -258,8 +300,11 @@ function App() {
 
     // Save to localStorage
     localStorage.setItem("poit_current_poem", JSON.stringify(processedPoem));
-    setLastSaved(new Date().toISOString());
 
+    // Update streak when transitioning to Echo mode
+    updateStreak();
+
+    setLastSaved(new Date().toISOString());
     setCurrentScreen("echo");
   };
 
@@ -275,19 +320,6 @@ function App() {
 
     setPoemHistory(updatedHistory);
     localStorage.setItem("poit_poems_history", JSON.stringify(updatedHistory));
-
-    // Update streak
-    const streak = parseInt(localStorage.getItem("poit_streak") || "0");
-    const newStreak = streak + 1;
-    localStorage.setItem("poit_streak", newStreak.toString());
-
-    // Update longest streak if needed
-    const longestStreak = parseInt(
-      localStorage.getItem("poit_longest_streak") || "0"
-    );
-    if (newStreak > longestStreak) {
-      localStorage.setItem("poit_longest_streak", newStreak.toString());
-    }
 
     // Clear current session
     localStorage.removeItem("poit_daily_words");
