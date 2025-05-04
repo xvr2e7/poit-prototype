@@ -17,13 +17,10 @@ import {
 const WordNode = ({
   word,
   scaleFactor,
-  isHighlighted,
   isConnecting,
   isSharedWord = false,
   isSharedNonPool = false,
   constellationMode = false,
-  poemIndex,
-  adjacentPoems = [],
 }) => {
   // Scale position based on scaleFactor to ensure everything fits
   const position = {
@@ -88,8 +85,7 @@ const WordNode = ({
   }
 
   // Font weight styling
-  const fontWeight =
-    isConnecting || isSharedWord ? 500 : isSharedNonPool ? 400 : 400;
+  const fontWeight = isConnecting || isSharedWord ? 500 : 400;
 
   return (
     <div
@@ -296,6 +292,7 @@ const PoemCanvas = ({
             isConnecting={connectingWord === word.text.toLowerCase()}
             isSharedWord={isShared}
             constellationMode={constellationMode}
+            poemIndex={layer}
           />
         );
       })}
@@ -309,24 +306,30 @@ const NavigationNetwork = ({
   onClose,
   visitedPoems = [],
   currentPoemId,
-  onPoemSelect,
   uniquePoemCount,
   constellationCount,
   wordPool = [],
   connectingWords = {},
-  savedConnectingWords = {},
 }) => {
   const containerRef = useRef(null);
+
+  // Load saved connecting words
+  const savedConnectingWords = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("poit_connecting_words") || "{}");
+    } catch (error) {
+      console.error("Error parsing saved connecting words:", error);
+      return {};
+    }
+  }, []);
 
   // Merge saved connecting words with current session words
   const allConnectingWords = useMemo(() => {
     return { ...savedConnectingWords, ...connectingWords };
   }, [connectingWords, savedConnectingWords]);
 
-  // Update all uses of connectingWords to use allConnectingWords
-
-  // When saving the network state:
-  const saveNetworkState = () => {
+  // Save the network state when the component is closed
+  const handleClose = () => {
     // Save the current state of the network visualization
     localStorage.setItem(
       "poit_network_state",
@@ -336,24 +339,19 @@ const NavigationNetwork = ({
         lastVisited: new Date().toISOString(),
       })
     );
-  };
-
-  // Call saveNetworkState when the component is closed
-  const handleClose = () => {
-    saveNetworkState();
     onClose();
   };
 
-  // Helper function to find shared words between adjacent poems
-  const getSharedWordsMap = (poems) => {
-    if (!poems || poems.length < 2) return new Map();
+  // Helper function to find shared words between all poems
+  const sharedWordsMap = useMemo(() => {
+    if (!visitedPoems || visitedPoems.length < 2) return new Map();
 
-    const sharedWordsMap = new Map();
+    const sharedMap = new Map();
 
     // Find shared words between adjacent poems
-    for (let i = 0; i < poems.length - 1; i++) {
-      const poem1 = poems[i];
-      const poem2 = poems[i + 1];
+    for (let i = 0; i < visitedPoems.length - 1; i++) {
+      const poem1 = visitedPoems[i];
+      const poem2 = visitedPoems[i + 1];
 
       if (!poem1?.components || !poem2?.components) continue;
 
@@ -372,16 +370,16 @@ const NavigationNetwork = ({
 
       // Store in map
       for (const word of sharedWords) {
-        if (!sharedWordsMap.has(word)) {
-          sharedWordsMap.set(word, new Set());
+        if (!sharedMap.has(word)) {
+          sharedMap.set(word, new Set());
         }
-        sharedWordsMap.get(word).add(i);
-        sharedWordsMap.get(word).add(i + 1);
+        sharedMap.get(word).add(i);
+        sharedMap.get(word).add(i + 1);
       }
     }
 
-    return sharedWordsMap;
-  };
+    return sharedMap;
+  }, [visitedPoems]);
 
   // State for 3D controls
   const [scale, setScale] = useState(1);
@@ -397,62 +395,6 @@ const NavigationNetwork = ({
 
   // 2D view state
   const [isIn2DView, setIsIn2DView] = useState(false);
-
-  // Enhanced word connections that calculate actual positions
-  const wordConnections = useMemo(() => {
-    if (!visitedPoems || visitedPoems.length < 2) return [];
-
-    const connections = [];
-
-    // Process each adjacent poem pair
-    for (let i = 0; i < visitedPoems.length - 1; i++) {
-      const fromPoem = visitedPoems[i];
-      const toPoem = visitedPoems[i + 1];
-
-      if (!fromPoem || !toPoem || !fromPoem.components || !toPoem.components)
-        continue;
-
-      // Extract all words from both poems
-      const fromWords = fromPoem.components.filter(
-        (comp) => comp.type === "word"
-      );
-      const toWords = toPoem.components.filter((comp) => comp.type === "word");
-
-      // Find shared words between the two poems
-      for (const fromWord of fromWords) {
-        const matchingToWords = toWords.filter(
-          (toWord) => toWord.text.toLowerCase() === fromWord.text.toLowerCase()
-        );
-
-        // Create connections for each shared word
-        for (const toWord of matchingToWords) {
-          if (fromWord.position && toWord.position) {
-            connections.push({
-              from: {
-                position: fromWord.position,
-                layer: i,
-                poemId: fromPoem.id,
-                word: fromWord.text,
-              },
-              to: {
-                position: toWord.position,
-                layer: i + 1,
-                poemId: toPoem.id,
-                word: toWord.text,
-              },
-              word: fromWord.text.toLowerCase(),
-              // Highlight the navigational connections
-              isActive:
-                connectingWords[`${fromPoem.id}-${toPoem.id}`] ===
-                fromWord.text.toLowerCase(),
-            });
-          }
-        }
-      }
-    }
-
-    return connections;
-  }, [visitedPoems, connectingWords]);
 
   // Mouse/touch interaction for 3D rotation
   const handleMouseDown = (e) => {
@@ -517,8 +459,6 @@ const NavigationNetwork = ({
     setRotation({ x: 0, y: -12 });
     setPosition({ x: 0, y: 0 });
     setIsIn2DView(false);
-
-    // Reset active layer
     setActiveLayer(null);
   };
 
@@ -565,12 +505,13 @@ const NavigationNetwork = ({
   }, [isOpen]);
 
   // Extract highlighted words
-  const highlightedWords = wordPool.map((w) =>
-    typeof w === "string" ? w.toLowerCase() : w.text.toLowerCase()
+  const highlightedWords = useMemo(
+    () =>
+      wordPool.map((w) =>
+        typeof w === "string" ? w.toLowerCase() : w.text.toLowerCase()
+      ),
+    [wordPool]
   );
-
-  // Calculate shared words map
-  const sharedWordsMap = getSharedWordsMap(visitedPoems);
 
   // Total number of layers for positioning calculation
   const totalLayers = visitedPoems.length;
@@ -584,14 +525,16 @@ const NavigationNetwork = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* Close button */}
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/5 
-              backdrop-blur-sm z-20 text-white hover:bg-white/10 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          {/* Close button - only in 3D view */}
+          {!isIn2DView && (
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 
+                backdrop-blur-sm z-20 text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          )}
 
           {/* Stats display - only show in 3D view */}
           {!isIn2DView && (
@@ -712,16 +655,18 @@ const NavigationNetwork = ({
 
           {/* Back button for 2D view */}
           {isIn2DView && (
-            <button
-              onClick={returnTo3DView}
-              className="absolute top-4 left-1/2 transform -translate-x-1/2
-                px-4 py-2 rounded-lg bg-gray-900/70 backdrop-blur-sm 
-                border border-gray-800 text-white hover:bg-gray-800/70
-                transition-colors shadow-lg z-20 flex items-center gap-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Stack</span>
-            </button>
+            <>
+              <button
+                onClick={returnTo3DView}
+                className="absolute top-4 left-1/2 transform -translate-x-1/2
+                  px-4 py-2 rounded-lg bg-gray-900/70 backdrop-blur-sm 
+                  border border-gray-800 text-white hover:bg-gray-800/70
+                  transition-colors shadow-lg z-20 flex items-center gap-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Stack</span>
+              </button>
+            </>
           )}
 
           {/* Controls - Only shown in 3D view */}
@@ -897,7 +842,7 @@ const NavigationNetwork = ({
                         highlightedWords={highlightedWords}
                         connectingWord={
                           activeLayer < visitedPoems.length - 1
-                            ? connectingWords[
+                            ? allConnectingWords[
                                 `${poem.id}-${
                                   visitedPoems[activeLayer + 1]?.id
                                 }`
@@ -922,7 +867,7 @@ const NavigationNetwork = ({
                         highlightedWords={highlightedWords}
                         connectingWord={
                           index < visitedPoems.length - 1
-                            ? connectingWords[
+                            ? allConnectingWords[
                                 `${poem.id}-${visitedPoems[index + 1]?.id}`
                               ]
                             : null
@@ -952,7 +897,7 @@ const NavigationNetwork = ({
 
                               const isConnectingWord =
                                 index < visitedPoems.length - 1 &&
-                                connectingWords[
+                                allConnectingWords[
                                   `${poem.id}-${visitedPoems[index + 1]?.id}`
                                 ] === wordText;
 
@@ -961,8 +906,6 @@ const NavigationNetwork = ({
                                   key={`star-${poem.id}-${wordIdx}-${word.text}`}
                                   word={word}
                                   layer={index}
-                                  currentLayer={activeLayer}
-                                  totalLayers={totalLayers}
                                   isHighlighted={false}
                                   isConnecting={isConnectingWord}
                                   isSharedWord={true}
