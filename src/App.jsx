@@ -6,6 +6,8 @@ import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import { getTestWordStrings, getTestPoems } from "./utils/testData/devTestData";
+import CookieConsentBanner from "./components/shared/CookieConsentBanner";
+import CookiePolicyPage from "./components/shared/CookiePolicyPage";
 
 function App() {
   // Navigation state
@@ -14,6 +16,7 @@ function App() {
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
   const [isDevMode, setIsDevMode] = useState(false);
+  const [showCookiePolicy, setShowCookiePolicy] = useState(false);
 
   // Save state
   const [lastSaved, setLastSaved] = useState(null);
@@ -388,6 +391,10 @@ function App() {
     }
   };
 
+  if (showCookiePolicy) {
+    return <CookiePolicyPage onBack={() => setShowCookiePolicy(false)} />;
+  }
+
   // Render based on current screen
   return (
     <div className="min-h-screen">
@@ -479,6 +486,9 @@ function App() {
           lastSaved={lastSaved}
         />
       )}
+
+      {/* Cookie Consent Banner */}
+      <CookieConsentBanner onViewPolicy={() => setShowCookiePolicy(true)} />
     </div>
   );
 }

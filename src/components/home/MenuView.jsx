@@ -267,6 +267,22 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
             </button>
           </div>
 
+          {/* Attribution line */}
+          <div className="fixed bottom-4 right-4 text-xs text-gray-500/70 z-10">
+            Built with <span className="text-red-500">♥</span> by{" "}
+            <span className="text-[#2C8C7C]">Ziyan Xie</span>. Supported by the{" "}
+            <span className="text-[#2C8C7C]">Internet Research Initiative</span>{" "}
+            at{" "}
+            <a
+              href="https://uclaconnectionlab.org/"
+              className="text-[#2C8C7C] hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              UCLA Connection Lab
+            </a>
+          </div>
+
           {/* Save Options */}
           <div className="mt-auto flex gap-2 w-5/6 mx-auto">
             <button
