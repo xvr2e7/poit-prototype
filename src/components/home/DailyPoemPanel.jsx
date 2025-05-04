@@ -105,7 +105,7 @@ const DailyPoemPanel = () => {
                   ease: "easeOut",
                 }}
               >
-                <div className="py-4 px-5">
+                {/* <div className="py-4 px-5">
                   <h3 className="text-base font-normal text-gray-800 dark:text-gray-200">
                     {poem?.title}
                   </h3>
@@ -115,7 +115,7 @@ const DailyPoemPanel = () => {
                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
                     &copy;Poem-a-Day, by the Academy of American Poets.
                   </p>
-                </div>
+                </div> */}
               </motion.div>
             </motion.div>
           )}

@@ -31,118 +31,24 @@ router.get("/poetsorg", async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    // Extract poem title
-    const title =
-      $(
-        ".daily-poem__poem-title, .d-flex.pt-3.pb-3.daily-poem__poem-title, .daily-poem__title, .poem-a-day__title, h1.poem__title"
-      )
-        .first()
-        .text()
-        .trim() || "Untitled";
+    // Simplified selector strategy
+    const title = $("h1.poem__title").first().text().trim() || "Untitled";
+    const author = $(".poem__author").text().trim() || "Unknown";
 
-    // Extract poet name
-    let author = "";
-
-    const authorLink = $(
-      ".poem-a-day__poem-author a[itemprop='name'], .field--field_author a[itemprop='name']"
-    ).first();
-    if (authorLink.length) {
-      author = authorLink.text().trim();
-    } else {
-      // Try the div containing the author directly
-      const authorDiv = $(".poem-a-day__poem-author").first();
-      if (authorDiv.length) {
-        author = authorDiv.text().trim();
-      } else {
-        // Fallback selectors
-        author = $(".poem__author a, .daily-poem__poet, .poem-a-day__poet")
-          .first()
-          .text()
-          .trim();
-      }
-    }
-
-    // Extract poem body
+    // Simplify line extraction
     let lines = [];
-
-    $(
-      ".daily-poem__poem-text.poem__body span.long-line, .daily-poem__poem-text .field--body p span.long-line, .poem__body .field--body p span.long-line"
-    ).each((i, el) => {
-      const line = $(el).text().trim();
-      lines.push(line); // Include empty lines for poem structure
+    $(".poem__body p").each(function () {
+      const text = $(this).text().trim();
+      if (text) lines.push(text);
     });
 
-    // Handle br tags by inserting empty lines
-    $(
-      ".daily-poem__poem-text.poem__body br, .daily-poem__poem-text .field--body br, .poem__body .field--body br"
-    ).each((i, el) => {
-      lines.push("");
-    });
-
-    // If no lines were found with long-line spans, try regular paragraph text
-    if (lines.length === 0) {
-      $(
-        ".daily-poem__poem-text .field--body p, .poem__body .field--body p"
-      ).each((i, el) => {
-        // Get only the direct text content, not the nested elements
-        $(el)
-          .contents()
-          .each((j, node) => {
-            if (node.type === "text") {
-              const line = $(node).text().trim();
-              if (line) {
-                lines.push(line);
-              }
-            }
-          });
-      });
-    }
-
-    // Try directly getting the content of the poem body div
-    if (lines.length === 0) {
-      $(".daily-poem__poem-text.poem__body").each((i, el) => {
-        $(el)
-          .contents()
-          .each((j, node) => {
-            if (node.type === "text") {
-              const text = $(node).text().trim();
-              if (text) {
-                lines.push(text);
-              }
-            }
-          });
-      });
-    }
-
-    // As a last resort, try getting all text from the poem body
-    if (lines.length === 0) {
-      const bodyText = $(
-        ".daily-poem__poem-text .field--body, .poem__body .field--body, .daily-poem__poem-text.poem__body"
-      )
-        .text()
-        .trim();
-      if (bodyText) {
-        lines = bodyText
-          .split(/\n+/)
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0);
-      }
-    }
-
-    console.log("Extracted poem data:", {
+    const result = {
       title,
-      author: author || "Unknown",
-      lineCount: lines.length,
-      sampleLines: lines.slice(0, 2),
-    });
-
-    res.json({
-      title,
-      author: author || "Unknown",
+      author,
       lines,
       source: "poetsorg",
       refreshedAt: new Date().toISOString(),
-    });
+    };
 
     // Cache the result
     poetryCache.data = result;
@@ -155,11 +61,38 @@ router.get("/poetsorg", async (req, res) => {
       response: error.response?.status,
     });
 
-    res.status(error.response?.status || 500).json({
-      error: "Failed to fetch from poets.org",
-      details: error.message,
-    });
+    return res.json(getFallbackPoem());
   }
 });
+
+function getFallbackPoem() {
+  return {
+    title: "Do not go gentle into that good night",
+    author: "Dylan Thomas",
+    lines: [
+      "Do not go gentle into that good night,",
+      "Old age should burn and rave at close of day;",
+      "Rage, rage against the dying of the light.",
+      "Though wise men at their end know dark is right,",
+      "Because their words had forked no lightning they",
+      "Do not go gentle into that good night.",
+      "Good men, the last wave by, crying how bright",
+      "Their frail deeds might have danced in a green bay,",
+      "Rage, rage against the dying of the light.",
+      "Wild men who caught and sang the sun in flight,",
+      "And learn, too late, they grieved it on its way,",
+      "Do not go gentle into that good night.",
+      "Grave men, near death, who see with blinding sight",
+      "Blind eyes could blaze like meteors and be gay,",
+      "Rage, rage against the dying of the light.",
+      "And you, my father, there on the sad height,",
+      "Curse, bless, me now with your fierce tears, I pray.",
+      "Do not go gentle into that good night.",
+      "Rage, rage against the dying of the light.",
+    ],
+    source: "fallback",
+    refreshedAt: new Date().toISOString(),
+  };
+}
 
 module.exports = router;
