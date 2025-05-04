@@ -3,8 +3,21 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const router = express.Router();
 
+const CACHE_TTL = 3600000; // 1 hour in milliseconds
+let poetryCache = {
+  data: null,
+  timestamp: 0,
+};
+
 router.get("/poetsorg", async (req, res) => {
   try {
+    // Check cache first
+    const now = Date.now();
+    if (poetryCache.data && now - poetryCache.timestamp < CACHE_TTL) {
+      console.log("Serving poem from cache");
+      return res.json(poetryCache.data);
+    }
+
     console.log("Fetching poem from poets.org");
     const response = await axios.get("https://poets.org/poem-a-day", {
       headers: {
@@ -13,7 +26,7 @@ router.get("/poetsorg", async (req, res) => {
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
       },
-      timeout: 10000,
+      timeout: 5000,
     });
 
     const $ = cheerio.load(response.data);
@@ -130,6 +143,12 @@ router.get("/poetsorg", async (req, res) => {
       source: "poetsorg",
       refreshedAt: new Date().toISOString(),
     });
+
+    // Cache the result
+    poetryCache.data = result;
+    poetryCache.timestamp = now;
+
+    res.json(result);
   } catch (error) {
     console.error("poets.org API error:", {
       message: error.message,
