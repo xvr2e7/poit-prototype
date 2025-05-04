@@ -61,8 +61,6 @@ function App() {
     const pulseCompleted =
       localStorage.getItem("poit_pulse_completed") === "true";
 
-    const hasCraftData = localStorage.getItem("poit_craft_has_data") === "true";
-
     const pulseInProgress = JSON.parse(
       localStorage.getItem("poit_daily_words_in_progress") || "null"
     );
@@ -97,11 +95,6 @@ function App() {
   // Save data handler
   const saveData = useCallback(() => {
     let success = false;
-    console.log("saveData called in App.jsx with:", {
-      currentScreen,
-      selectedWordsLength: selectedWords.length,
-      currentPoemExists: !!currentPoem,
-    });
 
     try {
       // Save based on current mode
@@ -111,19 +104,12 @@ function App() {
           localStorage.getItem("poit_daily_words_in_progress") || "[]"
         );
 
-        // If we have in-progress words, save them
-        if (inProgressWords.length > 0) {
+        if (inProgressWords.length > 0 || selectedWords.length > 0) {
           localStorage.setItem(
             "poit_daily_words",
-            JSON.stringify(inProgressWords)
-          );
-          success = true;
-        }
-        // Otherwise use the words from state if available
-        else if (selectedWords.length > 0) {
-          localStorage.setItem(
-            "poit_daily_words",
-            JSON.stringify(selectedWords)
+            JSON.stringify(
+              inProgressWords.length > 0 ? inProgressWords : selectedWords
+            )
           );
           success = true;
         }
@@ -180,12 +166,8 @@ function App() {
       if (success) {
         const now = new Date();
         setLastSaved(now.toISOString());
-        console.log(`Progress saved at ${now.toLocaleTimeString()}`);
-      } else {
-        console.log("Save unsuccessful");
       }
 
-      console.log("Returning success:", success);
       return success;
     } catch (error) {
       console.error("Error saving data:", error);
@@ -203,10 +185,7 @@ function App() {
 
     // Only set up auto-save for creative modes
     if (["pulse", "craft", "echo"].includes(currentScreen)) {
-      const interval = setInterval(() => {
-        saveData();
-      }, 60000); // Save every 60 seconds
-
+      const interval = setInterval(saveData, 60000); // Save every 60 seconds
       setSaveInterval(interval);
     }
 
@@ -466,7 +445,7 @@ function App() {
         <PulseMode
           onComplete={handlePulseComplete}
           onExitToHome={handleExitToHome}
-          onSave={saveData} // Pass save function
+          onSave={saveData}
           lastSaved={lastSaved}
         />
       )}
@@ -476,7 +455,7 @@ function App() {
           selectedWords={selectedWords}
           onComplete={handleCraftComplete}
           onExitToHome={handleExitToHome}
-          onSave={saveData} // Pass save function
+          onSave={saveData}
           lastSaved={lastSaved}
         />
       )}
@@ -496,7 +475,7 @@ function App() {
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
           onExitToHome={handleExitToHome}
-          onSave={saveData} // Pass save function
+          onSave={saveData}
           lastSaved={lastSaved}
         />
       )}
