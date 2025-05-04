@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ZoomIn, ZoomOut, LogOut } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
@@ -14,14 +14,11 @@ const EchoMode = ({
   enabled = true,
   onExitToHome,
   onSave,
-  lastSaved,
 }) => {
   const containerRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [connectingWord, setConnectingWord] = useState(null);
   const [isNetworkVisible, setIsNetworkVisible] = useState(false);
-  const [constellationsAdded, setConstellationsAdded] = useState(0);
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -75,22 +72,64 @@ const EchoMode = ({
     setTotalConstellations(savedTotalConstellations);
   }, []);
 
-  // Save constellation counts whenever they change
-  useEffect(() => {
+  // Track connecting words between poems
+  const [connectingWords, setConnectingWords] = useState({});
+
+  const incrementConstellationCount = useCallback(() => {
+    // Update today's constellations
+    const updatedTodayCount = todayConstellations + 1;
+    setTodayConstellations(updatedTodayCount);
     localStorage.setItem(
       "poit_today_constellations",
-      todayConstellations.toString()
+      updatedTodayCount.toString()
     );
+
+    // Update total constellations
+    const updatedTotalCount = totalConstellations + 1;
+    setTotalConstellations(updatedTotalCount);
     localStorage.setItem(
       "poit_total_constellations",
-      totalConstellations.toString()
+      updatedTotalCount.toString()
     );
   }, [todayConstellations, totalConstellations]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const handleWordClick = useCallback(
+    async (word, e) => {
+      if (!e || isDragging) return;
+      const nextPoem = findNextPoemForWord(word.text);
+      if (nextPoem) {
+        // Set the connecting word (the word that was clicked)
+        setConnectingWord(word.text.toLowerCase());
+
+        // Track connecting word in our map
+        if (currentPoem) {
+          setConnectingWords((prev) => ({
+            ...prev,
+            [`${currentPoem.id}-${nextPoem.id}`]: word.text.toLowerCase(),
+          }));
+
+          // Only count as a constellation if we're navigating to a poem that's not the starting poem
+          if (nextPoem.id !== poems[0]?.id) {
+            incrementConstellationCount();
+          }
+        }
+
+        setIsTransitioning(true);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        navigateToPoem(nextPoem.id, word.text);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        setIsTransitioning(false);
+      }
+    },
+    [
+      isDragging,
+      findNextPoemForWord,
+      currentPoem,
+      poems,
+      navigateToPoem,
+      incrementConstellationCount,
+    ]
+  );
 
   // Reset drag and zoom when changing poems
   useEffect(() => {
@@ -135,112 +174,77 @@ const EchoMode = ({
     }
   }, [currentPoem, connectingWord, isTransitioning]);
 
-  // Track connecting words between poems
-  const [connectingWords, setConnectingWords] = useState({});
-
-  const handleWordClick = async (word, e) => {
-    if (!e || isDragging) return;
-    const nextPoem = findNextPoemForWord(word.text);
-    if (nextPoem) {
-      // Set the connecting word (the word that was clicked)
-      setConnectingWord(word.text.toLowerCase());
-
-      // Track connecting word in our map
-      if (currentPoem) {
-        setConnectingWords((prev) => ({
-          ...prev,
-          [`${currentPoem.id}-${nextPoem.id}`]: word.text.toLowerCase(),
-        }));
-
-        // Only count as a constellation if we're navigating to a poem that's not the starting poem
-        if (nextPoem.id !== poems[0]?.id) {
-          // Increment constellation count
-          setConstellationsAdded((prev) => prev + 1);
-        }
-      }
-
-      setIsTransitioning(true);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      navigateToPoem(nextPoem.id, word.text);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setIsTransitioning(false);
-    }
-  };
-
-  useEffect(() => {
-    if (constellationsAdded > 0) {
-      // Update total constellations
-      const totalConstellations = parseInt(
-        localStorage.getItem("poit_total_constellations") || "0"
-      );
-      localStorage.setItem(
-        "poit_total_constellations",
-        (totalConstellations + constellationsAdded).toString()
-      );
-
-      // Update today's constellations
-      const todayConstellations = parseInt(
-        localStorage.getItem("poit_today_constellations") || "0"
-      );
-      localStorage.setItem(
-        "poit_today_constellations",
-        (todayConstellations + constellationsAdded).toString()
-      );
-
-      // Reset the counter since we've saved the changes
-      setConstellationsAdded(0);
-    }
-  }, [constellationsAdded]);
-
   // Dragging handlers
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return; // Only primary mouse button
+  const handleMouseDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return; // Only primary mouse button
 
-    setIsDragging(true);
-    dragStartPosition.current = {
-      x: e.clientX - dragOffset.x,
-      y: e.clientY - dragOffset.y,
-    };
+      setIsDragging(true);
+      dragStartPosition.current = {
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y,
+      };
 
-    e.preventDefault(); // Prevent text selection
-  };
+      e.preventDefault(); // Prevent text selection
+    },
+    [dragOffset]
+  );
 
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return;
 
-    const newOffset = {
-      x: e.clientX - dragStartPosition.current.x,
-      y: e.clientY - dragStartPosition.current.y,
-    };
+      const newOffset = {
+        x: e.clientX - dragStartPosition.current.x,
+        y: e.clientY - dragStartPosition.current.y,
+      };
 
-    setDragOffset(newOffset);
-  };
+      setDragOffset(newOffset);
+    },
+    [isDragging]
+  );
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
+
+  // Add/remove event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Zoom handlers
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     setZoomLevel((prev) => Math.min(MAX_ZOOM, prev + ZOOM_STEP));
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setZoomLevel((prev) => Math.max(MIN_ZOOM, prev - ZOOM_STEP));
-  };
+  }, []);
 
   // Wheel zoom handler
-  const handleWheel = (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      // Zoom in/out based on wheel direction
-      if (e.deltaY < 0) {
-        handleZoomIn();
-      } else {
-        handleZoomOut();
+  const handleWheel = useCallback(
+    (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        // Zoom in/out based on wheel direction
+        if (e.deltaY < 0) {
+          handleZoomIn();
+        } else {
+          handleZoomOut();
+        }
       }
-    }
-  };
+    },
+    [handleZoomIn, handleZoomOut]
+  );
 
   // Keyboard handler for zoom controls
   useEffect(() => {
@@ -265,20 +269,7 @@ const EchoMode = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Add/remove event listeners
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-    }
-  }, [isDragging]);
+  }, [handleZoomIn, handleZoomOut]);
 
   // Calculate statistics for network view
   const uniquePoemIds = new Set(
@@ -302,6 +293,11 @@ const EchoMode = ({
     );
   }
 
+  // Extract highlighted words once for reuse
+  const highlightedWords = wordPool.map((w) =>
+    typeof w === "string" ? w.toLowerCase() : w.text.toLowerCase()
+  );
+
   return (
     <div className="w-full h-screen relative overflow-hidden">
       <AdaptiveBackground mode="echo" className="opacity-50" />
@@ -310,7 +306,6 @@ const EchoMode = ({
         currentMode="echo"
         onExitToHome={onExitToHome}
         onSave={onSave}
-        lastSaved={lastSaved}
       />
 
       {/* Main Content */}
@@ -395,13 +390,7 @@ const EchoMode = ({
                 {currentPoem?.components?.filter(
                   (component) =>
                     component.type === "word" &&
-                    wordPool.some(
-                      (word) =>
-                        (typeof word === "string"
-                          ? word.toLowerCase()
-                          : word.text.toLowerCase()) ===
-                        component.text.toLowerCase()
-                    )
+                    highlightedWords.includes(component.text.toLowerCase())
                 ).length || 0}
               </span>
             </div>
@@ -426,19 +415,15 @@ const EchoMode = ({
                 className="w-full h-full"
               >
                 <AnimatePresence mode="wait">
-                  {!isLoading && (
-                    <WordDisplay
-                      words={currentPoem.components}
-                      highlightedWords={wordPool.map((w) =>
-                        typeof w === "string" ? w : w.text
-                      )}
-                      getWordGlowIntensity={getWordGlowIntensity}
-                      onWordClick={handleWordClick}
-                      isTransitioning={isTransitioning}
-                      isFloating={true}
-                      connectingWord={connectingWord}
-                    />
-                  )}
+                  <WordDisplay
+                    words={currentPoem.components}
+                    highlightedWords={highlightedWords}
+                    getWordGlowIntensity={getWordGlowIntensity}
+                    onWordClick={handleWordClick}
+                    isTransitioning={isTransitioning}
+                    isFloating={true}
+                    connectingWord={connectingWord}
+                  />
                 </AnimatePresence>
               </motion.div>
             </div>
