@@ -20,12 +20,8 @@ class PoetryDBService {
 
 class PoetsOrgService {
   constructor() {
-    const isLocalhost =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1";
-    const baseApiUrl = isLocalhost
-      ? "http://localhost:5001"
-      : import.meta.env.VITE_API_URL;
+    const baseApiUrl =
+      window.location.hostname === "localhost" ? "http://localhost:5001" : "";
     this.baseUrl = `${baseApiUrl}/api/poetry/poetsorg`;
   }
 
