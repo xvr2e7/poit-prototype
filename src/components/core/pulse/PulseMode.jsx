@@ -4,6 +4,7 @@ import WordInteraction from "./components/WordInteraction";
 import GrowingWordSelector from "./components/GrowingWordSelector";
 import Navigation from "../../shared/Navigation";
 import SelectedWordsModal from "./components/SelectedWordsModal";
+import { getTestWordStrings } from "../../../utils/testData/devTestData";
 
 const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   const [selectedWords, setSelectedWords] = useState([]);
@@ -66,45 +67,9 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        // Check for dev mode
-        const urlParams = new URLSearchParams(window.location.search);
-        const devMode = urlParams.get("dev");
-
-        if (devMode === "true") {
-          // Import and use test words
-          const { getTestWords } = await import(
-            "../../../utils/testData/devTestData"
-          );
-          setAvailableWords(getTestWords());
-          setIsLoading(false);
-          return;
-        }
-
-        // Get user's timezone
-        let timezone;
-        try {
-          const timeZoneDetector = Intl.DateTimeFormat();
-          const resolvedOptions = timeZoneDetector.resolvedOptions();
-          timezone = resolvedOptions.timeZone;
-        } catch (error) {
-          console.error("Timezone detection error:", error);
-          timezone = "UTC";
-        }
-
-        const response = await fetch("http://localhost:5001/api/words", {
-          headers: {
-            "X-Timezone": timezone,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setAvailableWords(data.words);
+        // Always use dev test data
+        const testWords = getTestWordStrings().map((text) => ({ text }));
+        setAvailableWords(testWords);
       } catch (error) {
         console.error("Error in fetchWords:", error);
       } finally {

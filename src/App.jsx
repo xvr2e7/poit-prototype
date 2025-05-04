@@ -15,7 +15,7 @@ function App() {
   const [selectedWords, setSelectedWords] = useState([]);
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
-  const [isDevMode, setIsDevMode] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(true); // Always set to true
   const [showCookiePolicy, setShowCookiePolicy] = useState(false);
 
   // Save state
@@ -24,75 +24,64 @@ function App() {
 
   // Load saved data on initial render
   useEffect(() => {
-    // Check for dev mode activation via URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const devMode = urlParams.get("dev");
+    try {
+      // Always load test data
+      const testWords = getTestWordStrings();
+      const testPoems = getTestPoems();
 
-    if (devMode === "true") {
-      try {
-        // Load test data
-        const testWords = getTestWordStrings();
-        const testPoems = getTestPoems();
+      setSelectedWords(testWords);
+      setPoemHistory(testPoems);
+      console.log(`- Loaded ${testWords.length} test words`);
+      console.log(`- Loaded ${testPoems.length} test poems`);
+    } catch (error) {
+      console.error("Failed to load test data:", error);
+      // Fall back to normal mode if test data fails
+      const savedHistory = JSON.parse(
+        localStorage.getItem("poit_poems_history") || "[]"
+      );
+      setPoemHistory(savedHistory);
 
-        setSelectedWords(testWords);
-        setPoemHistory(testPoems);
-        setIsDevMode(true);
-        console.log(`- Loaded ${testWords.length} test words`);
-        console.log(`- Loaded ${testPoems.length} test poems`);
-        return;
-      } catch (error) {
-        console.error("Failed to load test data:", error);
-        // Fall back to normal mode if test data fails
+      const currentPoemData = JSON.parse(
+        localStorage.getItem("poit_current_poem") || "null"
+      );
+
+      const dailyWords = JSON.parse(
+        localStorage.getItem("poit_daily_words") || "null"
+      );
+
+      // Check if pulse has been explicitly completed
+      const pulseCompleted =
+        localStorage.getItem("poit_pulse_completed") === "true";
+
+      const pulseInProgress = JSON.parse(
+        localStorage.getItem("poit_daily_words_in_progress") || "null"
+      );
+
+      const lastConstellationDate = localStorage.getItem(
+        "poit_constellation_date"
+      );
+      const today = new Date().toDateString();
+
+      if (lastConstellationDate !== today) {
+        // Reset daily constellation count if it's a new day
+        localStorage.setItem("poit_today_constellations", "0");
+        localStorage.setItem("poit_constellation_date", today);
+      }
+
+      if (currentPoemData) {
+        // User has reached Echo mode
+        setCurrentPoem(currentPoemData);
+        if (dailyWords) setSelectedWords(dailyWords);
+        setCurrentScreen("echo");
+      } else if (dailyWords && pulseCompleted) {
+        // User has completed Pulse and explicitly continued to Craft
+        setSelectedWords(dailyWords);
+        setCurrentScreen("craft");
+      } else if (pulseInProgress && pulseInProgress.length > 0) {
+        // User started but didn't complete Pulse
+        setCurrentScreen("pulse");
       }
     }
-
-    // Normal production data loading
-    const savedHistory = JSON.parse(
-      localStorage.getItem("poit_poems_history") || "[]"
-    );
-    setPoemHistory(savedHistory);
-
-    const currentPoemData = JSON.parse(
-      localStorage.getItem("poit_current_poem") || "null"
-    );
-
-    const dailyWords = JSON.parse(
-      localStorage.getItem("poit_daily_words") || "null"
-    );
-
-    // Check if pulse has been explicitly completed
-    const pulseCompleted =
-      localStorage.getItem("poit_pulse_completed") === "true";
-
-    const pulseInProgress = JSON.parse(
-      localStorage.getItem("poit_daily_words_in_progress") || "null"
-    );
-
-    const lastConstellationDate = localStorage.getItem(
-      "poit_constellation_date"
-    );
-    const today = new Date().toDateString();
-
-    if (lastConstellationDate !== today) {
-      // Reset daily constellation count if it's a new day
-      localStorage.setItem("poit_today_constellations", "0");
-      localStorage.setItem("poit_constellation_date", today);
-    }
-
-    if (currentPoemData) {
-      // User has reached Echo mode
-      setCurrentPoem(currentPoemData);
-      if (dailyWords) setSelectedWords(dailyWords);
-      setCurrentScreen("echo");
-    } else if (dailyWords && pulseCompleted) {
-      // User has completed Pulse and explicitly continued to Craft
-      setSelectedWords(dailyWords);
-      setCurrentScreen("craft");
-    } else if (pulseInProgress && pulseInProgress.length > 0) {
-      // User started but didn't complete Pulse
-      setCurrentScreen("pulse");
-    }
-    // Otherwise stay on home screen
   }, []);
 
   // Save data handler
@@ -365,32 +354,6 @@ function App() {
     setCurrentScreen(target);
   };
 
-  // Function to handle entering dev mode echo
-  const enterDevModeEcho = () => {
-    setCurrentScreen("echo");
-  };
-
-  // Check if we should show dev mode buttons
-  const showDevControls =
-    process.env.NODE_ENV === "development" && currentScreen === "home";
-
-  // Toggle dev mode on/off
-  const toggleDevMode = () => {
-    const url = new URL(window.location);
-
-    if (isDevMode) {
-      // Turn off dev mode
-      url.searchParams.delete("dev");
-      window.history.pushState({}, "", url);
-      window.location.reload();
-    } else {
-      // Turn on dev mode
-      url.searchParams.set("dev", "true");
-      window.history.pushState({}, "", url);
-      window.location.reload();
-    }
-  };
-
   if (showCookiePolicy) {
     return <CookiePolicyPage onBack={() => setShowCookiePolicy(false)} />;
   }
@@ -406,37 +369,6 @@ function App() {
             onStartDaily={handleStartDaily}
             onViewHistory={handleViewHistory}
           />
-
-          {/* Dev mode controls */}
-          {showDevControls && (
-            <div className="fixed bottom-4 right-4 flex flex-col gap-2">
-              <button
-                onClick={toggleDevMode}
-                className={`px-2 py-1 ${
-                  isDevMode ? "bg-[#2C8C7C]" : "bg-gray-600"
-                } text-white text-xs rounded-lg shadow-lg`}
-              >
-                Dev Mode: {isDevMode ? "ON" : "OFF"}
-              </button>
-
-              {isDevMode && (
-                <>
-                  <button
-                    onClick={() => setCurrentScreen("pulse")}
-                    className="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg shadow-lg"
-                  >
-                    Dev: Pulse Mode
-                  </button>
-                  <button
-                    onClick={enterDevModeEcho}
-                    className="px-2 py-1 bg-gray-400 text-white text-xs rounded-lg shadow-lg"
-                  >
-                    Dev: Echo Mode
-                  </button>
-                </>
-              )}
-            </div>
-          )}
         </>
       )}
 
