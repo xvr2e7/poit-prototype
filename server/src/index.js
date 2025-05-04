@@ -23,6 +23,13 @@ app.use(express.json());
 const wordsRouter = require("./routes/words");
 const poetryRouter = require("./routes/poetry");
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "POiT API server is running",
+    endpoints: ["/api/words", "/api/poetry/poetsorg"],
+  });
+});
+
 // Routes
 app.use("/api/words", wordsRouter);
 app.use("/api/poetry", poetryRouter);
