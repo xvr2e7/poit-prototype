@@ -4,6 +4,7 @@ import { Menu, Calendar } from "lucide-react";
 import DynamicLogo from "../shared/DynamicLogo";
 import { calculateTimeUntilTomorrow } from "../../utils/timeUtils";
 import MenuView from "./MenuView";
+import VersionBadge from "../shared/VersionBadge";
 
 const HomePage = ({ onStartDaily, onViewHistory }) => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0 });
@@ -91,6 +92,8 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <VersionBadge />
     </div>
   );
 };
