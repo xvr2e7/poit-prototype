@@ -23,7 +23,9 @@ class PoetsOrgService {
     const isLocalhost =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
-    const baseApiUrl = isLocalhost ? "http://localhost:5001" : "";
+    const baseApiUrl = isLocalhost
+      ? "http://localhost:5001"
+      : import.meta.env.VITE_API_URL;
     this.baseUrl = `${baseApiUrl}/api/poetry/poetsorg`;
   }
 
