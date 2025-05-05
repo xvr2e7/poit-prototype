@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Calendar } from "lucide-react";
+import { Menu, Calendar, HelpCircle } from "lucide-react";
 import DynamicLogo from "../shared/DynamicLogo";
 import { calculateTimeUntilTomorrow } from "../../utils/timeUtils";
 import MenuView from "./MenuView";
+import OnboardingCarousel from "./OnboardingCarousel";
 import VersionBadge from "../shared/VersionBadge";
 
 const HomePage = ({ onStartDaily, onViewHistory }) => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false); // State for onboarding
 
   useEffect(() => {
     const updateTime = () => {
@@ -18,6 +20,15 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
     updateTime();
     const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Check if it's the first visit and show onboarding
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem("poit_seen_onboarding");
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+      localStorage.setItem("poit_seen_onboarding", "true");
+    }
   }, []);
 
   const toggleMenu = () => {
@@ -53,6 +64,18 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
               whileTap={{ scale: 0.95 }}
             >
               <Menu className="w-5 h-5 text-[#2C8C7C]" />
+            </motion.button>
+
+            {/* Help Button */}
+            <motion.button
+              className="absolute top-6 left-20 p-3 rounded-xl
+                bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20
+                hover:bg-white/10 transition-colors"
+              onClick={() => setShowOnboarding(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <HelpCircle className="w-5 h-5 text-[#2C8C7C]" />
             </motion.button>
 
             {/* Main Logo */}
@@ -118,7 +141,7 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
               className="bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/20 
-                rounded-xl p-4 flex flex-col items-center"
+                  rounded-xl p-4 flex flex-col items-center relative group"
             >
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="w-4 h-4 text-gray-400" />
@@ -127,6 +150,27 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
               <p className="text-2xl font-light text-[#2C8C7C]">
                 {timeLeft.hours}h {timeLeft.minutes}m
               </p>
+
+              {/* Tooltip that appears to the top-right */}
+              <div
+                className="absolute top-0 left-full ml-3 -mt-10 w-96 bg-gray-900/90 dark:bg-gray-800/90 
+                  backdrop-blur-sm p-3 rounded-lg text-sm text-white shadow-lg
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+                  z-10 border border-[#2C8C7C]/30"
+              >
+                <p>
+                  POiT is designed as a one-way daily experience. Once you
+                  begin, you'll move through all three phases without returning.
+                </p>
+                <p className="mt-1 text-xs text-gray-300">
+                  In this beta version, the word set for pulse will not refresh
+                  daily.
+                </p>
+                <div
+                  className="absolute w-4 h-4 bg-gray-900/90 dark:bg-gray-800/90 transform rotate-45 
+                    left-0 top-12 -ml-2 border-l border-b border-[#2C8C7C]/30"
+                ></div>
+              </div>
             </motion.div>
 
             {/* Discord Icon Link */}
@@ -163,6 +207,12 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Onboarding Carousel */}
+      <OnboardingCarousel
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
 
       <VersionBadge />
     </div>
