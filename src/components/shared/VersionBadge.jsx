@@ -1,7 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
+import packageJson from "../../../package.json";
 
-const VersionBadge = ({ version = "0.9.0-beta.1" }) => {
+const VersionBadge = ({ version = packageJson.version }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
