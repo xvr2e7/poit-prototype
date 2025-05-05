@@ -5,6 +5,9 @@ import GrowingWordSelector from "./components/GrowingWordSelector";
 import Navigation from "../../shared/Navigation";
 import SelectedWordsModal from "./components/SelectedWordsModal";
 import { getTestWordStrings } from "../../../utils/testData/devTestData";
+import HelpModal from "../../shared/HelpModal";
+import { CircleHelp } from "lucide-react";
+import { motion } from "framer-motion";
 
 const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   const [selectedWords, setSelectedWords] = useState([]);
@@ -13,7 +16,20 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   const [showSelectedWords, setShowSelectedWords] = useState(false);
   const [availableWords, setAvailableWords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
   const wordPositionsRef = useRef(new Map());
+
+  // Check if user has seen tutorial before
+  useEffect(() => {
+    const tutorialKey = "hasSeenPulseTutorial";
+    const hasSeenBefore = localStorage.getItem(tutorialKey);
+
+    // Show tutorial automatically for first-time visitors
+    if (!hasSeenBefore) {
+      setTimeout(() => setShowHelp(true), 1000);
+      localStorage.setItem(tutorialKey, "true");
+    }
+  }, []);
 
   // Load saved words from localStorage on component mount
   useEffect(() => {
@@ -165,6 +181,31 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
         onSave={onSave}
         onExitToHome={onExitToHome}
         lastSaved={lastSaved}
+        onHelpClick={() => setShowHelp(true)}
+      />
+
+      {/* Help Button */}
+      <motion.button
+        onClick={() => setShowHelp(true)}
+        className="fixed left-6 bottom-6 z-50 p-2 rounded-lg 
+    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
+    hover:bg-white/10 transition-colors flex items-center justify-center"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          marginLeft: "12px",
+          width: "40px",
+          height: "40px",
+        }}
+      >
+        <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+      </motion.button>
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        mode="pulse"
       />
 
       {/* Main content */}

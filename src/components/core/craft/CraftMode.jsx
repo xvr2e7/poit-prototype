@@ -12,12 +12,14 @@ import {
   X,
   Grid,
   Pencil,
+  CircleHelp,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import TemplateGuide from "./components/TemplateGuide";
 import Navigation from "../../shared/Navigation";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import PoolWordsModal from "./components/PoolWordsModal";
+import HelpModal from "../../shared/HelpModal";
 
 const CraftMode = ({
   selectedWords = [],
@@ -41,10 +43,22 @@ const CraftMode = ({
   const [poemTitle, setPoemTitle] = useState("Today's Poem");
   const previewStartPosition = useRef({ x: 0, y: 0 });
   const [showPoolWordsModal, setShowPoolWordsModal] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // DOM refs
   const canvasRef = useRef(null);
   const wordsRef = useRef({});
+
+  useEffect(() => {
+    const tutorialKey = "hasSeenCraftTutorial";
+    const hasSeenBefore = localStorage.getItem(tutorialKey);
+
+    // Show tutorial automatically for first-time visitors
+    if (!hasSeenBefore) {
+      setTimeout(() => setShowHelp(true), 1000);
+      localStorage.setItem(tutorialKey, "true");
+    }
+  }, []);
 
   // Initialize pool words from selectedWords
   useEffect(() => {
@@ -650,6 +664,27 @@ const CraftMode = ({
           currentMode="craft"
           onExitToHome={onExitToHome}
           onSave={handleSave}
+          onHelpClick={() => setShowHelp(true)}
+        />
+
+        {/* Help Button */}
+        <motion.button
+          onClick={() => setShowHelp(true)}
+          className="fixed left-6 bottom-6 z-50 p-2 rounded-full
+    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
+    hover:bg-white/10 transition-colors flex items-center justify-center
+    h-[40px] w-[40px]"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+        </motion.button>
+
+        {/* Help Modal */}
+        <HelpModal
+          isOpen={showHelp}
+          onClose={() => setShowHelp(false)}
+          mode="craft"
         />
 
         {/* Left Sidebar - Word Pool */}
@@ -658,7 +693,7 @@ const CraftMode = ({
             className="h-full w-72 backdrop-blur-md bg-white/80 dark:bg-gray-950/80
             border-r border-[#2C8C7C]/10"
           >
-            <div className="h-20" /> {/* Spacing for logo */}
+            <div className="h-20" />
             <div
               className="p-2 space-y-1 overflow-y-auto"
               style={{ height: "calc(100% - 5rem)" }}
