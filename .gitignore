@@ -17,6 +17,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
 # logs
 npm-debug.log*
@@ -26,10 +27,15 @@ yarn-error.log*
 # server
 /server/node_modules
 /server/.env
+/server/.vercel
+/server/.env.production
 
 # Vite specific
 *.local
 .vite/
+
+# Vercel
+./server/.vercel/
 
 # Editor directories and files
 .vscode/*

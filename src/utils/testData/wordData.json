@@ -7,7 +7,7 @@
       "source": "wordnik_random"
     },
     {
-      "text": "fema",
+      "text": "egg",
       "type": "noun",
       "score": 800,
       "source": "wordnik_random"
@@ -43,8 +43,8 @@
       "source": "wordnik_random"
     },
     {
-      "text": "yet",
-      "type": "noun",
+      "text": "yellow",
+      "type": "adj",
       "score": 800,
       "source": "wordnik_random"
     },
@@ -79,7 +79,7 @@
       "source": "wordnik_random"
     },
     {
-      "text": "sparks",
+      "text": "crunch",
       "type": "verb",
       "score": 800,
       "source": "wordnik_random"
@@ -109,8 +109,8 @@
       "source": "wordnik_random"
     },
     {
-      "text": "collins",
-      "type": "noun",
+      "text": "collapse",
+      "type": "verb",
       "score": 800,
       "source": "wordnik_random"
     },
@@ -133,7 +133,7 @@
       "source": "wordnik_random"
     },
     {
-      "text": "markers",
+      "text": "mark",
       "type": "verb",
       "score": 800,
       "source": "wordnik_random"
@@ -193,7 +193,7 @@
       "source": "wordnik_random"
     },
     {
-      "text": "solves",
+      "text": "solve",
       "type": "verb",
       "score": 800,
       "source": "wordnik_random"
@@ -206,7 +206,7 @@
     },
     {
       "text": "minor",
-      "type": "verb",
+      "type": "adj",
       "score": 800,
       "source": "wordnik_random"
     },
@@ -218,19 +218,19 @@
     },
     {
       "text": "peep",
-      "type": "noun",
-      "score": 800,
-      "source": "wordnik_random"
-    },
-    {
-      "text": "bog",
       "type": "verb",
       "score": 800,
       "source": "wordnik_random"
     },
     {
-      "text": "impair",
+      "text": "bog",
       "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "impair",
+      "type": "verb",
       "score": 800,
       "source": "wordnik_random"
     },
@@ -279,25 +279,25 @@
     },
     {
       "text": "crab",
-      "type": "verb",
-      "score": 800,
-      "source": "wordnik_random"
-    },
-    {
-      "text": "cardinals",
       "type": "noun",
       "score": 800,
       "source": "wordnik_random"
     },
     {
-      "text": "vitro",
+      "text": "cardinal",
       "type": "noun",
       "score": 800,
       "source": "wordnik_random"
     },
     {
-      "text": "hi-tech",
-      "type": "adj",
+      "text": "vitrue",
+      "type": "noun",
+      "score": 800,
+      "source": "wordnik_random"
+    },
+    {
+      "text": "height",
+      "type": "noun",
       "score": 800,
       "source": "wordnik_random"
     }

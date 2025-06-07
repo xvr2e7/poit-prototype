@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ZoomIn, ZoomOut, LogOut } from "lucide-react";
+import { ZoomIn, ZoomOut, LogOut, CircleHelp } from "lucide-react";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
 import { usePoemNavigation } from "./hooks/usePoemNavigation";
 import NavigationNetworkButton from "./components/NavigationNetworkButton";
 import NavigationNetwork from "./components/NavigationNetwork";
+import HelpModal from "../../shared/HelpModal";
 
 const EchoMode = ({
   poems = [],
@@ -19,6 +20,18 @@ const EchoMode = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [connectingWord, setConnectingWord] = useState(null);
   const [isNetworkVisible, setIsNetworkVisible] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  useEffect(() => {
+    const tutorialKey = "hasSeenEchoTutorial";
+    const hasSeenBefore = localStorage.getItem(tutorialKey);
+
+    // Show tutorial automatically for first-time visitors
+    if (!hasSeenBefore) {
+      setTimeout(() => setShowHelp(true), 1000);
+      localStorage.setItem(tutorialKey, "true");
+    }
+  }, []);
 
   // Dragging state
   const [isDragging, setIsDragging] = useState(false);
@@ -306,6 +319,31 @@ const EchoMode = ({
         currentMode="echo"
         onExitToHome={onExitToHome}
         onSave={onSave}
+        onHelpClick={() => setShowHelp(true)}
+      />
+
+      {/* Help Button */}
+      <motion.button
+        onClick={() => setShowHelp(true)}
+        className="fixed left-6 bottom-6 z-50 p-2 rounded-lg 
+    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
+    hover:bg-white/10 transition-colors flex items-center justify-center"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          marginLeft: "12px",
+          width: "40px",
+          height: "40px",
+        }}
+      >
+        <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+      </motion.button>
+
+      {/* Help Modal */}
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        mode="echo"
       />
 
       {/* Main Content */}
