@@ -20,16 +20,12 @@ class PoetryDBService {
 
 class PoetsOrgService {
   constructor() {
-    const baseApiUrl =
-      window.location.hostname === "localhost" ? "http://localhost:5001" : "";
+    const baseApiUrl = import.meta.env.VITE_API_BASE_URL || "";
     this.baseUrl = `${baseApiUrl}/api/poetry/poetsorg`;
   }
 
   async getDailyPoem() {
     try {
-      console.log("Requesting daily poem");
-
-      // Use a timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
@@ -49,7 +45,6 @@ class PoetsOrgService {
         }
 
         const data = await response.json();
-        console.log("Response received", data);
 
         if (!data?.lines || data.lines.length === 0) {
           throw new Error("No poem found in response");
@@ -122,14 +117,7 @@ class CombinedPoetryService {
 
   async getDailyPoem() {
     try {
-      // Always use the direct fallback in production mode
-      if (window.location.hostname !== "localhost") {
-        return this.getFallbackPoem();
-      }
-
-      // Only make external requests in dev mode
       if (this.shouldRefreshDailyPoem()) {
-        // Try poetsorg
         const poetsorgPoem = await this.poetsorg.getDailyPoem();
 
         if (poetsorgPoem) {
@@ -153,12 +141,6 @@ class CombinedPoetryService {
   }
 
   async getFeedPoems(count = 10) {
-    if (window.location.hostname !== "localhost") {
-      // In production, just return 10 copies of the fallback poem
-      return Array(count).fill(this.getFallbackPoem());
-    }
-
-    // For feed, primarily use PoetryDB as it's better for bulk fetching
     const poems = await this.poetrydb.getRandomPoems(count);
     return poems.length > 0 ? poems : [this.getFallbackPoem()];
   }

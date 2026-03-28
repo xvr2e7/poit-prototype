@@ -35,7 +35,9 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
       localStorage.getItem("poit_total_constellations") || "0";
     const savedTodayConstellations =
       localStorage.getItem("poit_today_constellations") || "0";
-    const savedPoems = JSON.parse(localStorage.getItem("poit_poems") || "[]");
+    const savedPoems = JSON.parse(
+      localStorage.getItem("poit_poems_history") || "[]"
+    );
 
     setStreak(parseInt(savedStreak));
     setLongestStreak(parseInt(savedLongestStreak));
@@ -135,7 +137,7 @@ const MenuView = ({ onClose, onStartDaily, onViewHistory }) => {
   const handleSavePoem = (poem) => {
     const updatedPoems = [...poems, poem];
     setPoems(updatedPoems);
-    localStorage.setItem("poit_poems", JSON.stringify(updatedPoems));
+    localStorage.setItem("poit_poems_history", JSON.stringify(updatedPoems));
     setShowWriteAPoem(false);
   };
 

@@ -5,7 +5,6 @@ import MenuView from "./components/home/MenuView";
 import PulseMode from "./components/core/pulse/PulseMode";
 import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
-import { getTestWordStrings, getTestPoems } from "./utils/testData/devTestData";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import CookiePolicyPage from "./components/shared/CookiePolicyPage";
 
@@ -15,7 +14,6 @@ function App() {
   const [selectedWords, setSelectedWords] = useState([]);
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
-  const [isDevMode, setIsDevMode] = useState(true); // Always set to true
   const [showCookiePolicy, setShowCookiePolicy] = useState(false);
 
   // Save state
@@ -25,17 +23,12 @@ function App() {
   // Load saved data on initial render
   useEffect(() => {
     try {
-      // Always load test data
-      const testWords = getTestWordStrings();
-      const testPoems = getTestPoems();
+      const legacyPoems = localStorage.getItem("poit_poems");
+      const canonicalPoems = localStorage.getItem("poit_poems_history");
+      if (legacyPoems && !canonicalPoems) {
+        localStorage.setItem("poit_poems_history", legacyPoems);
+      }
 
-      setSelectedWords(testWords);
-      setPoemHistory(testPoems);
-      console.log(`- Loaded ${testWords.length} test words`);
-      console.log(`- Loaded ${testPoems.length} test poems`);
-    } catch (error) {
-      console.error("Failed to load test data:", error);
-      // Fall back to normal mode if test data fails
       const savedHistory = JSON.parse(
         localStorage.getItem("poit_poems_history") || "[]"
       );
@@ -49,7 +42,6 @@ function App() {
         localStorage.getItem("poit_daily_words") || "null"
       );
 
-      // Check if pulse has been explicitly completed
       const pulseCompleted =
         localStorage.getItem("poit_pulse_completed") === "true";
 
@@ -63,24 +55,22 @@ function App() {
       const today = new Date().toDateString();
 
       if (lastConstellationDate !== today) {
-        // Reset daily constellation count if it's a new day
         localStorage.setItem("poit_today_constellations", "0");
         localStorage.setItem("poit_constellation_date", today);
       }
 
       if (currentPoemData) {
-        // User has reached Echo mode
         setCurrentPoem(currentPoemData);
         if (dailyWords) setSelectedWords(dailyWords);
         setCurrentScreen("echo");
       } else if (dailyWords && pulseCompleted) {
-        // User has completed Pulse and explicitly continued to Craft
         setSelectedWords(dailyWords);
         setCurrentScreen("craft");
       } else if (pulseInProgress && pulseInProgress.length > 0) {
-        // User started but didn't complete Pulse
         setCurrentScreen("pulse");
       }
+    } catch (error) {
+      console.error("Failed to load saved state:", error);
     }
   }, []);
 
@@ -402,14 +392,9 @@ function App() {
       {currentScreen === "echo" && (
         <EchoMode
           poems={
-            isDevMode
-              ? currentPoem
-                ? [
-                    currentPoem,
-                    ...poemHistory.filter((p) => p.id !== currentPoem.id),
-                  ]
-                : poemHistory
-              : [currentPoem].filter(Boolean)
+            currentPoem
+              ? [currentPoem, ...poemHistory.filter((p) => p.id !== currentPoem.id)]
+              : poemHistory
           }
           wordPool={selectedWords}
           onComplete={handleEchoComplete}
