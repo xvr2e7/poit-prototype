@@ -83,8 +83,6 @@ const HomePage = ({ onStartDaily, onViewHistory }) => {
               <motion.div
                 className="relative w-[300px] h-[300px] flex items-center justify-center"
                 onClick={onStartDaily}
-                onMouseEnter={() => setLogoHovered(true)}
-                onMouseLeave={() => setLogoHovered(false)}
               >
                 {/* Animated concentric rings */}
                 <motion.div

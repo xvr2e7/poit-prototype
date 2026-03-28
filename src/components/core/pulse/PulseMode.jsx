@@ -39,7 +39,6 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
         try {
           const parsedWords = JSON.parse(savedWords);
           if (Array.isArray(parsedWords) && parsedWords.length > 0) {
-            console.log("Loaded saved words:", parsedWords);
             setSelectedWords(parsedWords);
           }
         } catch (error) {
@@ -63,7 +62,6 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
         "poit_daily_words_in_progress",
         JSON.stringify(selectedWords)
       );
-      console.log("Saved words to localStorage:", selectedWords);
     }
   }, [selectedWords]);
 
@@ -83,11 +81,39 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        // Always use dev test data
-        const testWords = getTestWordStrings().map((text) => ({ text }));
-        setAvailableWords(testWords);
+        const useTestData = import.meta.env.VITE_USE_TEST_DATA === "true";
+
+        if (useTestData) {
+          const testWords = getTestWordStrings().map((text) => ({ text }));
+          setAvailableWords(testWords);
+          return;
+        }
+
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const response = await fetch(`${apiBase}/api/words`, {
+          headers: {
+            "X-Timezone": timezone,
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch words: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const words = Array.isArray(payload.words) ? payload.words : [];
+
+        if (words.length === 0) {
+          throw new Error("Word API returned an empty list");
+        }
+
+        setAvailableWords(words);
       } catch (error) {
         console.error("Error in fetchWords:", error);
+        const fallbackWords = getTestWordStrings().map((text) => ({ text }));
+        setAvailableWords(fallbackWords);
       } finally {
         setIsLoading(false);
       }
