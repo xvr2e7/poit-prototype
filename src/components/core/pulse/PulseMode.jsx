@@ -5,8 +5,9 @@ import GrowingWordSelector from "./components/GrowingWordSelector";
 import Navigation from "../../shared/Navigation";
 import SelectedWordsModal from "./components/SelectedWordsModal";
 import { getTestWordStrings } from "../../../utils/testData/devTestData";
+import { API_URL } from "../../../utils/api";
 import HelpModal from "../../shared/HelpModal";
-import { CircleHelp } from "lucide-react";
+import { IconAsk } from "../../shared/icons";
 import { motion } from "framer-motion";
 
 const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
@@ -89,9 +90,8 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
           return;
         }
 
-        const apiBase = import.meta.env.VITE_API_BASE_URL || "";
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const response = await fetch(`${apiBase}/api/words`, {
+        const response = await fetch(`${API_URL}/words`, {
           headers: {
             "X-Timezone": timezone,
             Accept: "application/json",
@@ -194,7 +194,16 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
   if (isLoading) {
     return (
       <div className="w-full min-h-screen relative overflow-hidden flex items-center justify-center">
-        <div className="text-[#2C8C7C]">Loading words...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-2 border-seal/20 animate-ping" />
+            <div className="absolute inset-2 rounded-full border-2 border-seal/40 animate-pulse" />
+            <div className="absolute inset-4 rounded-full bg-seal/10 animate-pulse" />
+          </div>
+          <p className="text-label text-seal/70 animate-pulse">
+            gathering today&apos;s words…
+          </p>
+        </div>
       </div>
     );
   }
@@ -214,8 +223,8 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
       <motion.button
         onClick={() => setShowHelp(true)}
         className="fixed left-6 bottom-6 z-50 p-2 rounded-lg 
-    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
-    hover:bg-white/10 transition-colors flex items-center justify-center"
+    bg-surface/60 backdrop-blur-sm border border-seal/15
+    hover:bg-seal/10 transition-colors flex items-center justify-center"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         style={{
@@ -224,7 +233,7 @@ const PulseMode = ({ onComplete, onExitToHome, onSave, lastSaved }) => {
           height: "40px",
         }}
       >
-        <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+        <IconAsk className="w-5 h-5 text-seal" />
       </motion.button>
 
       {/* Help Modal */}

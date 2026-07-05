@@ -1,4 +1,5 @@
 const axios = require("axios");
+const poeticWords = require("../data/poeticWords.json");
 
 class DictionaryService {
   constructor() {
@@ -15,27 +16,41 @@ class DictionaryService {
   }
 
   initExclusionFilters() {
+    // Technical/unpoetic terms to hard-reject
+    const technicalTerms = new Set([
+      "pascal", "algorithm", "optimize", "optimizing", "compile", "compiler",
+      "boolean", "integer", "syntax", "binary", "debug", "malloc",
+      "bandwidth", "firmware", "ethernet", "pixel", "database", "server",
+      "markup", "stylesheet", "frontend", "backend", "middleware", "runtime",
+      "startup", "benchmark", "throughput", "scalable", "leverage",
+      "synergy", "stakeholder", "incentivize", "monetize", "capitalize",
+      "proactive", "streamline", "onboarding", "workflow", "outsource",
+      "rebrand", "upscale", "downsize", "franchise", "liquidate",
+      "amortize", "depreciate", "arbitrage", "collateral", "dividend",
+    ]);
+
     return {
-      // Only the most minimal filters for quality control
       sensitivePatterns: [
-        /^(?:fuck|shit|cunt|ass|bitch|nazi|rape|kill)/i, // Truly offensive terms
+        /^(?:fuck|shit|cunt|ass|bitch|nazi|rape|kill)/i,
       ],
 
       excludedDomains: [
-        // Only exclude extremely specific domains
         "trademark",
         "medical_condition",
         "slur",
         "medicine",
       ],
 
-      // Basic technical filters
+      technicalTerms,
+
       technicalFilters: [
-        (word) => word.length < 2 || word.length > 12, // Length constraints
-        (word) => /^[A-Z]/.test(word), // Proper nouns (capitalized)
-        (word) => /^[^a-zA-Z]/.test(word), // Non-letter starting
-        (word) => /'s$/.test(word), // Possessives
-        (word) => /[0-9]/.test(word), // Numbers
+        (word) => word.length < 3 || word.length > 12,
+        (word) => /^[A-Z]/.test(word),
+        (word) => /^[^a-zA-Z]/.test(word),
+        (word) => /'s$/.test(word),
+        (word) => /[0-9]/.test(word),
+        (word) => /[-–—]/.test(word), // Hyphenated words
+        (word) => technicalTerms.has(word.toLowerCase()),
       ],
     };
   }
@@ -111,17 +126,13 @@ class DictionaryService {
         const includePartOfSpeech =
           pos === "noun" ? "noun" : pos === "verb" ? "verb" : "adjective";
 
-        // Create random parameter variations to increase diversity
-        const minCorpusCount = [1000, 3000, 5000][
-          Math.floor(Math.random() * 3)
-        ];
         const request = this.wordnikApi.get("/words.json/randomWords", {
           params: {
             limit: requestCount,
             minLength: 3,
             maxLength: 10,
             includePartOfSpeech,
-            minCorpusCount,
+            minCorpusCount: 5000,
             hasDictionaryDef: true,
           },
         });
@@ -206,29 +217,48 @@ class DictionaryService {
     return posMap[pos.toLowerCase()] || null;
   }
 
+  async getDefinition(word) {
+    try {
+      const response = await this.wordnikApi.get(
+        `/word.json/${encodeURIComponent(word)}/definitions`,
+        { params: { limit: 1 } }
+      );
+      const def = response.data[0];
+      if (def) {
+        return {
+          word,
+          definition: def.text,
+          partOfSpeech: this.extractWordnikPOS(def.partOfSpeech) || null,
+        };
+      }
+      return { word, definition: null, partOfSpeech: null };
+    } catch (error) {
+      return { word, definition: null, partOfSpeech: null };
+    }
+  }
+
   getFallbackWord() {
-    // Absolute emergency fallback, but not themed
+    const nouns = poeticWords.noun;
+    const word = nouns[Math.floor(Math.random() * nouns.length)];
     return {
-      text: "random",
-      type: "adj",
+      text: word,
+      type: "noun",
       score: 500,
       source: "fallback",
     };
   }
 
   getEmergencyWords(count) {
-    // This is only used if all API calls fail - absolute minimum fallbacks
-    const emergency = [
-      { text: "knight", type: "noun", score: 500, source: "emergency" },
-      { text: "hornet", type: "noun", score: 500, source: "emergency" },
-      { text: "stroll", type: "verb", score: 500, source: "emergency" },
-      { text: "fox", type: "noun", score: 500, source: "emergency" },
-      { text: "quick", type: "adj", score: 500, source: "emergency" },
-      { text: "hollow", type: "adj", score: 500, source: "emergency" },
-    ];
+    const allWords = [];
+    for (const [pos, words] of Object.entries(poeticWords)) {
+      const type = pos === "adj" ? "adj" : pos;
+      for (const text of words) {
+        allWords.push({ text, type, score: 500, source: "emergency" });
+      }
+    }
 
-    // Return shuffled emergency words
-    return emergency.sort(() => Math.random() - 0.5).slice(0, count);
+    // Shuffle and return requested count
+    return allWords.sort(() => Math.random() - 0.5).slice(0, count);
   }
 }
 

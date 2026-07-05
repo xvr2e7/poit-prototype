@@ -1,5 +1,15 @@
 import React, { useEffect, useRef } from "react";
 
+// Canvas 2D can't resolve CSS variables, so read the seal token per draw.
+// Guides are the tool's marks, and the tool speaks in jade.
+const seal = (alpha) => {
+  const rgb =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--seal")
+      .trim() || "44 140 124";
+  return `rgb(${rgb} / ${alpha})`;
+};
+
 const TemplateGuide = ({ template, isActive = false, className = "" }) => {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -57,13 +67,6 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
       const margin = minDimension * 0.1; // 10% margin
       const lineHeight = Math.min(30, minDimension * 0.04);
       const lineSpacing = lineHeight * 0.8;
-
-      // Colors
-      const lineColor = "rgba(44, 140, 124, 0.15)";
-      const fillColor = "rgba(44, 140, 124, 0.03)";
-      const accentColor = "rgba(44, 140, 124, 0.2)";
-      const textColor = "rgba(44, 140, 124, 0.6)";
-      const titleColor = "rgba(44, 140, 124, 0.7)";
 
       switch (template) {
         case "sonnet":
@@ -259,13 +262,13 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
       ctx.clearRect(0, 0, width, height);
 
       // Draw template title
-      ctx.fillStyle = "rgba(44, 140, 124, 0.7)";
-      ctx.font = "bold 20px -apple-system, system-ui, sans-serif";
+      ctx.fillStyle = seal(0.7);
+      ctx.font = "bold 20px 'Space Mono', monospace";
       ctx.fillText(info.title, 20, 35);
 
       // Draw subtitle/description
-      ctx.fillStyle = "rgba(44, 140, 124, 0.5)";
-      ctx.font = "14px -apple-system, system-ui, sans-serif";
+      ctx.fillStyle = seal(0.5);
+      ctx.font = "14px 'Space Mono', monospace";
       ctx.fillText(info.description, 20, 60);
 
       // Draw the lines - simple boxes for each line/row
@@ -273,11 +276,11 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
         const yOffset = Math.sin(timeRef.current + i * 0.5) * 0.5;
 
         // Fill background
-        ctx.fillStyle = "rgba(44, 140, 124, 0.03)";
+        ctx.fillStyle = seal(0.03);
         ctx.fillRect(line.x, line.y + yOffset, line.width, line.height);
 
         // Draw border
-        ctx.strokeStyle = "rgba(44, 140, 124, 0.15)";
+        ctx.strokeStyle = seal(0.15);
         ctx.setLineDash([4, 4]);
         ctx.lineWidth = 1;
         ctx.strokeRect(line.x, line.y + yOffset, line.width, line.height);
@@ -290,12 +293,12 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
           margin +
           8 * (lines[0].height + (lines[1].y - lines[0].y - lines[0].height)) -
           (lines[1].y - lines[0].y - lines[0].height) / 2;
-        ctx.fillStyle = "rgba(44, 140, 124, 0.2)";
+        ctx.fillStyle = seal(0.2);
         ctx.fillRect(margin, voltaY, width - margin * 2, 1);
 
         // Label octave and sestet
-        ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-        ctx.font = "12px -apple-system, system-ui, sans-serif";
+        ctx.fillStyle = seal(0.6);
+        ctx.font = "12px 'Space Mono', monospace";
         ctx.fillText("Octave", margin, margin - 10);
         ctx.fillText("Sestet", margin, voltaY + 15);
 
@@ -320,14 +323,14 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
           if (i >= lines.length) return;
           const y = lines[i].y + lines[i].height / 2;
 
-          ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-          ctx.font = "10px -apple-system, system-ui, sans-serif";
+          ctx.fillStyle = seal(0.6);
+          ctx.font = "10px 'Space Mono', monospace";
           ctx.fillText(rhyme, width - margin + 10, y);
         });
       } else if (template === "haiku") {
         // Draw syllable counts
-        ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-        ctx.font = "12px -apple-system, system-ui, sans-serif";
+        ctx.fillStyle = seal(0.6);
+        ctx.font = "12px 'Space Mono', monospace";
 
         lines.forEach((line, i) => {
           if (line.syllables) {
@@ -340,8 +343,8 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
         });
       } else if (template === "limerick") {
         // Draw rhyme scheme
-        ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-        ctx.font = "12px -apple-system, system-ui, sans-serif";
+        ctx.fillStyle = seal(0.6);
+        ctx.font = "12px 'Space Mono', monospace";
 
         const rhymes = ["A", "A", "B", "B", "A"];
         rhymes.forEach((rhyme, i) => {
@@ -351,8 +354,8 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
         });
       } else if (template === "tanka") {
         // Draw syllable counts
-        ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-        ctx.font = "12px -apple-system, system-ui, sans-serif";
+        ctx.fillStyle = seal(0.6);
+        ctx.font = "12px 'Space Mono', monospace";
 
         const syllables = [5, 7, 5, 7, 7];
         syllables.forEach((count, i) => {
@@ -362,7 +365,7 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
         });
 
         // Show the connection to haiku in the first 3 lines
-        ctx.fillStyle = "rgba(44, 140, 124, 0.2)";
+        ctx.fillStyle = seal(0.2);
         ctx.fillRect(
           margin - 8,
           margin,
@@ -372,8 +375,8 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
         );
 
         // Label sections
-        ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-        ctx.font = "12px -apple-system, system-ui, sans-serif";
+        ctx.fillStyle = seal(0.6);
+        ctx.font = "12px 'Space Mono', monospace";
         const haikuMiddle = margin + 1.5 * (lines[1].y - lines[0].y);
         ctx.fillText("Haiku", margin - 50, haikuMiddle);
 
@@ -391,7 +394,7 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
               : startY + lines[i * 2].height;
 
           // Draw bracket for each couplet
-          ctx.strokeStyle = "rgba(44, 140, 124, 0.2)";
+          ctx.strokeStyle = seal(0.2);
           ctx.lineWidth = 1;
           ctx.setLineDash([]);
           ctx.beginPath();
@@ -407,12 +410,12 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
           const startY = lines[2].y;
           const endY = lines[5].y + lines[5].height;
 
-          ctx.fillStyle = "rgba(44, 140, 124, 0.2)";
+          ctx.fillStyle = seal(0.2);
           ctx.fillRect(margin - 20, startY, 3, endY - startY);
 
           // Label the sections
-          ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-          ctx.font = "12px -apple-system, system-ui, sans-serif";
+          ctx.fillStyle = seal(0.6);
+          ctx.font = "12px 'Space Mono', monospace";
 
           ctx.fillText(
             "Opening",
@@ -444,7 +447,7 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
                 : startY + lines[i * 2].height;
 
             // Draw bracket for each couplet
-            ctx.strokeStyle = "rgba(44, 140, 124, 0.2)";
+            ctx.strokeStyle = seal(0.2);
             ctx.lineWidth = 1;
             ctx.setLineDash([]);
             ctx.beginPath();
@@ -459,7 +462,7 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
           for (let i = 0; i < coupletCount; i++) {
             // First couplet - both lines have refrain
             if (i === 0 && lines.length >= 2) {
-              ctx.fillStyle = "rgba(44, 140, 124, 0.2)";
+              ctx.fillStyle = seal(0.2);
               ctx.fillRect(
                 width - margin - 40,
                 lines[0].y + lines[0].height / 2 - 2,
@@ -474,7 +477,7 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
               );
             } else if (i * 2 + 1 < lines.length) {
               // Other couplets - only second line has refrain
-              ctx.fillStyle = "rgba(44, 140, 124, 0.2)";
+              ctx.fillStyle = seal(0.2);
               ctx.fillRect(
                 width - margin - 40,
                 lines[i * 2 + 1].y + lines[i * 2 + 1].height / 2 - 2,
@@ -485,8 +488,8 @@ const TemplateGuide = ({ template, isActive = false, className = "" }) => {
           }
 
           // Label sections
-          ctx.fillStyle = "rgba(44, 140, 124, 0.6)";
-          ctx.font = "12px -apple-system, system-ui, sans-serif";
+          ctx.fillStyle = seal(0.6);
+          ctx.font = "12px 'Space Mono', monospace";
           ctx.fillText("Matlaa", margin - 50, lines[0].y + lines[0].height);
           ctx.fillText(
             "Refrains →",

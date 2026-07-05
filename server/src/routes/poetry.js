@@ -41,37 +41,61 @@ const getFallbackPoem = () => ({
 const parsePoetsOrgPoem = (html) => {
   const $ = cheerio.load(html);
 
+  // Title: in .daily-poem__poem-title h3 a, or data-poem-title attribute
   const title =
-    $("h1.c-hdgSans").first().text().trim() ||
+    $(".daily-poem__poem-title h3 a").first().text().trim() ||
+    $("article[data-poem-title]").first().attr("data-poem-title") ||
     $("h1").first().text().trim() ||
     "Untitled";
 
+  // Author: itemprop="name" link or any link to /poet/
   const author =
-    $(".field--name-field-poem-author a").first().text().trim() ||
+    $('a[itemprop="name"]').first().text().trim() ||
     $("a[href*='/poet/']").first().text().trim() ||
     "Unknown";
 
-  const poemContainer =
-    $(".field--name-body .field__item").first() ||
-    $(".o-poem").first() ||
-    $("article").first();
+  // Poem body: .field.field--body contains <p> with <span class="long-line"> and <br>
+  const poemBody = $(".field.field--body").first();
 
   const extractedLines = [];
-  poemContainer.find("p, div, br").each((_, element) => {
-    if (element.tagName === "br") {
-      extractedLines.push("");
-      return;
-    }
 
-    const text = $(element).text().trim();
-    if (text) {
-      extractedLines.push(text);
-    }
-  });
+  if (poemBody.length) {
+    // Each <p> is a stanza; lines within are separated by <br>
+    poemBody.find("p").each((stanzaIdx, p) => {
+      if (stanzaIdx > 0) extractedLines.push(""); // blank line between stanzas
+
+      // Get the inner HTML and split on <br> tags
+      const innerHtml = $(p).html() || "";
+      const lineParts = innerHtml.split(/<br\s*\/?>/i);
+
+      for (const part of lineParts) {
+        // Strip HTML tags, decode entities, and trim
+        const text = cheerio.load(part).text().trim();
+        if (text) extractedLines.push(text);
+      }
+    });
+  }
+
+  // Fallback: try older selectors
+  if (extractedLines.length === 0) {
+    const fallbackContainer =
+      $(".field--name-body .field__item").first() ||
+      $(".o-poem").first() ||
+      $("article").first();
+
+    fallbackContainer.find("p, div, br").each((_, element) => {
+      if (element.tagName === "br") {
+        extractedLines.push("");
+        return;
+      }
+      const text = $(element).text().trim();
+      if (text) extractedLines.push(text);
+    });
+  }
 
   const lines = extractedLines.length
     ? extractedLines
-    : poemContainer
+    : poemBody
         .text()
         .split("\n")
         .map((line) => line.trim())

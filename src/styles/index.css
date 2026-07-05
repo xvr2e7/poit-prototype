@@ -2,20 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * POiT — "Two Inks"
+ * The poem is written in ink; the tool speaks in jade, the collector's seal.
+ * Day is paper, night is lampblack.
+ */
+:root {
+  --paper: 244 239 228;   /* warm xuan paper       #F4EFE4 */
+  --surface: 250 246 237; /* a fresh leaf, raised  #FAF6ED */
+  --ink: 41 35 23;        /* warm sepia-black      #292317 */
+  --seal: 44 140 124;     /* jade                  #2C8C7C */
+}
+
+.dark {
+  --paper: 24 21 17;      /* lampblack             #181511 */
+  --surface: 33 29 23;    /* raised lampblack      #211D17 */
+  --ink: 240 234 221;     /* bone                  #F0EADD */
+  --seal: 82 185 166;     /* jade by lamplight     #52B9A6 */
+}
+
 body {
-  font-family: 'Space Mono', monospace;
+  font-family: "Spectral", Georgia, serif;
+  color: rgb(var(--ink));
+  background-color: rgb(var(--paper));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure scrolling is smooth */
 html {
   scroll-behavior: smooth;
 }
 
-/* Ensure dark mode transitions are smooth */
+/* Theme changes glide; everything else stays immediate */
 * {
   transition-property: background-color, border-color, color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+/* The seal never loses the keyboard */
+:focus-visible {
+  outline: 2px solid rgb(var(--seal) / 0.7);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: rgb(var(--seal) / 0.22);
+}
+
+/* Laid paper: faint chain lines, like handmade sheets */
+.bg-laid {
+  background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 27px,
+      rgb(var(--ink) / 0.035) 27px,
+      rgb(var(--ink) / 0.035) 28px
+    ),
+    radial-gradient(
+      ellipse 120% 90% at 50% -20%,
+      rgb(var(--ink) / 0.02),
+      transparent 60%
+    );
+}
+
+/* Apparatus voice: small mono caption used by the tool's chrome */
+.text-label {
+  font-family: "Space Mono", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Quiet scrollbars on paper */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ink) / 0.2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--ink) / 0.18);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

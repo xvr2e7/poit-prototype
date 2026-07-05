@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { IconClose } from "../../../shared/icons";
 
 const SelectedWordsModal = ({
   isOpen,
@@ -48,7 +48,7 @@ const SelectedWordsModal = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center 
-            bg-black/30 backdrop-blur-sm p-6"
+            bg-ink/25 backdrop-blur-sm p-6"
           onClick={onClose}
         >
           <motion.div
@@ -56,36 +56,36 @@ const SelectedWordsModal = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-4xl 
-              shadow-xl overflow-hidden"
+            className="bg-surface rounded-xl w-full max-w-4xl 
+              shadow-leaf dark:shadow-leaf-dark border border-ink/10 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div
-              className="px-8 py-5 border-b border-[#2C8C7C]/10 
+              className="px-8 py-5 border-b border-seal/10 
               flex items-center justify-between"
             >
               <div>
-                <h3 className="text-xl font-medium text-[#2C8C7C]">
-                  Selected Words
+                <h3 className="font-serif text-xl font-medium text-ink">
+                  Your lexicon
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {selectedWords.length} of {maxWords} words selected
+                <p className="font-mono text-xs text-ink/45 mt-1">
+                  {selectedWords.length} of {maxWords} words gathered
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 
-                  text-gray-500 transition-colors"
+                className="p-2 rounded-lg hover:bg-seal/10 
+                  text-ink/40 hover:text-ink/70 transition-colors"
               >
-                <X size={20} />
+                <IconClose size={20} />
               </button>
             </div>
 
             {/* Word list */}
             <div className="px-8 py-6 max-h-[60vh] overflow-y-auto">
               {selectedWords.length > 0 ? (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {selectedWords.map((word, index) => (
                     <motion.div
                       key={index}
@@ -93,10 +93,10 @@ const SelectedWordsModal = ({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.03 }}
                       className="flex items-center justify-between p-3 
-                        bg-[#2C8C7C]/5 rounded-lg group hover:bg-[#2C8C7C]/10
+                        bg-seal/5 rounded-lg group hover:bg-seal/10
                         transition-colors"
                     >
-                      <span className="text-gray-700 dark:text-gray-300">
+                      <span className="font-serif text-lg text-ink/85">
                         {word}
                       </span>
                       <button
@@ -105,29 +105,28 @@ const SelectedWordsModal = ({
                           onRemoveWord(word);
                         }}
                         className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full
-                          hover:bg-[#2C8C7C]/20 text-gray-400 hover:text-gray-600
-                          dark:text-gray-500 dark:hover:text-gray-300
+                          hover:bg-seal/20 text-ink/35 hover:text-seal
                           transition-all"
                         aria-label={`Remove ${word}`}
                       >
-                        <X size={16} />
+                        <IconClose size={16} />
                       </button>
                     </motion.div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  No words selected yet
+                <div className="text-center py-12 font-serif italic text-ink/40">
+                  No words gathered yet
                 </div>
               )}
             </div>
 
             {/* Footer with status and actions */}
             <div
-              className="px-8 py-4 border-t border-[#2C8C7C]/10 
-              bg-[#2C8C7C]/5 flex items-center justify-between"
+              className="px-8 py-4 border-t border-seal/10 
+              bg-seal/5 flex items-center justify-between"
             >
-              <p className="text-sm text-[#2C8C7C]">{getMessage()}</p>
+              <p className="font-mono text-xs text-seal/80">{getMessage()}</p>
 
               {/* Show continue button if enough words are selected and onContinue is provided */}
               {selectedWords.length >= minWords && onContinue && (
@@ -138,8 +137,8 @@ const SelectedWordsModal = ({
                     e.stopPropagation();
                     onContinue();
                   }}
-                  className="px-6 py-2 bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
-                    text-white rounded-lg shadow-sm transition-colors"
+                  className="px-6 py-2 bg-seal hover:bg-seal/90 
+                    text-paper font-mono text-xs tracking-wide rounded-lg transition-colors"
                 >
                   Continue to Craft
                 </motion.button>

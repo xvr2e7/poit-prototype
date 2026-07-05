@@ -88,7 +88,7 @@ const DynamicLogo = ({ size = "large", animate = true, onClick }) => {
           className="absolute inset-0 rounded-full opacity-30 -z-10"
           style={{
             background:
-              "radial-gradient(circle, rgba(44,140,124,0.2) 0%, rgba(44,140,124,0) 70%)",
+              "radial-gradient(circle, rgb(var(--seal) / 0.25) 0%, rgb(var(--seal) / 0) 70%)",
           }}
           animate={{
             scale: [1, 1.05, 1],

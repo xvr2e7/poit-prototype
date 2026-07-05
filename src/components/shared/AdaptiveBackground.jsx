@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { IconMonitor, IconMoon, IconSun } from "./icons";
 
 // Create theme context
 const ThemeContext = createContext();
@@ -64,21 +64,21 @@ export const ThemeToggle = () => {
   const { theme, setTheme } = useContext(ThemeContext);
 
   const options = [
-    { value: "light", icon: Sun },
-    { value: "system", icon: Monitor },
-    { value: "dark", icon: Moon },
+    { value: "light", icon: IconSun },
+    { value: "system", icon: IconMonitor },
+    { value: "dark", icon: IconMoon },
   ];
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex gap-1 p-1 rounded-lg bg-white/10 dark:bg-gray-800/10 backdrop-blur-sm border border-white/20">
+    <div className="fixed top-4 right-4 z-50 flex gap-1 p-1 rounded-lg bg-surface/60 backdrop-blur-sm border border-ink/10">
       {options.map(({ value, icon: Icon }) => (
         <button
           key={value}
           onClick={() => setTheme(value)}
           className={`p-2 rounded-md transition-colors ${
             theme === value
-              ? "bg-white/20 text-black dark:text-white"
-              : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
+              ? "bg-seal/10 text-seal"
+              : "text-ink/40 hover:text-ink/70"
           }`}
         >
           <Icon size={20} />
@@ -88,18 +88,9 @@ export const ThemeToggle = () => {
   );
 };
 
-// Background component
+// Background component — a sheet of laid paper by day, lampblack by night
 export const AdaptiveBackground = () => (
-  <div
-    className="fixed inset-0 transition-colors duration-500
-    bg-gradient-to-b from-blue-50 to-blue-100 
-    dark:from-gray-900 dark:to-blue-950"
-  >
-    <div
-      className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.2),rgba(255,255,255,0))] 
-      dark:bg-[radial-gradient(circle_at_50%_120%,rgba(36,0,70,0.4),rgba(0,0,0,0))]"
-    />
-  </div>
+  <div className="fixed inset-0 transition-colors duration-500 bg-paper bg-laid" />
 );
 
 export default AdaptiveBackground;

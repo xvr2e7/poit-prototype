@@ -80,7 +80,7 @@ const WordComponent = ({
         <div
           className={`absolute inset-0 rounded-lg opacity-0 
           ${isInteractive ? "group-hover:opacity-100" : ""}
-          bg-[#2C8C7C]/5 dark:bg-[#2C8C7C]/10
+          bg-seal/5 dark:bg-seal/10
           transition-all duration-300`}
         />
 
@@ -92,7 +92,7 @@ const WordComponent = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="absolute inset-0 bg-gradient-radial from-[#2C8C7C]/5 to-transparent opacity-50" />
+            <div className="absolute inset-0 bg-gradient-radial from-seal/5 to-transparent opacity-50" />
           </motion.div>
         )}
 
@@ -106,7 +106,7 @@ const WordComponent = ({
               transition={{ duration: 0.5 }}
               style={{
                 background:
-                  "radial-gradient(circle at center, rgba(44, 140, 124, 0.25) 0%, rgba(44, 140, 124, 0.15) 50%, rgba(44, 140, 124, 0.05) 70%, transparent 100%)",
+                  "radial-gradient(circle at center, rgb(var(--seal) / 0.22) 0%, rgb(var(--seal) / 0.12) 50%, rgb(var(--seal) / 0.04) 70%, transparent 100%)",
               }}
             />
             <motion.div
@@ -115,9 +115,9 @@ const WordComponent = ({
               animate={{
                 opacity: [0.3, 0.6, 0.3],
                 boxShadow: [
-                  "0 0 8px 2px rgba(44, 140, 124, 0.2)",
-                  "0 0 12px 4px rgba(44, 140, 124, 0.3)",
-                  "0 0 8px 2px rgba(44, 140, 124, 0.2)",
+                  "0 0 8px 2px rgb(var(--seal) / 0.25)",
+                  "0 0 12px 4px rgb(var(--seal) / 0.35)",
+                  "0 0 8px 2px rgb(var(--seal) / 0.25)",
                 ],
               }}
               transition={{
@@ -144,7 +144,7 @@ const WordComponent = ({
             style={{
               background: `radial-gradient(
                 circle at center,
-                rgba(44, 140, 124, ${0.1 + glowIntensity * 0.2}) 0%,
+                rgb(var(--seal) / ${0.1 + glowIntensity * 0.2}) 0%,
                 transparent 70%
               )`,
             }}
@@ -158,17 +158,17 @@ const WordComponent = ({
             transition-all duration-500 ease-out
             ${
               isHighlighted
-                ? "text-[#2C8C7C] dark:text-[#2C8C7C]"
-                : "text-gray-600 dark:text-gray-300"
+                ? "text-seal dark:text-seal"
+                : "text-ink/75"
             }
             ${
               isInteractive
-                ? "group-hover:text-[#2C8C7C] dark:group-hover:text-[#2C8C7C]"
+                ? "group-hover:text-seal dark:group-hover:text-seal"
                 : ""
             }
             ${
               isConnectingWord
-                ? "font-medium text-[#2C8C7C] dark:text-[#2C8C7C]"
+                ? "font-medium text-seal dark:text-seal"
                 : ""
             }
             hover:tracking-wide tracking-normal
@@ -179,7 +179,7 @@ const WordComponent = ({
 
         <div
           className={`absolute bottom-0 left-0 right-0 h-px 
-          bg-[#2C8C7C]/0 ${isInteractive ? "group-hover:bg-[#2C8C7C]/20" : ""}
+          bg-seal/0 ${isInteractive ? "group-hover:bg-seal/20" : ""}
           transition-all duration-300`}
         />
 
@@ -192,7 +192,7 @@ const WordComponent = ({
             {[...Array(3)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-0.5 h-0.5 rounded-full bg-[#2C8C7C]/40"
+                className="absolute w-0.5 h-0.5 rounded-full bg-seal/40"
                 style={{
                   left: `${50 + Math.cos((i * Math.PI * 2) / 3) * 15}%`,
                   top: `${50 + Math.sin((i * Math.PI * 2) / 3) * 15}%`,
@@ -224,6 +224,7 @@ const WordDisplay = ({
   isFloating = false,
   className = "",
   connectingWord = null,
+  poemSource = null,
 }) => {
   const highlightedWordSet = useMemo(
     () => new Set(highlightedWords.map((w) => w.toLowerCase())),
@@ -231,7 +232,7 @@ const WordDisplay = ({
   );
 
   return (
-    <div className={`relative w-full h-full ${className}`}>
+    <div className={`relative w-full h-full font-serif ${className}`}>
       <AnimatePresence mode="sync">
         {words.map((word) => (
           <WordComponent
