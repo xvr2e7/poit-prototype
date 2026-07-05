@@ -2,6 +2,7 @@ const express = require("express");
 
 const WordService = require("../services/wordService");
 const dailyWordStore = require("../services/dailyWordStore");
+const dictionaryService = require("../services/dictionaryService");
 
 const router = express.Router();
 
@@ -95,6 +96,19 @@ router.post("/refresh", async (req, res) => {
     return res.status(500).json({
       message: "Failed to refresh daily words",
       details: error.message,
+    });
+  }
+});
+
+router.get("/define/:word", async (req, res) => {
+  try {
+    const result = await dictionaryService.getDefinition(req.params.word);
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      word: req.params.word,
+      definition: null,
+      partOfSpeech: null,
     });
   }
 });

@@ -13,7 +13,7 @@ const LoadingAnimation = () => (
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="w-2 h-2 rounded-full bg-[#2C8C7C]/30"
+          className="w-2 h-2 rounded-full bg-seal/30"
           animate={{
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.7, 0.3],
@@ -53,7 +53,8 @@ const DailyPoemPanel = () => {
   return (
     <div className="flex-1 flex flex-col">
       <div
-        className="flex-1 mx-12 mt-6 mb-12 rounded-2xl relative overflow-hidden"
+        className="flex-1 mx-4 md:mx-12 mt-6 mb-12 rounded-2xl relative overflow-hidden
+          bg-surface/70 border border-ink/10"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
@@ -83,10 +84,7 @@ const DailyPoemPanel = () => {
                         delay: i * 0.5,
                       }}
                     >
-                      <h2
-                        className="text-lg font-light text-gray-600/90 dark:text-gray-400/90"
-                        style={{ fontFamily: "Space Mono, monospace" }}
-                      >
+                      <h2 className="font-serif text-lg font-light leading-relaxed text-ink/75">
                         {line}
                       </h2>
                     </motion.div>
@@ -96,7 +94,7 @@ const DailyPoemPanel = () => {
 
               {/* Metadata section */}
               <motion.div
-                className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0f172a]"
+                className="absolute bottom-0 left-0 right-0 bg-surface border-t border-ink/10"
                 animate={{
                   opacity: isHovering ? 0.1 : 1,
                 }}
@@ -106,10 +104,10 @@ const DailyPoemPanel = () => {
                 }}
               >
                 <div className="py-4 px-5">
-                  <h3 className="text-base font-normal text-gray-800 dark:text-gray-200">
+                  <h3 className="font-serif text-base text-ink">
                     {poem?.title}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="font-mono text-xs text-ink/50 mt-1">
                     by {poem?.author}
                   </p>
                   {/* <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">

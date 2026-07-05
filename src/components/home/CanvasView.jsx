@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
-  Type,
-  PenTool,
-  Hash,
-  Grid,
-  RotateCcw,
-  BookMarked,
-  ZoomIn,
-  ZoomOut,
-  Pencil,
-} from "lucide-react";
+  IconClose,
+  IconGrid,
+  IconHash,
+  IconNib,
+  IconPencil,
+  IconPoemlet,
+  IconRetry,
+  IconType,
+  IconZoomIn,
+  IconZoomOut,
+} from "../shared/icons";
 
 const CanvasView = ({ onBack, words, onSavePoem }) => {
   // CANVAS WORDS STATE
@@ -334,13 +334,13 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
       case "grid":
         return {
           backgroundImage:
-            "linear-gradient(to right, rgba(44, 140, 124, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.05) 1px, transparent 1px)",
+            "linear-gradient(to right, rgb(var(--ink) / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--ink) / 0.05) 1px, transparent 1px)",
           backgroundSize: "40px 40px",
         };
       case "dots":
         return {
           backgroundImage:
-            "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+            "radial-gradient(rgb(var(--ink) / 0.1) 1px, transparent 1px)",
           backgroundSize: "20px 20px",
         };
       case "waves":
@@ -352,17 +352,17 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-surface z-50 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-[#2C8C7C]/20 flex justify-between items-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+      <div className="p-4 border-b border-seal/20 flex justify-between items-center bg-surface backdrop-blur-sm">
         <div className="flex-1">
           <input
             type="text"
             value={poemTitle}
             onChange={(e) => setPoemTitle(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-transparent border-b border-[#2C8C7C]/40 
-              text-gray-800 dark:text-white text-lg font-medium
-              focus:outline-none focus:border-[#2C8C7C]"
+            className="px-3 py-1.5 rounded-lg bg-transparent border-b border-seal/40 
+              text-ink/85 text-lg font-medium
+              focus:outline-none focus:border-seal"
             placeholder="Enter poem title..."
           />
         </div>
@@ -372,33 +372,33 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
           <div className="flex items-center gap-2">
             <motion.button
               onClick={() => setZoomLevel((prev) => Math.max(0.5, prev - 0.1))}
-              className="p-1.5 rounded-full bg-white/10 dark:bg-gray-900/30 
-                backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20"
+              className="p-1.5 rounded-full bg-surface 
+                backdrop-blur-sm border border-seal/20 hover:bg-seal/10"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <ZoomOut className="w-4 h-4 text-[#2C8C7C]" />
+              <IconZoomOut className="w-4 h-4 text-seal" />
             </motion.button>
 
-            <span className="text-xs px-2 py-1 rounded bg-white/10 dark:bg-gray-900/20 text-[#2C8C7C]">
+            <span className="text-xs px-2 py-1 rounded bg-surface text-seal">
               {Math.round(zoomLevel * 100)}%
             </span>
 
             <motion.button
               onClick={() => setZoomLevel((prev) => Math.min(2.5, prev + 0.1))}
-              className="p-1.5 rounded-full bg-white/10 dark:bg-gray-900/30 
-                backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20"
+              className="p-1.5 rounded-full bg-surface 
+                backdrop-blur-sm border border-seal/20 hover:bg-seal/10"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <ZoomIn className="w-4 h-4 text-[#2C8C7C]" />
+              <IconZoomIn className="w-4 h-4 text-seal" />
             </motion.button>
           </div>
 
           <motion.button
             onClick={() => setShowPreview(true)}
-            className="px-4 py-1.5 rounded-lg bg-[#2C8C7C]/10 
-              hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-seal/10 
+              hover:bg-seal/20 text-seal transition-colors"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
@@ -407,8 +407,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
           <motion.button
             onClick={handleSavePoem}
-            className="px-4 py-1.5 rounded-lg bg-[#2C8C7C] 
-              hover:bg-[#2C8C7C]/90 text-white transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-seal 
+              hover:bg-seal/90 text-paper transition-colors"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
@@ -417,11 +417,11 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
           <motion.button
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+            className="p-2 rounded-lg hover:bg-seal/10 text-seal"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <X className="w-5 h-5" />
+            <IconClose className="w-5 h-5" />
           </motion.button>
         </div>
       </div>
@@ -430,8 +430,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
         {/* Left Toolbar */}
         <div className="relative">
           <div
-            className="h-full w-20 backdrop-blur-md bg-white/5 dark:bg-gray-900/5 
-            border-r border-[#2C8C7C]/10 flex flex-col"
+            className="h-full w-20 backdrop-blur-md bg-surface 
+            border-r border-seal/10 flex flex-col"
           >
             <div className="h-full p-4 flex flex-col">
               {/* Main tools */}
@@ -439,21 +439,21 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                 <div className="flex flex-col gap-5">
                   <motion.button
                     onClick={handleCapitalizationChange}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     disabled={!selectedWordId}
                   >
-                    <Type className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconType className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg z-10"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Capitalization (C)
                       </span>
                     </div>
@@ -461,20 +461,20 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
                   <motion.button
                     onClick={() => togglePanel("punctuation")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <PenTool className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconNib className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg z-10"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Punctuation (P)
                       </span>
                     </div>
@@ -482,20 +482,20 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
                   <motion.button
                     onClick={() => togglePanel("common")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Hash className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconHash className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg z-10"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Common Words (F)
                       </span>
                     </div>
@@ -504,20 +504,20 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                   {/* Canvas Pattern Tool */}
                   <motion.button
                     onClick={() => togglePanel("canvas")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Grid className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconGrid className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg z-10"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Canvas Pattern (B)
                       </span>
                     </div>
@@ -527,24 +527,24 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
               {/* Action Tools */}
               <div>
-                <div className="w-full h-px bg-[#2C8C7C]/10 mb-3" />
+                <div className="w-full h-px bg-seal/10 mb-3" />
 
                 <motion.button
                   onClick={() => setShowResetConfirm(true)}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                    border border-[#2C8C7C]/30 transition-all duration-300
+                  className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                    border border-seal/30 transition-all duration-300
                     group relative mb-3"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <RotateCcw className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <IconRetry className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                   <div
                     className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    bg-surface border border-seal/20 rounded-lg
                     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                     pointer-events-none px-3 py-2 shadow-lg z-10"
                   >
-                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                    <span className="text-sm text-seal whitespace-nowrap font-medium">
                       Reset Canvas (R)
                     </span>
                   </div>
@@ -552,20 +552,20 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
                 <motion.button
                   onClick={() => setShowPreview(true)}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                    border border-[#2C8C7C]/30 transition-all duration-300
+                  className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                    border border-seal/30 transition-all duration-300
                     group relative"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <BookMarked className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <IconPoemlet className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                   <div
                     className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    bg-surface border border-seal/20 rounded-lg
                     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                     pointer-events-none px-3 py-2 shadow-lg z-10"
                   >
-                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                    <span className="text-sm text-seal whitespace-nowrap font-medium">
                       Preview Poem
                     </span>
                   </div>
@@ -586,7 +586,7 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
           {/* Instruction text */}
           <div
             className="absolute bottom-6 left-1/2 transform -translate-x-1/2 
-            text-xs text-gray-500 bg-white/50 dark:bg-black/30 px-2 py-1 rounded-full
+            text-xs text-ink/50 bg-surface/70 dark:bg-ink/25 px-2 py-1 rounded-full
             pointer-events-none backdrop-blur-sm"
           >
             Drag to move words • Double-click to remove • Ctrl+Wheel to zoom •
@@ -609,23 +609,23 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                     <path
                       d="M0,50 C20,40 30,60 50,50 C70,40 80,60 100,50 C120,40 130,60 150,50 C170,40 180,60 200,50"
                       fill="none"
-                      stroke="rgba(44, 140, 124, 0.05)"
+                      stroke="rgb(var(--ink) / 0.05)"
                       strokeWidth="1"
-                      className="dark:stroke-[rgba(44,140,124,0.1)]"
+                      className=""
                     />
                     <path
                       d="M0,100 C20,90 30,110 50,100 C70,90 80,110 100,100 C120,90 130,110 150,100 C170,90 180,110 200,100"
                       fill="none"
-                      stroke="rgba(44, 140, 124, 0.05)"
+                      stroke="rgb(var(--ink) / 0.05)"
                       strokeWidth="1"
-                      className="dark:stroke-[rgba(44,140,124,0.1)]"
+                      className=""
                     />
                     <path
                       d="M0,150 C20,140 30,160 50,150 C70,140 80,160 100,150 C120,140 130,160 150,150 C170,140 180,160 200,150"
                       fill="none"
-                      stroke="rgba(44, 140, 124, 0.05)"
+                      stroke="rgb(var(--ink) / 0.05)"
                       strokeWidth="1"
-                      className="dark:stroke-[rgba(44,140,124,0.1)]"
+                      className=""
                     />
                   </pattern>
                 </defs>
@@ -670,12 +670,12 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                     backdrop-blur-sm transition-all
                     ${
                       selectedWordId === word.id
-                        ? "bg-[#2C8C7C]/15 outline outline-2 outline-[#2C8C7C]"
-                        : "bg-white/10"
+                        ? "bg-seal/15 outline outline-2 outline-seal"
+                        : "bg-paper/40"
                     }
                   `}
                 >
-                  <span className="text-[#2C8C7C] font-medium">
+                  <span className="text-seal font-medium">
                     {getDisplayText(word)}
                   </span>
                 </div>
@@ -692,24 +692,24 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-                rounded-lg border border-[#2C8C7C]/20 shadow-lg
+              className="fixed right-28 top-8 bg-surface 
+                rounded-lg border border-seal/20 shadow-lg
                 z-50"
             >
-              <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-                <h3 className="text-[#2C8C7C] font-medium">Common Words</h3>
+              <div className="flex items-center justify-between p-3 border-b border-seal/10">
+                <h3 className="text-seal font-medium">Common Words</h3>
                 <button
                   onClick={() => setActivePanel(null)}
-                  className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                  className="p-1 rounded-lg hover:bg-seal/10 text-seal"
                 >
-                  <X className="w-4 h-4" />
+                  <IconClose className="w-4 h-4" />
                 </button>
               </div>
               <div className="p-3">
                 <div className="w-96 space-y-4">
                   {categories.map((category) => (
                     <div key={category}>
-                      <h4 className="text-[#2C8C7C]/70 text-sm mb-2">
+                      <h4 className="text-seal/70 text-sm mb-2">
                         {category}
                       </h4>
                       <div className="grid grid-cols-4 gap-2">
@@ -724,8 +724,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                                   type: "word",
                                 })
                               }
-                              className="px-2 py-1.5 rounded-lg text-sm hover:bg-[#2C8C7C]/10 
-                                text-[#2C8C7C] text-center transition-colors"
+                              className="px-2 py-1.5 rounded-lg text-sm hover:bg-seal/10 
+                                text-seal text-center transition-colors"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -746,17 +746,17 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-                rounded-lg border border-[#2C8C7C]/20 shadow-lg
+              className="fixed right-28 top-8 bg-surface 
+                rounded-lg border border-seal/20 shadow-lg
                 z-50"
             >
-              <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-                <h3 className="text-[#2C8C7C] font-medium">Add Punctuation</h3>
+              <div className="flex items-center justify-between p-3 border-b border-seal/10">
+                <h3 className="text-seal font-medium">Add Punctuation</h3>
                 <button
                   onClick={() => setActivePanel(null)}
-                  className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                  className="p-1 rounded-lg hover:bg-seal/10 text-seal"
                 >
-                  <X className="w-4 h-4" />
+                  <IconClose className="w-4 h-4" />
                 </button>
               </div>
               <div className="p-3">
@@ -778,8 +778,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                           type: "punctuation",
                         })
                       }
-                      className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 
-                        text-[#2C8C7C] text-center transition-colors"
+                      className="p-2 rounded-lg hover:bg-seal/10 
+                        text-seal text-center transition-colors"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -798,19 +798,19 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-                rounded-lg border border-[#2C8C7C]/20 shadow-lg
+              className="fixed right-28 top-8 bg-surface 
+                rounded-lg border border-seal/20 shadow-lg
                 z-50"
             >
-              <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-                <h3 className="text-[#2C8C7C] font-medium">
+              <div className="flex items-center justify-between p-3 border-b border-seal/10">
+                <h3 className="text-seal font-medium">
                   Canvas Background
                 </h3>
                 <button
                   onClick={() => setActivePanel(null)}
-                  className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                  className="p-1 rounded-lg hover:bg-seal/10 text-seal"
                 >
-                  <X className="w-4 h-4" />
+                  <IconClose className="w-4 h-4" />
                 </button>
               </div>
               <div className="p-3">
@@ -820,17 +820,17 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                       setCanvasPattern("blank");
                       setActivePanel(null);
                     }}
-                    className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-                      text-[#2C8C7C] text-center transition-colors border
+                    className={`p-3 rounded-lg hover:bg-seal/10 
+                      text-seal text-center transition-colors border
                       ${
                         canvasPattern === "blank"
-                          ? "border-[#2C8C7C]"
-                          : "border-[#2C8C7C]/20"
+                          ? "border-seal"
+                          : "border-seal/20"
                       }`}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2"></div>
+                    <div className="w-full h-16 bg-surface rounded-md mb-2"></div>
                     <div className="text-sm">Blank</div>
                   </motion.button>
 
@@ -839,22 +839,22 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                       setCanvasPattern("grid");
                       setActivePanel(null);
                     }}
-                    className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-                      text-[#2C8C7C] text-center transition-colors border
+                    className={`p-3 rounded-lg hover:bg-seal/10 
+                      text-seal text-center transition-colors border
                       ${
                         canvasPattern === "grid"
-                          ? "border-[#2C8C7C]"
-                          : "border-[#2C8C7C]/20"
+                          ? "border-seal"
+                          : "border-seal/20"
                       }`}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <div className="w-full h-16 bg-surface rounded-md mb-2 relative overflow-hidden">
                       <div
                         className="absolute inset-0"
                         style={{
                           backgroundImage:
-                            "linear-gradient(to right, rgba(44, 140, 124, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                            "linear-gradient(to right, rgb(var(--ink) / 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--ink) / 0.1) 1px, transparent 1px)",
                           backgroundSize: "8px 8px",
                         }}
                       ></div>
@@ -867,22 +867,22 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                       setCanvasPattern("dots");
                       setActivePanel(null);
                     }}
-                    className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-                      text-[#2C8C7C] text-center transition-colors border
+                    className={`p-3 rounded-lg hover:bg-seal/10 
+                      text-seal text-center transition-colors border
                       ${
                         canvasPattern === "dots"
-                          ? "border-[#2C8C7C]"
-                          : "border-[#2C8C7C]/20"
+                          ? "border-seal"
+                          : "border-seal/20"
                       }`}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <div className="w-full h-16 bg-surface rounded-md mb-2 relative overflow-hidden">
                       <div
                         className="absolute inset-0"
                         style={{
                           backgroundImage:
-                            "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                            "radial-gradient(rgb(var(--ink) / 0.1) 1px, transparent 1px)",
                           backgroundSize: "8px 8px",
                         }}
                       ></div>
@@ -895,17 +895,17 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                       setCanvasPattern("waves");
                       setActivePanel(null);
                     }}
-                    className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-                      text-[#2C8C7C] text-center transition-colors border
+                    className={`p-3 rounded-lg hover:bg-seal/10 
+                      text-seal text-center transition-colors border
                       ${
                         canvasPattern === "waves"
-                          ? "border-[#2C8C7C]"
-                          : "border-[#2C8C7C]/20"
+                          ? "border-seal"
+                          : "border-seal/20"
                       }`}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                    <div className="w-full h-16 bg-surface rounded-md mb-2 relative overflow-hidden">
                       <svg
                         className="absolute inset-0 w-full h-full"
                         preserveAspectRatio="none"
@@ -913,13 +913,13 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                         <path
                           d="M0,20 C10,15 15,25 25,20 C35,15 40,25 50,20 C60,15 65,25 75,20 C85,15 90,25 100,20"
                           fill="none"
-                          stroke="rgba(44, 140, 124, 0.1)"
+                          stroke="rgb(var(--ink) / 0.1)"
                           strokeWidth="1"
                         />
                         <path
                           d="M0,40 C10,35 15,45 25,40 C35,35 40,45 50,40 C60,35 65,45 75,40 C85,35 90,45 100,40"
                           fill="none"
-                          stroke="rgba(44, 140, 124, 0.1)"
+                          stroke="rgb(var(--ink) / 0.1)"
                           strokeWidth="1"
                         />
                       </svg>
@@ -940,28 +940,28 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-8"
+            className="fixed inset-0 z-60 bg-ink/60 flex items-center justify-center p-8"
             onClick={() => setShowPreview(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-xl overflow-hidden"
+              className="w-full max-w-3xl bg-surface rounded-xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-[#2C8C7C]/20">
-                <h2 className="text-2xl font-medium text-center text-gray-900 dark:text-white">
+              <div className="p-6 border-b border-seal/20">
+                <h2 className="text-2xl font-medium text-center text-ink">
                   {poemTitle}
                 </h2>
               </div>
 
-              <div className="p-8 bg-white dark:bg-gray-900 min-h-[300px] flex items-center justify-center">
+              <div className="p-8 bg-surface min-h-[300px] flex items-center justify-center">
                 <div className="max-w-lg text-center relative">
                   {canvasWords.map((word) => (
                     <span
                       key={word.id}
-                      className="inline-block m-1 px-2 py-1 text-[#2C8C7C]"
+                      className="inline-block m-1 px-2 py-1 text-seal"
                     >
                       {getDisplayText(word)}
                     </span>
@@ -969,11 +969,11 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                 </div>
               </div>
 
-              <div className="p-4 border-t border-[#2C8C7C]/20 flex justify-between">
+              <div className="p-4 border-t border-seal/20 flex justify-between">
                 <motion.button
                   onClick={handleSavePoem}
-                  className="px-4 py-2 rounded-lg bg-[#2C8C7C]
-                    hover:bg-[#2C8C7C]/90 text-white transition-colors"
+                  className="px-4 py-2 rounded-lg bg-seal
+                    hover:bg-seal/90 text-paper transition-colors"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -982,8 +982,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
 
                 <motion.button
                   onClick={() => setShowPreview(false)}
-                  className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
-                    hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+                  className="px-4 py-2 rounded-lg bg-seal/10 
+                    hover:bg-seal/20 text-seal transition-colors"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -1005,29 +1005,29 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
             className="fixed inset-0 z-60 flex items-center justify-center"
           >
             <div
-              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              className="absolute inset-0 bg-ink/20 backdrop-blur-sm"
               onClick={() => setShowResetConfirm(false)}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white dark:bg-gray-950 rounded-xl 
-                border border-[#2C8C7C]/20 p-6 w-80 shadow-xl"
+              className="relative bg-surface rounded-xl 
+                border border-seal/20 p-6 w-80 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
+              <h3 className="text-lg font-medium text-seal mb-3">
                 Reset Canvas?
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              <p className="text-sm text-ink/60 mb-6">
                 This will remove all words from the canvas. This action cannot
                 be undone.
               </p>
               <div className="flex justify-end gap-3">
                 <motion.button
                   onClick={() => setShowResetConfirm(false)}
-                  className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 
-                    text-[#2C8C7C] transition-colors"
+                  className="px-4 py-2 rounded-lg hover:bg-seal/5 
+                    text-seal transition-colors"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -1035,8 +1035,8 @@ const CanvasView = ({ onBack, words, onSavePoem }) => {
                 </motion.button>
                 <motion.button
                   onClick={resetCanvas}
-                  className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
-                    hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+                  className="px-4 py-2 rounded-lg bg-seal/10 
+                    hover:bg-seal/20 text-seal transition-colors"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >

@@ -1,0 +1,46 @@
+{
+  "noun": [
+    "moonlight", "ember", "hollow", "thorn", "river", "dusk", "frost",
+    "shadow", "bloom", "storm", "whisper", "ashes", "feather", "stone",
+    "silence", "mirror", "flame", "ocean", "meadow", "bone",
+    "longing", "grief", "wonder", "tenderness", "fury", "sorrow",
+    "bliss", "rapture", "ache", "solace", "yearning", "awe",
+    "breath", "marrow", "pulse", "vein", "temple", "palm",
+    "throat", "spine", "skin", "rib", "wound", "scar",
+    "dawn", "twilight", "epoch", "moment", "eternity", "midnight",
+    "autumn", "winter", "dusk", "threshold", "horizon", "origin",
+    "lantern", "cathedral", "ruins", "garden", "labyrinth", "harbor",
+    "atlas", "compass", "anchor", "vessel", "bridge", "tower",
+    "sparrow", "wolf", "moth", "raven", "serpent", "fox",
+    "honey", "salt", "smoke", "rain", "snow", "mist",
+    "echo", "hush", "lullaby", "hymn", "thunder", "murmur",
+    "ghost", "pilgrim", "stranger", "oracle", "keeper", "wanderer",
+    "riddle", "memory", "dream", "secret", "promise", "ruin",
+    "constellation", "tide", "root", "wing", "nest", "seed",
+    "velvet", "copper", "ivory", "amber", "jade", "obsidian"
+  ],
+  "verb": [
+    "wander", "shatter", "drift", "bloom", "dissolve", "kindle",
+    "tremble", "linger", "vanish", "emerge", "unravel", "mend",
+    "murmur", "echo", "hum", "keen", "chant", "whisper",
+    "cradle", "bury", "scatter", "gather", "weave", "carve",
+    "devour", "surrender", "ignite", "quench", "smolder", "flicker",
+    "haunt", "beckon", "summon", "flee", "dwell", "roam",
+    "fracture", "melt", "freeze", "thaw", "erode", "crumble",
+    "swallow", "breathe", "sigh", "gasp", "sob", "laugh",
+    "stitch", "unfold", "spiral", "cascade", "ripple", "surge",
+    "forgive", "forget", "remember", "awaken", "slumber", "yearn"
+  ],
+  "adj": [
+    "velvet", "brittle", "luminous", "gossamer", "jagged", "hollow",
+    "wistful", "fierce", "silent", "trembling", "radiant", "somber",
+    "golden", "silver", "crimson", "violet", "azure", "ivory",
+    "ancient", "fleeting", "eternal", "fragile", "tender", "wild",
+    "bitter", "sweet", "burning", "frozen", "molten", "restless",
+    "sunken", "buried", "hidden", "naked", "bruised", "broken",
+    "gentle", "savage", "quiet", "vast", "small", "immense",
+    "feral", "delicate", "rugged", "supple", "stark", "lush",
+    "haunted", "sacred", "profane", "mortal", "spectral", "earthen",
+    "tangled", "barren", "verdant", "withered", "blossoming", "ashen"
+  ]
+}

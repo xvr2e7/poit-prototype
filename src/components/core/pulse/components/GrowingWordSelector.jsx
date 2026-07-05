@@ -7,6 +7,17 @@ const MOUSE_GLOW_SIZE = 40;
 const DAMPING = 0.92;
 const ACCELERATION = 0.05;
 
+// Canvas 2D can't resolve CSS variables — read the seal token per frame
+const sealRGB = () => {
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--seal")
+    .trim();
+  const parts = v.split(/\s+/).map(Number);
+  return parts.length === 3 && parts.every((n) => !isNaN(n))
+    ? parts
+    : [158, 59, 34];
+};
+
 const GrowingWordSelector = ({
   selectedWords = [],
   minWords = 5,
@@ -41,9 +52,10 @@ const GrowingWordSelector = ({
     const drawMouseGlow = (x, y) => {
       if (activeRef.current) return;
 
+      const [r, g, b] = sealRGB();
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, MOUSE_GLOW_SIZE);
-      gradient.addColorStop(0, "rgba(147, 197, 253, 0.2)");
-      gradient.addColorStop(0.5, "rgba(147, 197, 253, 0.1)");
+      gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.18)`);
+      gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.08)`);
       gradient.addColorStop(1, "transparent");
 
       ctx.beginPath();
@@ -54,29 +66,21 @@ const GrowingWordSelector = ({
 
     const getSegmentStyle = () => {
       const count = selectedWords.length;
+      const seal = sealRGB();
+      // Blend from a pale wash toward full jade as words accumulate
+      const blend = (t) => seal.map((c) => Math.round(c + (200 - c) * (1 - t)));
+
       if (count < minWords) {
-        return {
-          color: [147, 197, 253],
-          alpha: 0.8,
-          baseSize: 15,
-        };
+        return { color: blend(0.45), alpha: 0.7, baseSize: 15 };
       } else if (count <= maxWords) {
         const progress = (count - minWords) / (maxWords - minWords);
         return {
-          color: [
-            147 + progress * 58,
-            197 - progress * 47,
-            253 - progress * 53,
-          ],
-          alpha: 0.8 + progress * 0.2,
+          color: blend(0.45 + progress * 0.55),
+          alpha: 0.75 + progress * 0.25,
           baseSize: 15 + progress * 3,
         };
       } else {
-        return {
-          color: [245, 158, 11],
-          alpha: 1,
-          baseSize: 18,
-        };
+        return { color: seal, alpha: 1, baseSize: 18 };
       }
     };
 

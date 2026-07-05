@@ -1,25 +1,27 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  PlusCircle,
-  Type,
-  PenTool,
-  Hash,
-  Layout,
-  Star,
-  RotateCcw,
-  BookMarked,
-  X,
-  Grid,
-  Pencil,
-  CircleHelp,
-} from "lucide-react";
+  IconAsk,
+  IconClose,
+  IconGrid,
+  IconHash,
+  IconLayout,
+  IconNib,
+  IconPencil,
+  IconPlus,
+  IconPoemlet,
+  IconRetry,
+  IconSpark,
+  IconStar,
+  IconType,
+} from "../../shared/icons";
 import { toPng } from "html-to-image";
 import TemplateGuide from "./components/TemplateGuide";
 import Navigation from "../../shared/Navigation";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import PoolWordsModal from "./components/PoolWordsModal";
 import HelpModal from "../../shared/HelpModal";
+import { API_URL } from "../../../utils/api";
 
 const CraftMode = ({
   selectedWords = [],
@@ -45,6 +47,10 @@ const CraftMode = ({
   const [showPoolWordsModal, setShowPoolWordsModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
+  // Spark/inspiration state
+  const [sparkData, setSparkData] = useState(null);
+  const [sparkIndex, setSparkIndex] = useState(0);
+
   // DOM refs
   const canvasRef = useRef(null);
   const wordsRef = useRef({});
@@ -58,6 +64,23 @@ const CraftMode = ({
       setTimeout(() => setShowHelp(true), 1000);
       localStorage.setItem(tutorialKey, "true");
     }
+  }, []);
+
+  // Fetch daily prompt / spark data
+  useEffect(() => {
+    const fetchSparkData = async () => {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch(`${API_URL}/daily-prompt?timezone=${tz}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSparkData(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch spark data:", err);
+      }
+    };
+    fetchSparkData();
   }, []);
 
   // Initialize pool words from selectedWords
@@ -258,6 +281,10 @@ const CraftMode = ({
         case "b":
           // Canvas (Background)
           togglePanel(activePanel === "canvas" ? null : "canvas");
+          break;
+        case "i":
+          // Inspiration / Spark
+          togglePanel(activePanel === "spark" ? null : "spark");
           break;
         case "w":
           // Word pool modal
@@ -577,13 +604,16 @@ const CraftMode = ({
     if (!canvasRef.current) return;
 
     try {
+      const paperColor = `rgb(${getComputedStyle(document.documentElement)
+        .getPropertyValue("--paper")
+        .trim()})`;
       const dataUrl = await toPng(canvasRef.current, {
         quality: 1,
         style: {
           transform: "none",
           transformOrigin: "top left",
           padding: "40px",
-          background: "white",
+          background: paperColor,
         },
       });
 
@@ -655,7 +685,7 @@ const CraftMode = ({
   };
 
   return (
-    <div className="relative h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="relative h-screen">
       <AdaptiveBackground mode="craft" className="opacity-30" />
 
       <div className="absolute inset-0 flex">
@@ -671,13 +701,13 @@ const CraftMode = ({
         <motion.button
           onClick={() => setShowHelp(true)}
           className="fixed left-6 bottom-6 z-50 p-2 rounded-full
-    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
-    hover:bg-white/10 transition-colors flex items-center justify-center
+    bg-surface/60 backdrop-blur-sm border border-seal/15
+    hover:bg-seal/10 transition-colors flex items-center justify-center
     h-[40px] w-[40px]"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+          <IconAsk className="w-5 h-5 text-seal" />
         </motion.button>
 
         {/* Help Modal */}
@@ -690,8 +720,8 @@ const CraftMode = ({
         {/* Left Sidebar - Word Pool */}
         <div className="relative">
           <div
-            className="h-full w-72 backdrop-blur-md bg-white/80 dark:bg-gray-950/80
-            border-r border-[#2C8C7C]/10"
+            className="h-full w-72 backdrop-blur-md bg-surface/80
+            border-r border-ink/10"
           >
             <div className="h-20" />
             <div
@@ -702,15 +732,15 @@ const CraftMode = ({
                 <motion.button
                   key={word.id}
                   onClick={() => addWordToCanvas(word)}
-                  className="w-full group flex items-center px-4 py-3 rounded-xl
-                    text-[#2C8C7C] dark:text-[#2C8C7C]/90
-                    hover:bg-[#2C8C7C]/5 dark:hover:bg-[#2C8C7C]/10
+                  className="w-full group flex items-center px-4 py-2.5 rounded-lg
+                    text-ink/80 hover:text-ink
+                    hover:bg-seal/5
                     transition-all duration-200"
                   whileHover={{ x: 4 }}
                 >
-                  <span className="flex-1 font-medium">{word.text}</span>
-                  <PlusCircle
-                    className="w-4 h-4 text-[#2C8C7C] opacity-0 
+                  <span className="flex-1 font-serif text-lg">{word.text}</span>
+                  <IconPlus
+                    className="w-4 h-4 text-seal opacity-0 
                     group-hover:opacity-100 transition-opacity"
                   />
                 </motion.button>
@@ -725,14 +755,14 @@ const CraftMode = ({
             <div
               ref={canvasRef}
               className={`absolute inset-0 rounded-2xl 
-bg-white/90 dark:bg-gray-900/90 backdrop-blur-md 
-border border-[#2C8C7C]/10 overflow-hidden`}
+bg-surface/90 backdrop-blur-md 
+border border-ink/10 shadow-leaf dark:shadow-leaf-dark overflow-hidden`}
               style={{
                 backgroundImage:
                   canvasPattern === "grid"
-                    ? "linear-gradient(to right, rgba(44, 140, 124, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.05) 1px, transparent 1px)"
+                    ? "linear-gradient(to right, rgb(var(--ink) / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--ink) / 0.05) 1px, transparent 1px)"
                     : canvasPattern === "dots"
-                    ? "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)"
+                    ? "radial-gradient(rgb(var(--ink) / 0.1) 1px, transparent 1px)"
                     : "none",
                 backgroundSize:
                   canvasPattern === "grid"
@@ -758,23 +788,23 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                         <path
                           d="M0,50 C20,40 30,60 50,50 C70,40 80,60 100,50 C120,40 130,60 150,50 C170,40 180,60 200,50"
                           fill="none"
-                          stroke="rgba(44, 140, 124, 0.05)"
+                          stroke="rgb(var(--ink) / 0.05)"
                           strokeWidth="1"
-                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                          className=""
                         />
                         <path
                           d="M0,100 C20,90 30,110 50,100 C70,90 80,110 100,100 C120,90 130,110 150,100 C170,90 180,110 200,100"
                           fill="none"
-                          stroke="rgba(44, 140, 124, 0.05)"
+                          stroke="rgb(var(--ink) / 0.05)"
                           strokeWidth="1"
-                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                          className=""
                         />
                         <path
                           d="M0,150 C20,140 30,160 50,150 C70,140 80,160 100,150 C120,140 130,160 150,150 C170,140 180,160 200,150"
                           fill="none"
-                          stroke="rgba(44, 140, 124, 0.05)"
+                          stroke="rgb(var(--ink) / 0.05)"
                           strokeWidth="1"
-                          className="dark:stroke-[rgba(44,140,124,0.1)]"
+                          className=""
                         />
                       </pattern>
                     </defs>
@@ -813,16 +843,16 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                   {/* Word Container */}
                   <div
                     className={`
-          relative px-4 py-2 rounded-lg
-          backdrop-blur-sm transition-all
+          relative px-3 py-1.5 rounded-md
+          transition-all
           ${
             selectedWordId === word.id
-              ? "bg-[#2C8C7C]/15 outline outline-2 outline-[#2C8C7C]"
-              : "bg-white/10"
+              ? "bg-seal/10 outline outline-1 outline-seal"
+              : ""
           }
         `}
                   >
-                    <span className="text-[#2C8C7C] font-medium">
+                    <span className="font-serif text-lg text-ink">
                       {getDisplayText(word)}
                     </span>
                   </div>
@@ -836,8 +866,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
         <div className="relative">
           <div
             className="h-full w-20 backdrop-blur-md 
-            bg-white/80 dark:bg-gray-950/80
-            border-l border-[#2C8C7C]/10"
+            bg-surface/80
+            border-l border-ink/10"
           >
             <div className="h-full p-4 flex flex-col">
               {/* Main tools */}
@@ -845,19 +875,19 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                 <div className="flex flex-col gap-5">
                   <button
                     onClick={handleCapitalizationChange}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                     disabled={!selectedWordId}
                   >
-                    <Type className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconType className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Capitalization
                       </span>
                     </div>
@@ -865,18 +895,18 @@ border border-[#2C8C7C]/10 overflow-hidden`}
 
                   <button
                     onClick={() => togglePanel("punctuation")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                   >
-                    <PenTool className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconNib className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Punctuation
                       </span>
                     </div>
@@ -884,18 +914,18 @@ border border-[#2C8C7C]/10 overflow-hidden`}
 
                   <button
                     onClick={() => togglePanel("common")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                      border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                      border border-seal/30 transition-all duration-300
                       group relative"
                   >
-                    <Hash className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconHash className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                      bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                      bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                       pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Filler
                       </span>
                     </div>
@@ -904,18 +934,18 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                   {/* Template Tool */}
                   <button
                     onClick={() => togglePanel("templates")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-    border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+    border border-seal/30 transition-all duration-300
     group relative"
                   >
-                    <Layout className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconLayout className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
     pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Templates
                       </span>
                     </div>
@@ -924,18 +954,18 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                   {/* Signature Tool */}
                   <button
                     onClick={() => togglePanel("signatures")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-    border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+    border border-seal/30 transition-all duration-300
     group relative"
                   >
-                    <Star className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconStar className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
                       className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
     pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Signatures
                       </span>
                     </div>
@@ -944,19 +974,39 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                   {/* Canvas Pattern Tool */}
                   <button
                     onClick={() => togglePanel("canvas")}
-                    className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-    border border-[#2C8C7C]/30 transition-all duration-300
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10
+    border border-seal/30 transition-all duration-300
     group relative"
                   >
-                    <Grid className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                    <IconGrid className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                     <div
-                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
-    opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2
+    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
+    opacity-0 group-hover:opacity-100 transition-opacity duration-300
     pointer-events-none px-3 py-2 shadow-lg"
                     >
-                      <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
                         Canvas
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Spark / Inspiration Tool */}
+                  <button
+                    onClick={() => togglePanel("spark")}
+                    className="p-3 rounded-xl bg-transparent hover:bg-seal/10
+    border border-seal/30 transition-all duration-300
+    group relative"
+                  >
+                    <IconSpark className="w-5 h-5 text-seal/70 group-hover:text-seal" />
+                    <div
+                      className="absolute right-full mr-3 top-1/2 -translate-y-1/2
+    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
+    opacity-0 group-hover:opacity-100 transition-opacity duration-300
+    pointer-events-none px-3 py-2 shadow-lg"
+                    >
+                      <span className="text-sm text-seal whitespace-nowrap font-medium">
+                        Inspiration
                       </span>
                     </div>
                   </button>
@@ -965,22 +1015,22 @@ border border-[#2C8C7C]/10 overflow-hidden`}
 
               {/* Action Tools */}
               <div>
-                <div className="w-full h-px bg-[#2C8C7C]/10 mb-3" />
+                <div className="w-full h-px bg-seal/10 mb-3" />
 
                 <button
                   onClick={() => setShowResetConfirm(true)}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                    border border-[#2C8C7C]/30 transition-all duration-300
+                  className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                    border border-seal/30 transition-all duration-300
                     group relative mb-3"
                 >
-                  <RotateCcw className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <IconRetry className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                   <div
                     className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
                     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                     pointer-events-none px-3 py-2 shadow-lg"
                   >
-                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                    <span className="text-sm text-seal whitespace-nowrap font-medium">
                       Reset Canvas
                     </span>
                   </div>
@@ -988,18 +1038,18 @@ border border-[#2C8C7C]/10 overflow-hidden`}
 
                 <button
                   onClick={() => setIsPreviewOpen(true)}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#2C8C7C]/10 
-                    border border-[#2C8C7C]/30 transition-all duration-300
+                  className="p-3 rounded-xl bg-transparent hover:bg-seal/10 
+                    border border-seal/30 transition-all duration-300
                     group relative"
                 >
-                  <BookMarked className="w-5 h-5 text-[#2C8C7C]/70 group-hover:text-[#2C8C7C]" />
+                  <IconPoemlet className="w-5 h-5 text-seal/70 group-hover:text-seal" />
                   <div
                     className="absolute right-full mr-3 top-1/2 -translate-y-1/2 
-                    bg-white dark:bg-gray-950 border border-[#2C8C7C]/20 rounded-lg
+                    bg-surface border border-seal/20 rounded-lg shadow-leaf dark:shadow-leaf-dark
                     opacity-0 group-hover:opacity-100 transition-opacity duration-300 
                     pointer-events-none px-3 py-2 shadow-lg"
                   >
-                    <span className="text-sm text-[#2C8C7C] whitespace-nowrap font-medium">
+                    <span className="text-sm text-seal whitespace-nowrap font-medium">
                       Preview Poem
                     </span>
                   </div>
@@ -1017,24 +1067,24 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-              rounded-lg border border-[#2C8C7C]/20 shadow-lg
+            className="fixed right-28 top-8 bg-surface 
+              rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark
               z-50"
           >
-            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-              <h3 className="text-[#2C8C7C] font-medium">Common Words</h3>
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-label text-seal">Common words</h3>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
               >
-                <X className="w-4 h-4" />
+                <IconClose className="w-4 h-4" />
               </button>
             </div>
             <div className="p-3">
               <div className="w-96 space-y-4">
                 {categories.map((category) => (
                   <div key={category}>
-                    <h4 className="text-[#2C8C7C]/70 text-sm mb-2">
+                    <h4 className="text-seal/70 text-sm mb-2">
                       {category}
                     </h4>
                     <div className="grid grid-cols-4 gap-2">
@@ -1049,8 +1099,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                                 type: "word",
                               })
                             }
-                            className="px-2 py-1.5 rounded-lg text-sm hover:bg-[#2C8C7C]/10 
-                              text-[#2C8C7C] text-center transition-colors"
+                            className="px-2 py-1.5 rounded-md font-serif text-base hover:bg-seal/10 
+                              text-ink/80 hover:text-ink text-center transition-colors"
                           >
                             {word}
                           </button>
@@ -1068,17 +1118,17 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-              rounded-lg border border-[#2C8C7C]/20 shadow-lg
+            className="fixed right-28 top-8 bg-surface 
+              rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark
               z-50"
           >
-            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-              <h3 className="text-[#2C8C7C] font-medium">Add Punctuation</h3>
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-label text-seal">Punctuation</h3>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
               >
-                <X className="w-4 h-4" />
+                <IconClose className="w-4 h-4" />
               </button>
             </div>
             <div className="p-3">
@@ -1100,8 +1150,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                         type: "punctuation",
                       })
                     }
-                    className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 
-                      text-[#2C8C7C] text-center transition-colors"
+                    className="p-2 rounded-lg hover:bg-seal/10 
+                      text-seal text-center transition-colors"
                   >
                     <div className="text-lg font-medium">{symbol}</div>
                     <div className="text-xs opacity-70">{label}</div>
@@ -1117,17 +1167,17 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+            className="fixed right-28 top-8 bg-surface 
+      rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark
       z-50"
           >
-            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-              <h3 className="text-[#2C8C7C] font-medium">Poetic Forms</h3>
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-label text-seal">Poetic forms</h3>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
               >
-                <X className="w-4 h-4" />
+                <IconClose className="w-4 h-4" />
               </button>
             </div>
             <div className="p-3">
@@ -1140,8 +1190,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "sonnet" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "sonnet" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Sonnet</div>
@@ -1157,8 +1207,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "limerick" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "limerick" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Limerick</div>
@@ -1174,8 +1224,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "haiku" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "haiku" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Haiku</div>
@@ -1191,8 +1241,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "tanka" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "tanka" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Tanka</div>
@@ -1208,8 +1258,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full mt-1 p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "lushi" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full mt-1 p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "lushi" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Lüshi</div>
@@ -1225,8 +1275,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       );
                       setActivePanel(null);
                     }}
-                    className={`w-full p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] text-left transition-colors ${
-                      activeTemplate === "ghazal" ? "bg-[#2C8C7C]/10" : ""
+                    className={`w-full p-2 rounded-lg hover:bg-seal/10 text-seal text-left transition-colors ${
+                      activeTemplate === "ghazal" ? "bg-seal/10" : ""
                     }`}
                   >
                     <div className="font-medium">Ghazal</div>
@@ -1242,7 +1292,7 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       setActiveTemplate(null);
                       setActivePanel(null);
                     }}
-                    className="w-full p-2 mt-4 rounded-lg bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 text-[#2C8C7C] text-center transition-colors"
+                    className="w-full p-2 mt-4 rounded-lg bg-seal/10 hover:bg-seal/20 text-seal text-center transition-colors"
                   >
                     Clear Template
                   </button>
@@ -1257,22 +1307,22 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+            className="fixed right-28 top-8 bg-surface 
+      rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark
       z-50"
           >
-            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-              <h3 className="text-[#2C8C7C] font-medium">Your Signatures</h3>
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-label text-seal">Your signatures</h3>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
               >
-                <X className="w-4 h-4" />
+                <IconClose className="w-4 h-4" />
               </button>
             </div>
             <div className="p-3">
               <div className="w-64 space-y-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm text-ink/50 mb-2">
                   Add your personal flair:
                 </p>
                 {signatureWords.map((word, index) => (
@@ -1284,15 +1334,16 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                         handleSignatureWordChange(index, e.target.value)
                       }
                       placeholder="Enter word..."
-                      className="flex-1 p-2 rounded-lg bg-white/5 dark:bg-black/5 
-                border border-[#2C8C7C]/20 text-sm text-[#2C8C7C] 
-                focus:outline-none focus:ring-1 focus:ring-[#2C8C7C]"
+                      className="flex-1 p-2 rounded-lg bg-paper/60 
+                border border-ink/15 font-serif text-base text-ink 
+                placeholder:text-ink/30
+                focus:outline-none focus:ring-1 focus:ring-seal"
                     />
                     <button
                       onClick={() => handleRemoveSignatureWord(index)}
-                      className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                      className="p-1 rounded-lg hover:bg-seal/10 text-seal"
                     >
-                      <X className="w-4 h-4" />
+                      <IconClose className="w-4 h-4" />
                     </button>
                     {word.trim() && (
                       <button
@@ -1302,9 +1353,9 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                             type: "word",
                           })
                         }
-                        className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                        className="p-1 rounded-lg hover:bg-seal/10 text-seal"
                       >
-                        <PlusCircle className="w-4 h-4" />
+                        <IconPlus className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -1319,17 +1370,17 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed right-28 top-8 bg-white dark:bg-gray-950 
-      rounded-lg border border-[#2C8C7C]/20 shadow-lg
+            className="fixed right-28 top-8 bg-surface 
+      rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark
       z-50"
           >
-            <div className="flex items-center justify-between p-3 border-b border-[#2C8C7C]/10">
-              <h3 className="text-[#2C8C7C] font-medium">Canvas Background</h3>
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-label text-seal">Canvas background</h3>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-1 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C]"
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
               >
-                <X className="w-4 h-4" />
+                <IconClose className="w-4 h-4" />
               </button>
             </div>
             <div className="p-3">
@@ -1339,15 +1390,15 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     setCanvasPattern("blank");
                     setActivePanel(null);
                   }}
-                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-            text-[#2C8C7C] text-center transition-colors border
+                  className={`p-3 rounded-lg hover:bg-seal/10 
+            text-seal text-center transition-colors border
             ${
               canvasPattern === "blank"
-                ? "border-[#2C8C7C]"
-                : "border-[#2C8C7C]/20"
+                ? "border-seal"
+                : "border-seal/20"
             }`}
                 >
-                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2"></div>
+                  <div className="w-full h-16 bg-paper border border-ink/10 rounded-md mb-2"></div>
                   <div className="text-sm">Blank</div>
                 </button>
 
@@ -1356,20 +1407,20 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     setCanvasPattern("grid");
                     setActivePanel(null);
                   }}
-                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-            text-[#2C8C7C] text-center transition-colors border
+                  className={`p-3 rounded-lg hover:bg-seal/10 
+            text-seal text-center transition-colors border
             ${
               canvasPattern === "grid"
-                ? "border-[#2C8C7C]"
-                : "border-[#2C8C7C]/20"
+                ? "border-seal"
+                : "border-seal/20"
             }`}
                 >
-                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                  <div className="w-full h-16 bg-paper border border-ink/10 rounded-md mb-2 relative overflow-hidden">
                     <div
                       className="absolute inset-0"
                       style={{
                         backgroundImage:
-                          "linear-gradient(to right, rgba(44, 140, 124, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                          "linear-gradient(to right, rgb(var(--ink) / 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--ink) / 0.1) 1px, transparent 1px)",
                         backgroundSize: "8px 8px",
                       }}
                     ></div>
@@ -1382,20 +1433,20 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     setCanvasPattern("dots");
                     setActivePanel(null);
                   }}
-                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-            text-[#2C8C7C] text-center transition-colors border
+                  className={`p-3 rounded-lg hover:bg-seal/10 
+            text-seal text-center transition-colors border
             ${
               canvasPattern === "dots"
-                ? "border-[#2C8C7C]"
-                : "border-[#2C8C7C]/20"
+                ? "border-seal"
+                : "border-seal/20"
             }`}
                 >
-                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                  <div className="w-full h-16 bg-paper border border-ink/10 rounded-md mb-2 relative overflow-hidden">
                     <div
                       className="absolute inset-0"
                       style={{
                         backgroundImage:
-                          "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)",
+                          "radial-gradient(rgb(var(--ink) / 0.1) 1px, transparent 1px)",
                         backgroundSize: "8px 8px",
                       }}
                     ></div>
@@ -1408,15 +1459,15 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     setCanvasPattern("waves");
                     setActivePanel(null);
                   }}
-                  className={`p-3 rounded-lg hover:bg-[#2C8C7C]/10 
-            text-[#2C8C7C] text-center transition-colors border
+                  className={`p-3 rounded-lg hover:bg-seal/10 
+            text-seal text-center transition-colors border
             ${
               canvasPattern === "waves"
-                ? "border-[#2C8C7C]"
-                : "border-[#2C8C7C]/20"
+                ? "border-seal"
+                : "border-seal/20"
             }`}
                 >
-                  <div className="w-full h-16 bg-white dark:bg-gray-800 rounded-md mb-2 relative overflow-hidden">
+                  <div className="w-full h-16 bg-paper border border-ink/10 rounded-md mb-2 relative overflow-hidden">
                     <svg
                       className="absolute inset-0 w-full h-full"
                       preserveAspectRatio="none"
@@ -1424,13 +1475,13 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                       <path
                         d="M0,20 C10,15 15,25 25,20 C35,15 40,25 50,20 C60,15 65,25 75,20 C85,15 90,25 100,20"
                         fill="none"
-                        stroke="rgba(44, 140, 124, 0.1)"
+                        stroke="rgb(var(--ink) / 0.1)"
                         strokeWidth="1"
                       />
                       <path
                         d="M0,40 C10,35 15,45 25,40 C35,35 40,45 50,40 C60,35 65,45 75,40 C85,35 90,45 100,40"
                         fill="none"
-                        stroke="rgba(44, 140, 124, 0.1)"
+                        stroke="rgb(var(--ink) / 0.1)"
                         strokeWidth="1"
                       />
                     </svg>
@@ -1438,6 +1489,97 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                   <div className="text-sm">Waves</div>
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Spark / Inspiration Panel */}
+      <AnimatePresence>
+        {activePanel === "spark" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-28 top-8 bg-surface
+              rounded-lg border border-seal/20 shadow-leaf dark:shadow-leaf-dark z-50 w-80"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-seal/10">
+              <h3 className="text-seal font-medium flex items-center gap-2">
+                <IconSpark className="w-4 h-4" />
+                Inspiration
+              </h3>
+              <button
+                onClick={() => setActivePanel(null)}
+                className="p-1 rounded-lg hover:bg-seal/10 text-seal"
+              >
+                <IconClose className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Daily Prompt */}
+              {sparkData?.prompt && (
+                <div>
+                  <div className="text-label text-ink/40 mb-1.5">
+                    Today's prompt
+                  </div>
+                  <p className="font-serif text-sm text-ink/80 italic leading-relaxed">
+                    "{sparkData.prompt}"
+                  </p>
+                  {sparkData.theme && (
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-seal/10 text-seal">
+                      {sparkData.theme}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Suggested Words */}
+              {sparkData?.suggestedWords?.length > 0 && (
+                <div>
+                  <div className="text-label text-ink/40 mb-1.5">
+                    Try these words
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sparkData.suggestedWords.map((word) => (
+                      <span
+                        key={word}
+                        className="px-2 py-0.5 rounded-md font-serif text-sm bg-seal/10 text-seal"
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Spark Micro-lines */}
+              {sparkData?.sparks?.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-label text-ink/40">
+                      Spark
+                    </span>
+                    <button
+                      onClick={() =>
+                        setSparkIndex((prev) => (prev + 1) % sparkData.sparks.length)
+                      }
+                      className="text-xs text-seal hover:text-seal/80 transition-colors"
+                    >
+                      next spark
+                    </button>
+                  </div>
+                  <p className="font-serif text-sm text-ink/70 italic border-l-2 border-seal/40 pl-3">
+                    {sparkData.sparks[sparkIndex % sparkData.sparks.length]}
+                  </p>
+                </div>
+              )}
+
+              {!sparkData && (
+                <p className="font-serif text-sm text-ink/40 italic text-center py-4">
+                  Gathering inspiration…
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -1451,14 +1593,14 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 
-        bg-black/20 backdrop-blur-sm"
+        bg-ink/20 backdrop-blur-sm"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-4xl bg-white dark:bg-gray-950 
-          rounded-xl border border-[#2C8C7C]/20 shadow-xl overflow-hidden"
+              className="relative w-full max-w-4xl bg-surface 
+          rounded-xl border border-seal/20 shadow-leaf dark:shadow-leaf-dark overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Preview Header */}
@@ -1470,16 +1612,16 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     value={poemTitle}
                     onChange={(e) => setPoemTitle(e.target.value)}
                     placeholder="Enter poem title..."
-                    className="px-4 py-2 text-xl font-medium text-center 
-                      bg-transparent border-b border-[#2C8C7C]/20 
-                      focus:border-[#2C8C7C] focus:outline-none
-                      text-gray-900 dark:text-gray-100
-                      placeholder:text-gray-400 dark:placeholder:text-gray-600
+                    className="px-4 py-2 font-serif text-xl text-center 
+                      bg-transparent border-b border-seal/20 
+                      focus:border-seal focus:outline-none
+                      text-ink
+                      placeholder:text-ink/30
                       w-64 transition-all duration-300"
                   />
-                  <Pencil
+                  <IconPencil
                     className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 
-                    text-[#2C8C7C]/40 group-hover:text-[#2C8C7C]/60 opacity-0 group-hover:opacity-100
+                    text-seal/40 group-hover:text-seal/60 opacity-0 group-hover:opacity-100
                     transition-opacity duration-300"
                   />
                 </div>
@@ -1487,25 +1629,25 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                 {/* Close Button */}
                 <button
                   onClick={() => setIsPreviewOpen(false)}
-                  className="p-2 rounded-lg hover:bg-[#2C8C7C]/10 text-[#2C8C7C] transition-colors"
+                  className="p-2 rounded-lg hover:bg-seal/10 text-seal transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <IconClose className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Preview Content */}
               <div className="p-8 pt-16">
                 <div
-                  className="aspect-[1.4142] w-full bg-white dark:bg-gray-900 
-  rounded-lg border border-[#2C8C7C]/10 overflow-hidden"
+                  className="aspect-[1.4142] w-full bg-paper 
+  rounded-lg border border-ink/10 overflow-hidden"
                   style={{
                     position: "relative",
                     cursor: isDraggingPreview ? "grabbing" : "grab",
                     backgroundImage:
                       canvasPattern === "grid"
-                        ? "linear-gradient(to right, rgba(44, 140, 124, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(44, 140, 124, 0.05) 1px, transparent 1px)"
+                        ? "linear-gradient(to right, rgb(var(--ink) / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--ink) / 0.05) 1px, transparent 1px)"
                         : canvasPattern === "dots"
-                        ? "radial-gradient(rgba(44, 140, 124, 0.1) 1px, transparent 1px)"
+                        ? "radial-gradient(rgb(var(--ink) / 0.1) 1px, transparent 1px)"
                         : "none",
                     backgroundSize:
                       canvasPattern === "grid"
@@ -1532,23 +1674,23 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                             <path
                               d="M0,50 C20,40 30,60 50,50 C70,40 80,60 100,50 C120,40 130,60 150,50 C170,40 180,60 200,50"
                               fill="none"
-                              stroke="rgba(44, 140, 124, 0.05)"
+                              stroke="rgb(var(--ink) / 0.05)"
                               strokeWidth="1"
-                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                              className=""
                             />
                             <path
                               d="M0,100 C20,90 30,110 50,100 C70,90 80,110 100,100 C120,90 130,110 150,100 C170,90 180,110 200,100"
                               fill="none"
-                              stroke="rgba(44, 140, 124, 0.05)"
+                              stroke="rgb(var(--ink) / 0.05)"
                               strokeWidth="1"
-                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                              className=""
                             />
                             <path
                               d="M0,150 C20,140 30,160 50,150 C70,140 80,160 100,150 C120,140 130,160 150,150 C170,140 180,160 200,150"
                               fill="none"
-                              stroke="rgba(44, 140, 124, 0.05)"
+                              stroke="rgb(var(--ink) / 0.05)"
                               strokeWidth="1"
-                              className="dark:stroke-[rgba(44,140,124,0.1)]"
+                              className=""
                             />
                           </pattern>
                         </defs>
@@ -1561,8 +1703,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                     </div>
                   )}
                   <div className="absolute bottom-2 left-0 right-0 text-center z-10 pointer-events-none">
-                    <span className="text-sm text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 px-2 py-1 rounded-md backdrop-blur-sm">
-                      Click and drag to pan
+                    <span className="font-mono text-[11px] text-ink/40 bg-surface/70 px-2 py-1 rounded-md backdrop-blur-sm">
+                      click and drag to pan
                     </span>
                   </div>
 
@@ -1585,8 +1727,8 @@ border border-[#2C8C7C]/10 overflow-hidden`}
                           pointerEvents: "none",
                         }}
                       >
-                        <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm whitespace-nowrap">
-                          <span className="text-[#2C8C7C] font-medium">
+                        <div className="px-3 py-1.5 whitespace-nowrap">
+                          <span className="font-serif text-lg text-ink">
                             {getDisplayText(word)}
                           </span>
                         </div>
@@ -1597,23 +1739,23 @@ border border-[#2C8C7C]/10 overflow-hidden`}
               </div>
 
               {/* Actions */}
-              <div className="p-4 border-t border-[#2C8C7C]/10 flex justify-between items-center">
+              <div className="p-4 border-t border-seal/10 flex justify-between items-center">
                 <div className="flex gap-3">
                   <button
                     onClick={handleDownload}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg
-                bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
-                text-[#2C8C7C] transition-colors"
+                border border-seal/25 hover:bg-seal/5 
+                text-seal font-mono text-xs tracking-wide transition-colors"
                   >
-                    <span>Download</span>
+                    <span>Download image</span>
                   </button>
                 </div>
 
                 <button
                   onClick={handleComplete}
-                  className="group relative flex items-center gap-2 px-6 py-2 rounded-lg
-              bg-[#2C8C7C] hover:bg-[#2C8C7C]/90 
-              text-white transition-colors"
+                  className="group relative flex items-center gap-2 px-6 py-2.5 rounded-lg
+              bg-seal hover:bg-seal/90 
+              text-paper font-mono text-xs tracking-wide transition-colors"
                 >
                   <span>Continue to Echo</span>
                 </button>
@@ -1633,36 +1775,36 @@ border border-[#2C8C7C]/10 overflow-hidden`}
             className="fixed inset-0 z-50 flex items-center justify-center"
           >
             <div
-              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              className="absolute inset-0 bg-ink/20 backdrop-blur-sm"
               onClick={() => setShowResetConfirm(false)}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white dark:bg-gray-950 rounded-xl 
-                border border-[#2C8C7C]/20 p-6 w-80 shadow-xl"
+              className="relative bg-surface rounded-xl 
+                border border-seal/20 p-6 w-80 shadow-leaf dark:shadow-leaf-dark"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-medium text-[#2C8C7C] mb-3">
-                Reset Canvas?
+              <h3 className="font-serif text-lg font-medium text-ink mb-3">
+                Reset the canvas?
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              <p className="text-sm text-ink/60 mb-6">
                 This will return all words to the word pool. This action cannot
                 be undone.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowResetConfirm(false)}
-                  className="px-4 py-2 rounded-lg hover:bg-[#2C8C7C]/5 
-                    text-[#2C8C7C] transition-colors"
+                  className="px-4 py-2 rounded-lg hover:bg-seal/5 
+                    text-seal transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={resetCanvas}
-                  className="px-4 py-2 rounded-lg bg-[#2C8C7C]/10 
-                    hover:bg-[#2C8C7C]/20 text-[#2C8C7C] transition-colors"
+                  className="px-4 py-2 rounded-lg bg-seal/10 
+                    hover:bg-seal/20 text-seal transition-colors"
                 >
                   Reset
                 </button>

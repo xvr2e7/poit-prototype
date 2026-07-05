@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X,
-  ZoomIn,
-  ZoomOut,
-  RefreshCw,
-  Book,
-  Network,
-  ChevronLeft,
-  ChevronRight,
-  ArrowLeft,
-  Telescope,
-} from "lucide-react";
+  IconBack,
+  IconChevronLeft,
+  IconChevronRight,
+  IconClose,
+  IconConstellation,
+  IconPoemlet,
+  IconRetry,
+  IconTelescope,
+  IconZoomIn,
+  IconZoomOut,
+} from "../../../shared/icons";
 
 // Represents a single word in the 3D poem layer
 const WordNode = ({
@@ -47,17 +47,17 @@ const WordNode = ({
         <div
           className={`w-2 h-2 rounded-full ${
             isConnecting
-              ? "bg-[#2C8C7C]"
+              ? "bg-seal"
               : isSharedWord
-              ? "bg-[#2C8C7C]/80"
-              : "bg-[#2C8C7C]/40" // Dimmer for non-pool shared words
+              ? "bg-seal/80"
+              : "bg-seal/40" // Dimmer for non-pool shared words
           }`}
           style={{
             boxShadow: isConnecting
-              ? "0 0 8px 3px rgba(44, 140, 124, 0.8)"
+              ? "0 0 8px 3px rgba(82, 185, 166, 0.8)"
               : isSharedWord
-              ? "0 0 5px 2px rgba(44, 140, 124, 0.6)"
-              : "0 0 3px 1px rgba(44, 140, 124, 0.3)", // Dimmer glow for non-pool shared words
+              ? "0 0 5px 2px rgba(240, 234, 221, 0.6)"
+              : "0 0 3px 1px rgba(240, 234, 221, 0.3)", // Dimmer glow for non-pool shared words
             transform: "translate(-50%, -50%)",
             opacity: isConnecting ? 1 : isSharedWord ? 0.8 : 0.6,
           }}
@@ -71,17 +71,17 @@ const WordNode = ({
 
   if (isConnecting) {
     // Navigation word - full highlighting
-    wordStyle = "bg-[#2C8C7C] text-white shadow-lg";
+    wordStyle = "bg-seal text-[#F0EADD] shadow-lg";
   } else if (isSharedWord) {
     // Word pool shared word - text color highlighting
-    wordStyle = "bg-[#2C8C7C]/15 text-[#2C8C7C] dark:text-[#2C8C7C]";
+    wordStyle = "bg-seal/15 text-seal dark:text-seal";
   } else if (isSharedNonPool) {
     // Non-word pool shared word - subtle highlighting
     wordStyle =
-      "bg-gray-400/10 dark:bg-gray-400/5 text-gray-500 dark:text-gray-400";
+      "bg-[#F0EADD]/5 text-[#F0EADD]/50";
   } else {
     // Regular word - default styling
-    wordStyle = "text-gray-400/80 dark:text-gray-400/80";
+    wordStyle = "text-[#F0EADD]/40";
   }
 
   // Font weight styling
@@ -252,11 +252,11 @@ const PoemCanvas = ({
       <div
         className={`absolute inset-0 rounded-xl overflow-hidden
           border-2 transition-all duration-300 ${
-            isActiveLayer ? "border-[#2C8C7C]/60" : "border-[#2C8C7C]/10"
+            isActiveLayer ? "border-seal/60" : "border-seal/10"
           } ${
           constellationMode
             ? "bg-transparent border-transparent shadow-none"
-            : "bg-gray-800/90 shadow-lg"
+            : "bg-[#211D17]/90 shadow-lg"
         }`}
         style={{ transform: "translateZ(0px)" }}
       >
@@ -265,7 +265,7 @@ const PoemCanvas = ({
           <div
             className="absolute inset-0 rounded-xl"
             style={{
-              boxShadow: "0 0 20px rgba(44, 140, 124, 0.3) inset",
+              boxShadow: "0 0 20px rgba(240, 234, 221, 0.15) inset",
               pointerEvents: "none",
             }}
           />
@@ -274,7 +274,7 @@ const PoemCanvas = ({
         {/* Poem title */}
         {!constellationMode && (
           <div className="absolute top-4 left-4 p-2">
-            <h3 className="text-lg font-medium text-gray-200">{poem.title}</h3>
+            <h3 className="font-serif text-lg font-medium text-[#F0EADD]/90">{poem.title}</h3>
           </div>
         )}
       </div>
@@ -520,7 +520,7 @@ const NavigationNetwork = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 bg-gray-950/95 overflow-hidden"
+          className="fixed inset-0 z-50 bg-[#12100C]/95 overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -530,9 +530,9 @@ const NavigationNetwork = ({
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full bg-white/5 
-                backdrop-blur-sm z-20 text-white hover:bg-white/10 transition-colors"
+                backdrop-blur-sm z-20 text-[#F0EADD] hover:bg-white/10 transition-colors"
             >
-              <X className="w-6 h-6" />
+              <IconClose className="w-6 h-6" />
             </button>
           )}
 
@@ -541,22 +541,22 @@ const NavigationNetwork = ({
             <div className="absolute top-4 left-4 flex space-x-3 z-20">
               {/* Unique Poems Counter */}
               <div
-                className="p-3 bg-gray-900/90 backdrop-blur-sm 
-                rounded-lg border border-gray-800 flex items-center gap-2"
+                className="p-3 bg-[#1C1812]/90 backdrop-blur-sm 
+                rounded-lg border border-[#3B342A] flex items-center gap-2"
               >
-                <Book className="w-5 h-5 text-[#2C8C7C]" />
-                <div className="text-sm font-medium text-white">
+                <IconPoemlet className="w-5 h-5 text-seal" />
+                <div className="text-sm font-medium text-[#F0EADD]">
                   Unique Poems Visited: {uniquePoemCount}
                 </div>
               </div>
 
               {/* Constellation Counter */}
               <div
-                className="p-3 bg-gray-900/90 backdrop-blur-sm 
-                rounded-lg border border-gray-800 flex items-center gap-2"
+                className="p-3 bg-[#1C1812]/90 backdrop-blur-sm 
+                rounded-lg border border-[#3B342A] flex items-center gap-2"
               >
-                <Network className="w-5 h-5 text-[#2C8C7C]" />
-                <div className="text-sm font-medium text-white">
+                <IconConstellation className="w-5 h-5 text-seal" />
+                <div className="text-sm font-medium text-[#F0EADD]">
                   Constellation Count: {constellationCount}
                 </div>
               </div>
@@ -566,22 +566,22 @@ const NavigationNetwork = ({
                 <motion.button
                   onClick={() => setShowConstellation(!showConstellation)}
                   className={`p-2 rounded-full ${
-                    showConstellation ? "bg-[#2C8C7C]/50" : "bg-gray-900/70"
+                    showConstellation ? "bg-seal/50" : "bg-[#1C1812]/80"
                   } backdrop-blur-sm 
-                    text-white hover:bg-gray-800/70 transition-colors border border-gray-800
+                    text-[#F0EADD] hover:bg-[#2B251C]/80 transition-colors border border-[#3B342A]
                     flex items-center justify-center`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   aria-label="Toggle constellation view"
                 >
-                  <Telescope className="w-5 h-5 text-[#2C8C7C]" />
+                  <IconTelescope className="w-5 h-5 text-seal" />
                 </motion.button>
 
                 {/* Tooltip */}
                 <div
                   className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 
-                  bg-gray-900/90 backdrop-blur-sm rounded text-xs whitespace-nowrap 
-                  text-[#2C8C7C]
+                  bg-[#1C1812]/90 backdrop-blur-sm rounded text-xs whitespace-nowrap 
+                  text-seal
                   opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                 >
                   Stargazing
@@ -592,8 +592,8 @@ const NavigationNetwork = ({
               <div className="relative flex items-center ml-2">
                 <motion.button
                   onClick={() => setShowHelpModal(true)}
-                  className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                    text-white hover:bg-gray-800/70 transition-colors border border-gray-800
+                  className="p-2 rounded-full bg-[#1C1812]/80 backdrop-blur-sm 
+                    text-[#F0EADD] hover:bg-[#2B251C]/80 transition-colors border border-[#3B342A]
                     flex items-center justify-center"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -609,7 +609,7 @@ const NavigationNetwork = ({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="w-5 h-5 text-[#2C8C7C]"
+                    className="w-5 h-5 text-seal"
                   >
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -629,12 +629,12 @@ const NavigationNetwork = ({
                 className={`absolute left-6 top-1/2 transform -translate-y-1/2 
                   p-3 rounded-full border pointer-events-auto z-20 ${
                     activeLayer <= 0
-                      ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
+                      ? "bg-[#2B251C]/40 border-[#3B342A] text-[#F0EADD]/30 cursor-not-allowed"
+                      : "bg-[#1C1812]/80 border-[#3B342A] text-[#F0EADD] hover:bg-[#2B251C]/80"
                   } transition-colors shadow-lg`}
                 aria-label="Previous layer"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <IconChevronLeft className="w-5 h-5" />
               </button>
 
               <button
@@ -643,12 +643,12 @@ const NavigationNetwork = ({
                 className={`absolute right-6 top-1/2 transform -translate-y-1/2
                   p-3 rounded-full border pointer-events-auto z-20 ${
                     activeLayer >= visitedPoems.length - 1
-                      ? "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-900/70 border-gray-800 text-white hover:bg-gray-800/70"
+                      ? "bg-[#2B251C]/40 border-[#3B342A] text-[#F0EADD]/30 cursor-not-allowed"
+                      : "bg-[#1C1812]/80 border-[#3B342A] text-[#F0EADD] hover:bg-[#2B251C]/80"
                   } transition-colors shadow-lg`}
                 aria-label="Next layer"
               >
-                <ChevronRight className="w-5 h-5" />
+                <IconChevronRight className="w-5 h-5" />
               </button>
             </>
           )}
@@ -659,11 +659,11 @@ const NavigationNetwork = ({
               <button
                 onClick={returnTo3DView}
                 className="absolute top-4 left-1/2 transform -translate-x-1/2
-                  px-4 py-2 rounded-lg bg-gray-900/70 backdrop-blur-sm 
-                  border border-gray-800 text-white hover:bg-gray-800/70
+                  px-4 py-2 rounded-lg bg-[#1C1812]/80 backdrop-blur-sm 
+                  border border-[#3B342A] text-[#F0EADD] hover:bg-[#2B251C]/80
                   transition-colors shadow-lg z-20 flex items-center gap-2"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <IconBack className="w-5 h-5" />
                 <span>Back to Stack</span>
               </button>
             </>
@@ -677,27 +677,27 @@ const NavigationNetwork = ({
             >
               <button
                 onClick={() => setScale((prev) => Math.min(prev + 0.1, 2.5))}
-                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                className="p-2 rounded-full bg-[#1C1812]/80 backdrop-blur-sm 
+                  text-[#F0EADD] hover:bg-[#2B251C]/80 transition-colors border border-[#3B342A]"
                 aria-label="Zoom in"
               >
-                <ZoomIn className="w-4 h-4" />
+                <IconZoomIn className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
-                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                className="p-2 rounded-full bg-[#1C1812]/80 backdrop-blur-sm 
+                  text-[#F0EADD] hover:bg-[#2B251C]/80 transition-colors border border-[#3B342A]"
                 aria-label="Zoom out"
               >
-                <ZoomOut className="w-4 h-4" />
+                <IconZoomOut className="w-4 h-4" />
               </button>
               <button
                 onClick={resetView}
-                className="p-2 rounded-full bg-gray-900/70 backdrop-blur-sm 
-                  text-white hover:bg-gray-800/70 transition-colors border border-gray-800"
+                className="p-2 rounded-full bg-[#1C1812]/80 backdrop-blur-sm 
+                  text-[#F0EADD] hover:bg-[#2B251C]/80 transition-colors border border-[#3B342A]"
                 aria-label="Reset view"
               >
-                <RefreshCw className="w-4 h-4" />
+                <IconRetry className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -717,49 +717,49 @@ const NavigationNetwork = ({
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-gray-900 rounded-xl p-6 max-w-md w-full border border-[#2C8C7C]/20"
+                  className="bg-[#211D17] rounded-xl p-6 max-w-md w-full border border-seal/20"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <h3 className="text-xl font-medium text-[#2C8C7C] mb-4">
+                  <h3 className="text-xl font-medium text-seal mb-4">
                     Constellation Mode
                   </h3>
 
-                  <div className="space-y-4 text-gray-300 text-sm">
+                  <div className="space-y-4 text-[#F0EADD]/70 text-sm">
                     <p>
                       <b>Controls</b>
-                      <br />• <span className="text-[#2C8C7C]">Drag</span>:
+                      <br />• <span className="text-seal">Drag</span>:
                       Rotate the 3D space
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]">Scroll/Buttons</span>:
+                      <span className="text-seal">Scroll/Buttons</span>:
                       Zoom in and out
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]">Click poem border</span>:
+                      <span className="text-seal">Click poem border</span>:
                       Focus on a poem layer
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]">Double-click</span>:
+                      <span className="text-seal">Double-click</span>:
                       Expand poem to full view
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]">Reset button</span>:
+                      <span className="text-seal">Reset button</span>:
                       Return to default view
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]">Telescope icon</span>:
+                      <span className="text-seal">Telescope icon</span>:
                       Toggle stargazing view
                     </p>
 
                     <p>
                       <b>Star Types</b>
                       <br />•{" "}
-                      <span className="text-[#2C8C7C] font-medium">
+                      <span className="text-seal font-medium">
                         Bright stars
                       </span>
                       : Navigation connections
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]/80 font-medium">
+                      <span className="text-seal/80 font-medium">
                         Medium stars
                       </span>
                       : Shared words from the pool
                       <br />•{" "}
-                      <span className="text-[#2C8C7C]/40 font-medium">
+                      <span className="text-seal/40 font-medium">
                         Dim stars
                       </span>
                       : Other shared words
@@ -777,8 +777,8 @@ const NavigationNetwork = ({
                   <div className="mt-6 flex justify-end">
                     <button
                       onClick={() => setShowHelpModal(false)}
-                      className="px-4 py-2 bg-[#2C8C7C]/10 hover:bg-[#2C8C7C]/20 
-                        text-[#2C8C7C] rounded-lg transition-colors"
+                      className="px-4 py-2 bg-seal/10 hover:bg-seal/20 
+                        text-seal rounded-lg transition-colors"
                     >
                       Got it
                     </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { AdaptiveBackground } from "./components/shared/AdaptiveBackground";
 import HomePage from "./components/home/HomePage";
 import MenuView from "./components/home/MenuView";
@@ -7,20 +8,37 @@ import CraftMode from "./components/core/craft/CraftMode";
 import EchoMode from "./components/core/echo/EchoMode";
 import CookieConsentBanner from "./components/shared/CookieConsentBanner";
 import CookiePolicyPage from "./components/shared/CookiePolicyPage";
+import ErrorBoundary from "./components/shared/ErrorBoundary";
+import SharedPoemPage from "./components/shared/SharedPoemPage";
+import PoemletView from "./components/home/PoemletView";
+import IconSheet from "./components/shared/IconSheet";
+import { formatSeedPoems } from "./utils/poemFormatter";
+import { initDeviceIdentity, authFetch } from "./utils/deviceIdentity";
+import { API_URL } from "./utils/api";
 
 function App() {
-  // Navigation state
-  const [currentScreen, setCurrentScreen] = useState("home");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Core state
   const [selectedWords, setSelectedWords] = useState([]);
   const [currentPoem, setCurrentPoem] = useState(null);
   const [poemHistory, setPoemHistory] = useState([]);
-  const [showCookiePolicy, setShowCookiePolicy] = useState(false);
+
+  // Seed poems for Echo mode
+  const [seedPoems, setSeedPoems] = useState([]);
+
+  // Community poems for Echo mode
+  const [communityPoems, setCommunityPoems] = useState([]);
 
   // Save state
   const [lastSaved, setLastSaved] = useState(null);
   const [saveInterval, setSaveInterval] = useState(null);
 
-  // Load saved data on initial render
+  // Derive current screen from pathname for save logic
+  const currentScreen = location.pathname.replace("/", "") || "home";
+
+  // Load saved data on initial render and redirect to correct screen
   useEffect(() => {
     try {
       const legacyPoems = localStorage.getItem("poit_poems");
@@ -59,29 +77,87 @@ function App() {
         localStorage.setItem("poit_constellation_date", today);
       }
 
-      if (currentPoemData) {
-        setCurrentPoem(currentPoemData);
+      // Only auto-redirect if we're on the home page
+      if (location.pathname === "/") {
+        if (currentPoemData) {
+          setCurrentPoem(currentPoemData);
+          if (dailyWords) setSelectedWords(dailyWords);
+          navigate("/echo", { replace: true });
+        } else if (dailyWords && pulseCompleted) {
+          setSelectedWords(dailyWords);
+          navigate("/craft", { replace: true });
+        } else if (pulseInProgress && pulseInProgress.length > 0) {
+          navigate("/pulse", { replace: true });
+        }
+      } else {
+        // Restore state for non-home routes
+        if (currentPoemData) setCurrentPoem(currentPoemData);
         if (dailyWords) setSelectedWords(dailyWords);
-        setCurrentScreen("echo");
-      } else if (dailyWords && pulseCompleted) {
-        setSelectedWords(dailyWords);
-        setCurrentScreen("craft");
-      } else if (pulseInProgress && pulseInProgress.length > 0) {
-        setCurrentScreen("pulse");
       }
     } catch (error) {
       console.error("Failed to load saved state:", error);
     }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch seed poems for Echo mode
+  useEffect(() => {
+    const fetchSeedPoems = async () => {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch(`${API_URL}/seed-poems?timezone=${tz}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.poems?.length) {
+          const wordPool = selectedWords.length
+            ? selectedWords
+            : JSON.parse(localStorage.getItem("poit_daily_words") || "[]");
+          if (wordPool.length > 0) {
+            setSeedPoems(formatSeedPoems(data.poems, wordPool));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch seed poems:", err);
+      }
+    };
+    fetchSeedPoems();
+  }, [selectedWords]);
+
+  // Initialise device identity on mount (fire-and-forget)
+  useEffect(() => {
+    initDeviceIdentity().catch(() => {});
   }, []);
+
+  // Fetch community poems for Echo mode
+  useEffect(() => {
+    const fetchCommunityPoems = async () => {
+      try {
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const res = await authFetch(
+          `${API_URL}/poems/community?date_key=${dateKey}&limit=30`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.poems?.length) {
+          setCommunityPoems(
+            data.poems.map((p) => ({
+              ...p,
+              source: "community",
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch community poems:", err);
+      }
+    };
+    fetchCommunityPoems();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save data handler
   const saveData = useCallback(() => {
     let success = false;
 
     try {
-      // Save based on current mode
       if (currentScreen === "pulse") {
-        // Get the in-progress words from localStorage if they exist
         const inProgressWords = JSON.parse(
           localStorage.getItem("poit_daily_words_in_progress") || "[]"
         );
@@ -96,7 +172,6 @@ function App() {
           success = true;
         }
       } else if (currentScreen === "craft") {
-        // Save selected words
         if (selectedWords.length > 0) {
           localStorage.setItem(
             "poit_daily_words",
@@ -105,14 +180,12 @@ function App() {
           success = true;
         }
 
-        // Check if we have craft data to save
         const hasCraftData =
           localStorage.getItem("poit_craft_has_data") === "true";
         if (hasCraftData) {
           success = true;
         }
 
-        // If we have a current poem, save it
         if (currentPoem) {
           localStorage.setItem(
             "poit_current_poem",
@@ -123,7 +196,6 @@ function App() {
       } else if (currentScreen === "echo" && currentPoem) {
         localStorage.setItem("poit_current_poem", JSON.stringify(currentPoem));
 
-        // Also save the network state
         const connectingWords = JSON.parse(
           localStorage.getItem("poit_connecting_words") || "{}"
         );
@@ -131,7 +203,6 @@ function App() {
           localStorage.getItem("poit_navigation_history") || "[]"
         );
 
-        // Save a more complete state
         localStorage.setItem(
           "poit_echo_state",
           JSON.stringify({
@@ -146,8 +217,7 @@ function App() {
       }
 
       if (success) {
-        const now = new Date();
-        setLastSaved(now.toISOString());
+        setLastSaved(new Date().toISOString());
       }
 
       return success;
@@ -159,15 +229,13 @@ function App() {
 
   // Set up auto-save interval when in creative modes
   useEffect(() => {
-    // Clear any existing interval
     if (saveInterval) {
       clearInterval(saveInterval);
       setSaveInterval(null);
     }
 
-    // Only set up auto-save for creative modes
     if (["pulse", "craft", "echo"].includes(currentScreen)) {
-      const interval = setInterval(saveData, 60000); // Save every 60 seconds
+      const interval = setInterval(saveData, 60000);
       setSaveInterval(interval);
     }
 
@@ -176,11 +244,10 @@ function App() {
         clearInterval(saveInterval);
       }
     };
-  }, [currentScreen, saveData]);
+  }, [currentScreen, saveData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handler functions
   const handleStartDaily = () => {
-    // Check for active sessions in order of progression
     const currentPoemData = JSON.parse(
       localStorage.getItem("poit_current_poem") || "null"
     );
@@ -189,7 +256,6 @@ function App() {
       localStorage.getItem("poit_daily_words") || "null"
     );
 
-    // Check if pulse has been explicitly completed
     const pulseCompleted =
       localStorage.getItem("poit_pulse_completed") === "true";
 
@@ -198,50 +264,29 @@ function App() {
     );
 
     if (currentPoemData) {
-      // User has reached Echo mode
       setCurrentPoem(currentPoemData);
       if (dailyWords) setSelectedWords(dailyWords);
-
-      // Also load echo state
-      const echoState = JSON.parse(
-        localStorage.getItem("poit_echo_state") || "null"
-      );
-      if (echoState) {
-        // This data will be available to EchoMode when it loads
-        console.log("Loaded Echo state:", echoState);
-      }
-
-      setCurrentScreen("echo");
+      navigate("/echo");
     } else if (dailyWords && pulseCompleted) {
-      // User has explicitly completed Pulse and should be in Craft
       setSelectedWords(dailyWords);
-      setCurrentScreen("craft");
+      navigate("/craft");
     } else if (pulseInProgress && pulseInProgress.length > 0) {
-      // User started but didn't complete Pulse
-      setCurrentScreen("pulse");
+      navigate("/pulse");
     } else {
-      // No active session, start fresh at Pulse
-      setCurrentScreen("pulse");
+      navigate("/pulse");
     }
   };
 
   const handleViewHistory = () => {
-    // For now, just log
-    console.log("View history:", poemHistory);
+    navigate("/poemlet");
   };
 
   const handlePulseComplete = (words) => {
     setSelectedWords(words);
-
-    // Save to localStorage
     localStorage.setItem("poit_daily_words", JSON.stringify(words));
-
-    // Set flag to indicate pulse was explicitly completed
     localStorage.setItem("poit_pulse_completed", "true");
-
     setLastSaved(new Date().toISOString());
-
-    setCurrentScreen("craft");
+    navigate("/craft");
   };
 
   const updateStreak = () => {
@@ -259,25 +304,19 @@ function App() {
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-        // Consecutive day
         streak += 1;
       } else if (diffDays > 1) {
-        // Streak broken
         streak = 1;
       } else if (diffDays === 0) {
-        // Already updated today
         return;
       }
     } else {
-      // First time ever
       streak = 1;
     }
 
-    // Update streak in localStorage
     localStorage.setItem("poit_streak", streak.toString());
     localStorage.setItem("poit_last_streak_date", today.toISOString());
 
-    // Update longest streak if needed
     const longestStreak = parseInt(
       localStorage.getItem("poit_longest_streak") || "0"
     );
@@ -297,115 +336,203 @@ function App() {
     };
 
     setCurrentPoem(processedPoem);
-
-    // Save to localStorage
     localStorage.setItem("poit_current_poem", JSON.stringify(processedPoem));
-
-    // Update streak when transitioning to Echo mode
     updateStreak();
-
     setLastSaved(new Date().toISOString());
-    setCurrentScreen("echo");
+    navigate("/echo");
+
+    // Save poem to server in background (non-blocking)
+    authFetch(`${API_URL}/poems`, {
+      method: "POST",
+      body: {
+        title: processedPoem.title,
+        components: processedPoem.components,
+        selectedWords: selectedWords.map((w) =>
+          typeof w === "string" ? w : w.text
+        ),
+        dateKey: new Date().toISOString().slice(0, 10),
+        isPublic: true,
+      },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.id) {
+          // Store server poem ID for sharing
+          const updated = { ...processedPoem, serverId: data.id };
+          setCurrentPoem(updated);
+          localStorage.setItem("poit_current_poem", JSON.stringify(updated));
+        }
+      })
+      .catch((err) => console.error("Failed to save poem to server:", err));
   };
 
   const handleEchoComplete = () => {
-    // Save completed poem to history
     const updatedHistory = [
       {
         ...currentPoem,
         completedAt: new Date().toISOString(),
       },
       ...poemHistory,
-    ].slice(0, 50); // Keep last 50 poems
+    ].slice(0, 50);
 
     setPoemHistory(updatedHistory);
     localStorage.setItem("poit_poems_history", JSON.stringify(updatedHistory));
 
-    // Clear current session
     localStorage.removeItem("poit_daily_words");
     localStorage.removeItem("poit_current_poem");
     localStorage.removeItem("poit_pulse_completed");
     localStorage.removeItem("poit_navigation_history");
     localStorage.removeItem("poit_echo_state");
 
-    // Don't clear connecting_words as they represent the overall constellation
-
     setSelectedWords([]);
     setCurrentPoem(null);
-
-    // Return to home
-    setCurrentScreen("home");
+    navigate("/");
   };
 
-  // Callback to return to home screen
-  const handleExitToHome = (target = "home") => {
-    // Save progress before exiting
+  const handleExitToHome = () => {
     saveData();
-    setCurrentScreen(target);
+    navigate("/");
   };
 
-  if (showCookiePolicy) {
-    return <CookiePolicyPage onBack={() => setShowCookiePolicy(false)} />;
-  }
+  // Route guards
+  const CraftGuard = () => {
+    if (selectedWords.length === 0) {
+      const dailyWords = JSON.parse(
+        localStorage.getItem("poit_daily_words") || "null"
+      );
+      const pulseCompleted =
+        localStorage.getItem("poit_pulse_completed") === "true";
+      if (dailyWords && pulseCompleted) {
+        setSelectedWords(dailyWords);
+        return null; // Will re-render with words
+      }
+      return <Navigate to="/pulse" replace />;
+    }
+    return null;
+  };
 
-  // Render based on current screen
+  const EchoGuard = () => {
+    if (!currentPoem) {
+      const poemData = JSON.parse(
+        localStorage.getItem("poit_current_poem") || "null"
+      );
+      if (poemData) {
+        setCurrentPoem(poemData);
+        const dailyWords = JSON.parse(
+          localStorage.getItem("poit_daily_words") || "null"
+        );
+        if (dailyWords) setSelectedWords(dailyWords);
+        return null;
+      }
+      return <Navigate to="/pulse" replace />;
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen">
       <AdaptiveBackground />
 
-      {currentScreen === "home" && (
-        <>
-          <HomePage
-            onStartDaily={handleStartDaily}
-            onViewHistory={handleViewHistory}
-          />
-        </>
-      )}
-
-      {currentScreen === "menu" && (
-        <MenuView
-          onClose={() => setCurrentScreen("home")}
-          onStartDaily={handleStartDaily}
-          onViewHistory={handleViewHistory}
-        />
-      )}
-
-      {currentScreen === "pulse" && (
-        <PulseMode
-          onComplete={handlePulseComplete}
-          onExitToHome={handleExitToHome}
-          onSave={saveData}
-          lastSaved={lastSaved}
-        />
-      )}
-
-      {currentScreen === "craft" && (
-        <CraftMode
-          selectedWords={selectedWords}
-          onComplete={handleCraftComplete}
-          onExitToHome={handleExitToHome}
-          onSave={saveData}
-          lastSaved={lastSaved}
-        />
-      )}
-
-      {currentScreen === "echo" && (
-        <EchoMode
-          poems={
-            currentPoem
-              ? [currentPoem, ...poemHistory.filter((p) => p.id !== currentPoem.id)]
-              : poemHistory
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomePage
+              onStartDaily={handleStartDaily}
+              onViewHistory={handleViewHistory}
+            />
           }
-          wordPool={selectedWords}
-          onComplete={handleEchoComplete}
-          onExitToHome={handleExitToHome}
-          onSave={saveData}
-          lastSaved={lastSaved}
         />
-      )}
 
-      {/* Cookie Consent Banner */}
-      <CookieConsentBanner onViewPolicy={() => setShowCookiePolicy(true)} />
+        <Route
+          path="/menu"
+          element={
+            <MenuView
+              onClose={() => navigate("/")}
+              onStartDaily={handleStartDaily}
+              onViewHistory={handleViewHistory}
+            />
+          }
+        />
+
+        <Route
+          path="/pulse"
+          element={
+            <ErrorBoundary fallbackMessage="Something went wrong in Pulse mode." onGoHome={() => navigate("/")}>
+              <PulseMode
+                onComplete={handlePulseComplete}
+                onExitToHome={handleExitToHome}
+                onSave={saveData}
+                lastSaved={lastSaved}
+              />
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/craft"
+          element={
+            <>
+              <CraftGuard />
+              <ErrorBoundary fallbackMessage="Something went wrong in Craft mode." onGoHome={() => navigate("/")}>
+                <CraftMode
+                  selectedWords={selectedWords}
+                  onComplete={handleCraftComplete}
+                  onExitToHome={handleExitToHome}
+                  onSave={saveData}
+                  lastSaved={lastSaved}
+                />
+              </ErrorBoundary>
+            </>
+          }
+        />
+
+        <Route
+          path="/echo"
+          element={
+            <>
+              <EchoGuard />
+              <ErrorBoundary fallbackMessage="Something went wrong in Echo mode." onGoHome={() => navigate("/")}>
+                <EchoMode
+                  poems={
+                    currentPoem
+                      ? [
+                          currentPoem,
+                          ...poemHistory.filter((p) => p.id !== currentPoem.id),
+                          ...communityPoems.filter(
+                            (p) => p.id !== currentPoem.id && p.id !== currentPoem.serverId
+                          ),
+                          ...seedPoems,
+                        ]
+                      : [...poemHistory, ...communityPoems, ...seedPoems]
+                  }
+                  wordPool={selectedWords}
+                  onComplete={handleEchoComplete}
+                  onExitToHome={handleExitToHome}
+                  onSave={saveData}
+                  lastSaved={lastSaved}
+                />
+              </ErrorBoundary>
+            </>
+          }
+        />
+
+        <Route path="/cookie-policy" element={<CookiePolicyPage onBack={() => navigate(-1)} />} />
+
+        {/* Poemlet — the poet's own chapbook */}
+        <Route path="/poemlet" element={<PoemletView />} />
+
+        {/* Shareable poem page */}
+        <Route path="/poem/:id" element={<SharedPoemPage />} />
+
+        {/* Dev-only proof sheet for the icon set */}
+        {import.meta.env.DEV && <Route path="/dev/icons" element={<IconSheet />} />}
+
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      <CookieConsentBanner onViewPolicy={() => navigate("/cookie-policy")} />
     </div>
   );
 }

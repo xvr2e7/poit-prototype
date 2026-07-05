@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ZoomIn, ZoomOut, LogOut, CircleHelp } from "lucide-react";
+import {
+  IconAsk,
+  IconCheck,
+  IconExit,
+  IconLink,
+  IconZoomIn,
+  IconZoomOut,
+} from "../../shared/icons";
 import AdaptiveBackground from "../../shared/AdaptiveBackground";
 import Navigation from "../../shared/Navigation";
 import WordDisplay from "./components/WordDisplay";
@@ -8,6 +15,9 @@ import { usePoemNavigation } from "./hooks/usePoemNavigation";
 import NavigationNetworkButton from "./components/NavigationNetworkButton";
 import NavigationNetwork from "./components/NavigationNetwork";
 import HelpModal from "../../shared/HelpModal";
+import Seal from "../../shared/Seal";
+import { authFetch, getDeviceId } from "../../../utils/deviceIdentity";
+import { API_URL } from "../../../utils/api";
 
 const EchoMode = ({
   poems = [],
@@ -87,6 +97,48 @@ const EchoMode = ({
 
   // Track connecting words between poems
   const [connectingWords, setConnectingWords] = useState({});
+
+  // Like state for community poems
+  const [likedPoems, setLikedPoems] = useState(new Set());
+
+  // Share-link state for the poet's own poem
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleCopyShareLink = useCallback(async () => {
+    if (!currentPoem?.serverId) return;
+    const url = `${window.location.origin}/poem/${currentPoem.serverId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable — surface the URL instead
+      window.prompt("Copy this link:", url);
+    }
+  }, [currentPoem]);
+
+  const handleLikePoem = useCallback(async () => {
+    if (!currentPoem?.source || currentPoem.source !== "community") return;
+    const poemId = currentPoem.id || currentPoem.serverId;
+    if (!poemId || !getDeviceId()) return;
+
+    try {
+      const res = await authFetch(`${API_URL}/poems/${poemId}/like`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLikedPoems((prev) => {
+          const next = new Set(prev);
+          if (data.liked) next.add(poemId);
+          else next.delete(poemId);
+          return next;
+        });
+      }
+    } catch {
+      // silent fail
+    }
+  }, [currentPoem]);
 
   const incrementConstellationCount = useCallback(() => {
     // Update today's constellations
@@ -301,7 +353,9 @@ const EchoMode = ({
   if (!enabled || !currentPoem) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <span className="text-[#2C8C7C]">Loading poem...</span>
+        <span className="text-label text-seal/70 animate-pulse">
+          opening the atlas…
+        </span>
       </div>
     );
   }
@@ -326,8 +380,8 @@ const EchoMode = ({
       <motion.button
         onClick={() => setShowHelp(true)}
         className="fixed left-6 bottom-6 z-50 p-2 rounded-lg 
-    bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
-    hover:bg-white/10 transition-colors flex items-center justify-center"
+    bg-surface/60 backdrop-blur-sm border border-seal/15
+    hover:bg-seal/10 transition-colors flex items-center justify-center"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         style={{
@@ -336,7 +390,7 @@ const EchoMode = ({
           height: "40px",
         }}
       >
-        <CircleHelp className="w-5 h-5 text-[#2C8C7C]" />
+        <IconAsk className="w-5 h-5 text-seal" />
       </motion.button>
 
       {/* Help Modal */}
@@ -357,12 +411,57 @@ const EchoMode = ({
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex items-center justify-between mb-6"
+            className="flex items-center justify-between mb-6 pl-16"
           >
-            <div className="space-y-1">
-              <h2 className="text-2xl font-medium text-gray-900 dark:text-white">
-                {currentPoem.title}
-              </h2>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3">
+                <h2 className="font-serif text-2xl font-medium text-ink">
+                  {currentPoem.title}
+                </h2>
+                {currentPoem.source === "community" && (
+                  <span className="text-label text-seal/70">community</span>
+                )}
+                {currentPoem.source === "seed" && (
+                  <span className="text-label text-ink/40">seed</span>
+                )}
+              </div>
+              {/* Stamp your seal on a community poem you treasure */}
+              {currentPoem.source === "community" && !currentPoem.isOwn && getDeviceId() && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Seal
+                    size="sm"
+                    stamped={likedPoems.has(currentPoem.id)}
+                    onClick={handleLikePoem}
+                    label={
+                      likedPoems.has(currentPoem.id)
+                        ? "Remove your seal"
+                        : "Stamp your seal on this poem"
+                    }
+                  />
+                  <span className="font-mono text-xs text-ink/40">
+                    {(currentPoem.likeCount || 0) + (likedPoems.has(currentPoem.id) ? 1 : 0)}{" "}
+                    {(currentPoem.likeCount || 0) + (likedPoems.has(currentPoem.id) ? 1 : 0) === 1
+                      ? "seal"
+                      : "seals"}
+                  </span>
+                </div>
+              )}
+              {/* Copy a share link for your own poem */}
+              {currentPoem.serverId && (
+                <button
+                  onClick={handleCopyShareLink}
+                  className="flex items-center gap-1.5 mt-1 text-seal/70 hover:text-seal transition-colors"
+                >
+                  {shareCopied ? (
+                    <IconCheck className="w-3.5 h-3.5" />
+                  ) : (
+                    <IconLink className="w-3.5 h-3.5" />
+                  )}
+                  <span className="text-label">
+                    {shareCopied ? "link copied" : "share this poem"}
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Network Button */}
@@ -384,23 +483,23 @@ const EchoMode = ({
             <div className="absolute top-4 left-4 flex flex-row gap-2 z-10">
               <button
                 onClick={handleZoomIn}
-                className="p-2 rounded-full bg-white/10 dark:bg-gray-900/30 
-                  backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20 
-                  dark:hover:bg-gray-900/50 transition-colors"
+                className="p-2 rounded-full bg-surface/60 
+                  backdrop-blur-sm border border-seal/20 hover:bg-seal/10 
+                  transition-colors"
               >
-                <ZoomIn className="w-4 h-4 text-[#2C8C7C]" />
+                <IconZoomIn className="w-4 h-4 text-seal" />
               </button>
               <button
                 onClick={handleZoomOut}
-                className="p-2 rounded-full bg-white/10 dark:bg-gray-900/30 
-                  backdrop-blur-sm border border-[#2C8C7C]/20 hover:bg-white/20 
-                  dark:hover:bg-gray-900/50 transition-colors"
+                className="p-2 rounded-full bg-surface/60 
+                  backdrop-blur-sm border border-seal/20 hover:bg-seal/10 
+                  transition-colors"
               >
-                <ZoomOut className="w-4 h-4 text-[#2C8C7C]" />
+                <IconZoomOut className="w-4 h-4 text-seal" />
               </button>
               <div
-                className="text-center mt-1 text-xs text-[#2C8C7C] bg-white/10 dark:bg-gray-900/30 
-                backdrop-blur-sm rounded-md px-1 py-0.5 border border-[#2C8C7C]/20"
+                className="text-center mt-1 font-mono text-xs text-seal bg-surface/60 
+                backdrop-blur-sm rounded-md px-1.5 py-0.5 border border-seal/20"
               >
                 {Math.round(zoomLevel * 100)}%
               </div>
@@ -409,13 +508,13 @@ const EchoMode = ({
             {/* Connection Counter */}
             <div
               className="absolute top-4 right-4 flex items-center gap-1.5 
-                px-3 py-1.5 rounded-full bg-white/5 dark:bg-gray-950/30 
-                backdrop-blur-sm border border-[#2C8C7C]/20 z-10"
+                px-3 py-1.5 rounded-full bg-surface/60 
+                backdrop-blur-sm border border-seal/20 z-10"
             >
               <div className="relative">
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-4 h-4 text-[#2C8C7C]"
+                  className="w-4 h-4 text-seal"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -424,7 +523,7 @@ const EchoMode = ({
                   <path d="M16,13 A3,3 0 1,1 19,11 A3,3 0 1,1 16,13" />
                 </svg>
               </div>
-              <span className="text-sm font-medium text-[#2C8C7C]">
+              <span className="font-mono text-sm font-medium text-seal">
                 {currentPoem?.components?.filter(
                   (component) =>
                     component.type === "word" &&
@@ -461,6 +560,7 @@ const EchoMode = ({
                     isTransitioning={isTransitioning}
                     isFloating={true}
                     connectingWord={connectingWord}
+                    poemSource={currentPoem.source}
                   />
                 </AnimatePresence>
               </motion.div>
@@ -484,14 +584,14 @@ const EchoMode = ({
         <motion.button
           onClick={() => onExitToHome("menu")}
           className="fixed bottom-6 right-6 p-3 rounded-full 
-        bg-white/10 dark:bg-gray-900/30 backdrop-blur-sm 
-        border border-[#2C8C7C]/20 hover:bg-white/20 
-        dark:hover:bg-gray-900/50 transition-colors z-10"
+        bg-surface/60 backdrop-blur-sm 
+        border border-seal/20 hover:bg-seal/10 
+        transition-colors z-10"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Open Dashboard Menu"
         >
-          <LogOut className="w-5 h-5 text-[#2C8C7C]" />
+          <IconExit className="w-5 h-5 text-seal" />
         </motion.button>
       </div>
     </div>

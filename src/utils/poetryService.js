@@ -1,3 +1,5 @@
+import { API_URL } from "./api";
+
 const BASE_POETRYDB_URL = "https://poetrydb.org";
 
 class PoetryDBService {
@@ -20,8 +22,7 @@ class PoetryDBService {
 
 class PoetsOrgService {
   constructor() {
-    const baseApiUrl = import.meta.env.VITE_API_BASE_URL || "";
-    this.baseUrl = `${baseApiUrl}/api/poetry/poetsorg`;
+    this.baseUrl = `${API_URL}/poetry/poetsorg`;
   }
 
   async getDailyPoem() {

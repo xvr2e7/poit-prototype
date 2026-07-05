@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sun,
-  Moon,
-  HelpCircle,
-  Save,
-  Home,
-  ChevronDown,
-  Check,
-  AlertCircle,
-} from "lucide-react";
+  IconAlert,
+  IconAsk,
+  IconCheck,
+  IconChevronDown,
+  IconHome,
+  IconMoon,
+  IconSave,
+  IconSun,
+} from "./icons";
 import Logo from "./Logo";
 import { useTheme } from "./AdaptiveBackground";
 
@@ -87,15 +87,15 @@ const Navigation = ({
           {/* Menu Button */}
           <motion.button
             className="flex items-center justify-center p-2 rounded-lg 
-              bg-white/5 backdrop-blur-sm border border-[#2C8C7C]/10
-              hover:bg-white/10 transition-colors"
+              bg-surface/60 backdrop-blur-sm border border-seal/15
+              hover:bg-seal/10 transition-colors"
             onClick={() => setIsOpen(!isOpen)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Logo size="small" />
-            <ChevronDown
-              className="w-3 h-3 text-[#2C8C7C]/60 ml-1.5"
+            <IconChevronDown
+              className="w-3 h-3 text-seal/60 ml-1.5"
               style={{
                 transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                 transition: "transform 0.3s ease",
@@ -111,9 +111,9 @@ const Navigation = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 mt-2 w-48 
-                  bg-white/10 dark:bg-black/20 backdrop-blur-md 
-                  rounded-lg border border-[#2C8C7C]/10 
+                className="absolute top-full left-0 mt-2 w-52 
+                  bg-surface/95 backdrop-blur-md 
+                  rounded-lg border border-seal/15 shadow-leaf dark:shadow-leaf-dark
                   overflow-hidden"
               >
                 <div className="p-1">
@@ -121,39 +121,39 @@ const Navigation = ({
                   <motion.button
                     onClick={handleThemeToggle}
                     className="w-full flex items-center gap-3 px-4 py-2.5 
-                      text-sm text-[#2C8C7C] rounded-lg
-                      hover:bg-[#2C8C7C]/10 transition-colors text-left"
+                      font-mono text-xs tracking-wide text-seal rounded-lg
+                      hover:bg-seal/10 transition-colors text-left"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                    {theme === "dark" ? <IconSun size={16} /> : <IconMoon size={16} />}
+                    {theme === "dark" ? "Light mode" : "Dark mode"}
                   </motion.button>
 
                   {/* Save Button */}
                   <motion.button
                     onClick={handleSave}
                     className="w-full flex items-center gap-3 px-4 py-2.5 
-                      text-sm text-[#2C8C7C] rounded-lg
-                      hover:bg-[#2C8C7C]/10 transition-colors text-left"
+                      font-mono text-xs tracking-wide text-seal rounded-lg
+                      hover:bg-seal/10 transition-colors text-left"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Save size={16} />
-                    Save Progress
+                    <IconSave size={16} />
+                    Save progress
                   </motion.button>
 
                   {/* Home Button */}
                   <motion.button
                     onClick={handleHome}
                     className="w-full flex items-center gap-3 px-4 py-2.5 
-                      text-sm text-[#2C8C7C] rounded-lg
-                      hover:bg-[#2C8C7C]/10 transition-colors text-left"
+                      font-mono text-xs tracking-wide text-seal rounded-lg
+                      hover:bg-seal/10 transition-colors text-left"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Home size={16} />
-                    Return Home
+                    <IconHome size={16} />
+                    Return home
                   </motion.button>
                 </div>
               </motion.div>
@@ -170,23 +170,23 @@ const Navigation = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             className={`fixed bottom-6 inset-x-0 mx-auto w-fit z-50 
-              px-6 py-3 rounded-lg flex items-center gap-2 shadow-xl
-              backdrop-blur-sm
+              px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-leaf dark:shadow-leaf-dark
+              backdrop-blur-sm font-mono text-xs tracking-wide
               ${
                 saveStatus === "success"
-                  ? "bg-[#2C7C8C]/90 text-white"
-                  : "bg-red-500/90 text-white"
+                  ? "bg-seal text-paper"
+                  : "bg-ink text-paper"
               }`}
           >
             {saveStatus === "success" ? (
               <>
-                <Check className="w-5 h-5" />
-                <span>Progress saved successfully</span>
+                <IconCheck className="w-4 h-4" />
+                <span>Progress saved</span>
               </>
             ) : (
               <>
-                <AlertCircle className="w-5 h-5" />
-                <span>Failed to save progress</span>
+                <IconAlert className="w-4 h-4" />
+                <span>Nothing to save yet</span>
               </>
             )}
           </motion.div>

@@ -1,10 +1,12 @@
 const dictionaryService = require("./dictionaryService");
+const poeticWordCurator = require("./poeticWordCurator");
 
 class WordService {
   async getWords() {
     try {
       const wordMap = new Map();
 
+      // 1. Get Word of the Day + recent WOTDs (5 words)
       const wotdCount = 5;
       const wotd = await dictionaryService.getWordOfDay();
       wordMap.set(wotd.text, wotd);
@@ -16,7 +18,8 @@ class WordService {
         }
       }
 
-      const randomWordCount = Math.max(0, 50 - wordMap.size);
+      // 2. Fetch ~100 random words for AI scoring (up from ~75)
+      const randomWordCount = Math.max(0, 100 - wordMap.size);
       const posCounts = {
         noun: Math.ceil(randomWordCount * 0.4),
         verb: Math.ceil(randomWordCount * 0.3),
@@ -29,9 +32,16 @@ class WordService {
         Array.from(wordMap.keys())
       );
 
+      // 3. AI curation step — score words for poetic quality
+      const curatedWords = await poeticWordCurator.curateWords(randomWords);
+
+      // Use curated words if available, otherwise fall back to raw words
+      const wordsToAdd = curatedWords || randomWords;
+      const targetCount = 50 - wordMap.size;
+
       let addedCount = 0;
-      for (const word of randomWords) {
-        if (!wordMap.has(word.text) && addedCount < randomWordCount) {
+      for (const word of wordsToAdd) {
+        if (!wordMap.has(word.text) && addedCount < targetCount) {
           wordMap.set(word.text, word);
           addedCount += 1;
         }
@@ -39,15 +49,10 @@ class WordService {
 
       let finalWords = Array.from(wordMap.values());
 
+      // 4. Fill shortfall if needed
       if (finalWords.length < 50) {
         const shortfall = 50 - finalWords.length;
-
-        const additionalWords = await dictionaryService.getRandomWords(
-          shortfall * 2,
-          null,
-          finalWords.map((word) => word.text)
-        );
-
+        const additionalWords = dictionaryService.getEmergencyWords(shortfall);
         for (const word of additionalWords) {
           if (!wordMap.has(word.text) && finalWords.length < 50) {
             finalWords.push(word);
