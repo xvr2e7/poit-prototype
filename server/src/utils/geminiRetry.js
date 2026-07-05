@@ -21,11 +21,16 @@ async function withGeminiRetry(fn, { maxRetries = 2, label = "Gemini" } = {}) {
         throw error;
       }
 
-      // Parse retry delay from error if available, otherwise use exponential backoff
+      // Parse retry delay from error if available, otherwise use exponential backoff.
+      // Serverless functions can't afford long sleeps: if Gemini asks for more
+      // than a few seconds, give up now so callers move to their fallbacks.
       const retryMatch = error.message?.match(/retry in ([\d.]+)s/i);
-      const delaySeconds = retryMatch
-        ? Math.min(parseFloat(retryMatch[1]), 30)
-        : Math.pow(2, attempt + 1);
+      const suggested = retryMatch ? parseFloat(retryMatch[1]) : Math.pow(2, attempt + 1);
+      if (suggested > 5) {
+        console.warn(`${label}: Rate limited with ${suggested}s backoff, too long — skipping retries`);
+        throw error;
+      }
+      const delaySeconds = suggested;
 
       console.log(`${label}: Rate limited, retrying in ${delaySeconds}s (attempt ${attempt + 1}/${maxRetries})`);
       await new Promise((r) => setTimeout(r, delaySeconds * 1000));

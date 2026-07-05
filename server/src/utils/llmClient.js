@@ -80,10 +80,15 @@ class LLMClient {
           throw error;
         }
 
+        // Serverless budget: a long suggested backoff means "not now" —
+        // fail over to OpenRouter instead of sleeping the function away.
         const retryMatch = error.message?.match(/retry in ([\d.]+)s/i);
-        const delay = retryMatch
-          ? Math.min(parseFloat(retryMatch[1]), 30)
-          : Math.pow(2, attempt + 1);
+        const suggested = retryMatch ? parseFloat(retryMatch[1]) : Math.pow(2, attempt + 1);
+        if (suggested > 5) {
+          console.warn(`${label}: Gemini backoff ${suggested}s too long, failing over`);
+          throw error;
+        }
+        const delay = suggested;
 
         console.log(`${label}: Gemini rate limited, retrying in ${delay}s (${attempt + 1}/${maxRetries})`);
         await new Promise((r) => setTimeout(r, delay * 1000));
@@ -107,7 +112,7 @@ class LLMClient {
           "HTTP-Referer": "https://poit.xzyan.com",
           "X-Title": "POiT",
         },
-        timeout: 30000,
+        timeout: 15000,
       }
     );
 
