@@ -1,8 +1,5 @@
-const serverless = require("serverless-http");
 require("dotenv").config();
 
-const app = require("../server/src/app");
-
-module.exports = async (req, res) => {
-  return serverless(app)(req, res);
-};
+// Vercel's Node runtime invokes functions with plain (req, res), so the
+// Express app is the handler — no Lambda-style wrapper needed.
+module.exports = require("../server/src/app");
