@@ -1,18 +1,11 @@
 const jwt = require("jsonwebtoken");
-const { createClient } = require("@supabase/supabase-js");
+const { getSupabase } = require("../utils/supabaseClient");
 
 const JWT_SECRET = process.env.JWT_SECRET || "poit-device-secret-change-in-prod";
 
 class DeviceService {
   constructor() {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    this.supabase =
-      url && key
-        ? createClient(url, key, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          })
-        : null;
+    this.supabase = getSupabase();
   }
 
   async registerOrGet(fingerprint) {

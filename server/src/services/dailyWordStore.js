@@ -1,18 +1,9 @@
-const { createClient } = require("@supabase/supabase-js");
+const { getSupabase } = require("../utils/supabaseClient");
 
 class DailyWordStore {
   constructor() {
     this.memory = new Map();
-
-    const url = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    this.supabase =
-      url && serviceKey
-        ? createClient(url, serviceKey, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          })
-        : null;
+    this.supabase = getSupabase();
   }
 
   getCacheKey(timezone, dateKey) {
