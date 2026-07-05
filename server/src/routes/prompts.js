@@ -1,20 +1,11 @@
 const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
 const promptService = require("../services/promptService");
 const dailyWordStore = require("../services/dailyWordStore");
+const { getSupabase } = require("../utils/supabaseClient");
 
 const router = express.Router();
 
 const memoryCache = new Map();
-
-const getSupabase = () => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-};
 
 const getValidTimezone = (timezone) => {
   if (!timezone || typeof timezone !== "string") return "UTC";

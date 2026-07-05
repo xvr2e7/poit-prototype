@@ -1,18 +1,9 @@
 const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
 const { optionalAuth, requireAuth } = require("../middleware/auth");
 const deviceService = require("../services/deviceService");
+const { getSupabase } = require("../utils/supabaseClient");
 
 const router = express.Router();
-
-const getSupabase = () => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-};
 
 // Register / authenticate device
 router.post("/auth", async (req, res) => {
