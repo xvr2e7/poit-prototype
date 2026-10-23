@@ -1,5 +1,6 @@
 const axios = require("axios");
 const poeticWords = require("../data/poeticWords.json");
+const { rejectReason } = require("./wordFilter");
 
 class DictionaryService {
   constructor() {
@@ -12,47 +13,9 @@ class DictionaryService {
     });
 
     this.wotdHistory = [];
-    this.exclusionFilters = this.initExclusionFilters();
-  }
-
-  initExclusionFilters() {
-    // Technical/unpoetic terms to hard-reject
-    const technicalTerms = new Set([
-      "pascal", "algorithm", "optimize", "optimizing", "compile", "compiler",
-      "boolean", "integer", "syntax", "binary", "debug", "malloc",
-      "bandwidth", "firmware", "ethernet", "pixel", "database", "server",
-      "markup", "stylesheet", "frontend", "backend", "middleware", "runtime",
-      "startup", "benchmark", "throughput", "scalable", "leverage",
-      "synergy", "stakeholder", "incentivize", "monetize", "capitalize",
-      "proactive", "streamline", "onboarding", "workflow", "outsource",
-      "rebrand", "upscale", "downsize", "franchise", "liquidate",
-      "amortize", "depreciate", "arbitrage", "collateral", "dividend",
-    ]);
-
-    return {
-      sensitivePatterns: [
-        /^(?:fuck|shit|cunt|ass|bitch|nazi|rape|kill)/i,
-      ],
-
-      excludedDomains: [
-        "trademark",
-        "medical_condition",
-        "slur",
-        "medicine",
-      ],
-
-      technicalTerms,
-
-      technicalFilters: [
-        (word) => word.length < 3 || word.length > 12,
-        (word) => /^[A-Z]/.test(word),
-        (word) => /^[^a-zA-Z]/.test(word),
-        (word) => /'s$/.test(word),
-        (word) => /[0-9]/.test(word),
-        (word) => /[-–—]/.test(word), // Hyphenated words
-        (word) => technicalTerms.has(word.toLowerCase()),
-      ],
-    };
+    // What the last getRandomWords call turned away, and why (for logs and
+    // the preview script).
+    this.rejected = [];
   }
 
   async getWordOfDay() {
@@ -60,13 +23,14 @@ class DictionaryService {
       const response = await this.wordnikApi.get("/words.json/wordOfTheDay");
       const wordData = response.data;
 
-      // Extract the most reliable parts
-      const word = wordData.word.toLowerCase();
+      // Judge the word as Wordnik spells it: a capital marks a name.
+      const raw = wordData.word;
+      const word = raw.toLowerCase();
       let type = this.extractWordnikPOS(wordData.definitions[0]?.partOfSpeech);
 
-      // Validate or default
-      if (!this.isWordAcceptable(word) || !type) {
-        console.log(`WOTD ${word} failed quality check, using fallback`);
+      const reason = rejectReason(raw);
+      if (reason || !type) {
+        console.log(`WOTD ${raw} rejected (${reason || "no part of speech"}), using fallback`);
         return this.getFallbackWord();
       }
 
@@ -114,6 +78,7 @@ class DictionaryService {
       };
 
       const excludeSet = new Set(excludeWords.map((w) => w.toLowerCase()));
+      this.rejected = [];
       const results = {};
       const promises = [];
 
@@ -145,14 +110,16 @@ class DictionaryService {
         try {
           const response = await promise;
 
-          // Filter and normalize words
+          // Filter on the raw spelling, before lowercasing hides the
+          // capitals that mark names and acronyms
           const validWords = response.data
             .filter((word) => {
-              // Basic validation
-              const wordText = word.word.toLowerCase();
-              return (
-                this.isWordAcceptable(wordText) && !excludeSet.has(wordText)
-              );
+              const reason = rejectReason(word.word);
+              if (reason) {
+                this.rejected.push({ word: word.word, reason });
+                return false;
+              }
+              return !excludeSet.has(word.word);
             })
             .map((word) => ({
               text: word.word.toLowerCase(),
@@ -187,21 +154,10 @@ class DictionaryService {
     }
   }
 
+  // Stored words are already lowercase; this re-checks them against the
+  // blocklist and shape rules (it can't see capitals any more).
   isWordAcceptable(word) {
-    // Convert to lowercase for consistent checking
-    const text = word.toLowerCase();
-
-    // Apply technical filters
-    for (const filter of this.exclusionFilters.technicalFilters) {
-      if (filter(text)) return false;
-    }
-
-    // Check against sensitive patterns
-    for (const pattern of this.exclusionFilters.sensitivePatterns) {
-      if (pattern.test(text)) return false;
-    }
-
-    return true;
+    return rejectReason(word) === null;
   }
 
   extractWordnikPOS(pos) {
@@ -253,7 +209,8 @@ class DictionaryService {
     for (const [pos, words] of Object.entries(poeticWords)) {
       const type = pos === "adj" ? "adj" : pos;
       for (const text of words) {
-        allWords.push({ text, type, score: 500, source: "emergency" });
+        if (rejectReason(text)) continue;
+        allWords.push({ text, type, score: 500, source: "lexicon" });
       }
     }
 

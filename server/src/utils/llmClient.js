@@ -1,7 +1,20 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const axios = require("axios");
 
-const OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+// Model ids are retired on the providers' schedule, not ours: in 2026
+// both hard-coded ids ("gemini-2.0-flash", "meta-llama/llama-3.3-70b-
+// instruct:free") began returning 404, and every LLM feature (word curation,
+// seed poems, prompts) fell back silently. Use a rolling alias and let the
+// environment override either id without a code change. GEMINI_MODELS is
+// an ordered list: when the first is overloaded (503), the next is tried.
+// The lite alias answers in seconds; the full flash alias thinks first and
+// took 60-120 s in testing, past the 30 s function budget, so it's second.
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || "gemini-flash-lite-latest,gemini-flash-latest")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 12000;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 class LLMClient {
@@ -58,8 +71,25 @@ class LLMClient {
     throw new Error(`${label}: All providers failed — ${errors.join("; ")}`);
   }
 
-  async _tryGemini(prompt, { temperature, maxTokens, label }) {
-    const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  async _tryGemini(prompt, options) {
+    let lastError;
+    for (const id of GEMINI_MODELS) {
+      try {
+        return await this._tryGeminiModel(id, prompt, options);
+      } catch (error) {
+        lastError = error;
+        const overloaded =
+          /\b(500|503)\b|timed? ?out|abort/i.test(error.message || "") || [500, 503].includes(error.status);
+        const retired = /\b404\b/.test(error.message || "") || error.status === 404;
+        if (!overloaded && !retired) throw error;
+        console.warn(`${options.label}: Gemini ${id} unavailable (${overloaded ? "overloaded" : "not found"}), trying the next model`);
+      }
+    }
+    throw lastError;
+  }
+
+  async _tryGeminiModel(id, prompt, { temperature, maxTokens, label }) {
+    const model = this.genAI.getGenerativeModel({ model: id }, { timeout: GEMINI_TIMEOUT_MS });
 
     const maxRetries = 2;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {

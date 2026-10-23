@@ -16,7 +16,9 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "node --test test/",
+    "preview-pool": "node scripts/preview-pool.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
